@@ -3,9 +3,9 @@ Python tools to extract data from [UNESCO Bulk download services](https://apipor
 
 Functions:
 
-```read_zip()``` reads a csv from a zipped folder on the web without saving the file locally
+```read_zip``` reads a csv from a zipped folder on the web without saving the file locally
     
-```datasets()``` returns available datasets to query
+```datasets``` returns available datasets to query
     
 ```indicator_list``` returns available indicators for a specific dataset
     
