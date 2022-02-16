@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-
+Utility functions
+=================
+Includes functions to exract data from a zipped csv without a local download
 """
+
+
 import requests
 import pandas as pd
 import io
 from zipfile import ZipFile
+
 
 def read_zip(url:str, file_name:str) -> pd.DataFrame:
     """

@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
+Functions to query UNESCO
+=========================
 
-
-This script extracts data from the UNESCO Bulk download services here: https://apiportal.uis.unesco.org/bdds
-
-
+Functions query data from the UNESCO Bulk download services 
+here: https://apiportal.uis.unesco.org/bdds
 """
 
 
