@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 """
 Utility functions
 =================
-Includes functions to exract data from a zipped csv without a local download
+Includes functions to extract data from a zipped csv without a local download
 """
 
 

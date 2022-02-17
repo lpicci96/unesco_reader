@@ -1,25 +1,21 @@
-# -*- coding: utf-8 -*-
 """
 Functions to query UNESCO
 =========================
 
-Functions query data from the UNESCO Bulk download services 
+Functions query data from the UNESCO Institute of Statistics Bulk download services
 here: https://apiportal.uis.unesco.org/bdds
 """
 
 
 import pandas as pd
 from typing import Optional
-from unesco.utils import read_zip
+from unesco_reader.utils import read_zip
 import os
-
-
-
 
 
 def datasets():
     """
-    Metadata for available UNESCO datasets
+    Metadata for available UNESCO Institute of Statistics datasets
     
     Returns
     -------
@@ -35,12 +31,12 @@ def datasets():
 
 def indicators(dataset_code: str) -> pd.DataFrame:
     """
-    Metadata for available indecators in a UNESCO dataset
+    Metadata for available indicators in a UNESCO Institute of Statistics dataset
 
     Parameters
     ----------
     dataset_code : str
-        Specify the UNESCO dataset code 
+        Specify the UIS dataset code
 
     Returns
     -------
@@ -57,7 +53,7 @@ def indicators(dataset_code: str) -> pd.DataFrame:
 
 def get_bulk(dataset_code:str, grouping: Optional[str] = 'NATIONAL') -> pd.DataFrame:
     """
-    Download data for all available indicators in a UNESCO dataset
+    Download data for all available indicators in a UNESCO Institute of Statistics dataset
 
     Parameters
     ----------
@@ -90,7 +86,7 @@ def get_bulk(dataset_code:str, grouping: Optional[str] = 'NATIONAL') -> pd.DataF
 
 def get_indicator(indicator_code: str, dataset_code: str, grouping: Optional[str] = 'NATIONAL') -> pd.DataFrame:
     """
-    Download data for a specific UNESCO indicator
+    Download data for a specific UIS indicator
     
     Parameters
     ----------
