@@ -21,13 +21,10 @@ def datasets():
     -------
     pd.DataFrame
     """
-    root = os.path.dirname(os.path.abspath(__file__))
-    path = os.path.join(root, 'datasets.csv')
+    
+    path = os.path.join(os.path.split(os.path.abspath(__file__)), "datasets.csv")
     return pd.read_csv(path)
     
-
-
-
 
 def indicators(dataset_code: str) -> pd.DataFrame:
     """
