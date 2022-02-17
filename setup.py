@@ -9,7 +9,7 @@ setup(
     author_email = "lpicci96@gmail.com",
     description="Python package to download UNESCO data",
     name="unesco_reader",
-    version="0.0.2",
+    version="0.0.3",
     packages=find_packages(include=['unesco_reader', 'unesco_reader.*']),
     install_requires=['pandas', 'requests'],
     python_requires='>=3.8',
