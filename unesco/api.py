@@ -11,6 +11,10 @@ here: https://apiportal.uis.unesco.org/bdds
 import pandas as pd
 from typing import Optional
 from unesco.utils import read_zip
+import os
+
+
+
 
 
 def datasets():
@@ -21,9 +25,13 @@ def datasets():
     -------
     pd.DataFrame
     """
+    root = os.path.dirname(os.path.abspath(__file__))
+    path = os.path.join(root, 'datasets.csv')
+    return pd.read_csv(path)
     
-    return pd.read_csv('datasets.csv')
-    
+
+
+
 
 def indicators(dataset_code: str) -> pd.DataFrame:
     """
@@ -110,10 +118,6 @@ def get_indicator(indicator_code: str, dataset_code: str, grouping: Optional[str
         raise ValueError(f'No data available for {indicator_code}')
         
     return df
-
-
-
-
 
 
 
