@@ -10,7 +10,6 @@ here: https://apiportal.uis.unesco.org/bdds
 import pandas as pd
 from typing import Optional
 from unesco_reader.utils import read_zip
-import os
 
 
 def datasets():
@@ -20,10 +19,35 @@ def datasets():
     Returns
     -------
     pd.DataFrame
+    
     """
     
-    path = os.path.join(os.path.split(os.path.abspath(__file__)), "datasets.csv")
-    return pd.read_csv(path)
+    dataset_dict = {'dataset':['SDG Global and Thematic Indicators',
+                'Other Policy Relevant Indicators (OPRI)',
+                'Research and Development (R&D)',
+                'Innovation',
+                'Cultural Employment',
+                'Feature Films',
+                'Cultural Trade',
+                'SDG 11',
+                'Demographic and Socio-economic Indicators'],
+     'code': ['SDG','OPRI','SCI','INNO','CLTE','FILM','CLTT','SDG11','DEM'],
+     'category':['Education','Education','Science','Science',
+                 'Culture','Culture','Culture','Culture','External'],
+     'link':['https://apimgmtstzgjpfeq2u763lag.blob.core.windows.net/content/MediaLibrary/bdds/SDG.zip',
+'https://apimgmtstzgjpfeq2u763lag.blob.core.windows.net/content/MediaLibrary/bdds/OPRI.zip',
+'https://apimgmtstzgjpfeq2u763lag.blob.core.windows.net/content/MediaLibrary/bdds/SCI.zip',
+'https://apimgmtstzgjpfeq2u763lag.blob.core.windows.net/content/MediaLibrary/bdds/INNO.zip',
+'https://apimgmtstzgjpfeq2u763lag.blob.core.windows.net/content/MediaLibrary/bdds/CLTE.zip',
+'https://apimgmtstzgjpfeq2u763lag.blob.core.windows.net/content/MediaLibrary/bdds/FILM.zip',
+'https://apimgmtstzgjpfeq2u763lag.blob.core.windows.net/content/MediaLibrary/bdds/CLTT.zip',
+'https://apimgmtstzgjpfeq2u763lag.blob.core.windows.net/content/MediaLibrary/bdds/SDG11.zip',
+'https://apimgmtstzgjpfeq2u763lag.blob.core.windows.net/content/MediaLibrary/bdds/DEM.zip'
+]}
+
+    
+    
+    return pd.DataFrame(dataset_dict)
     
 
 def indicators(dataset_code: str) -> pd.DataFrame:
