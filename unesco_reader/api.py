@@ -114,21 +114,3 @@ def get_indicator(indicator_code: str, dataset_code: str, grouping: Optional[str
         raise ValueError(f'No data available for {indicator_code}')
         
     return df
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-    
