@@ -60,7 +60,7 @@ df = uis.get_indicator('LR.AG15T99', 'SDG')
 Additionally, the unzipping functionality can be using on other CSV files in a zipped folder, without needing to store the file locally. By speficying the downloadable link for the zipped folder and file name in the function below, the CSV will be read to a pandas dataframe
 
 ```
-unzipped_df = read_zip(url, file.csv)
+unzipped_df = uis.read_zip(url, file.csv)
 ```
 
 ## License
