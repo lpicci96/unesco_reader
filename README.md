@@ -1,7 +1,7 @@
 ![Black](https://github.com/lpicci96/unesco_reader/actions/workflows/code_format.yml/badge.svg)
 # UNESCO Institute for Statistics (UIS) Reader
 
-A programmatic and pythonic way to extract data from UNESCO Institute of Statistics (UIS) [bulk download services](https://apiportal.uis.unesco.org/bdds). This package lets you extract bulk data, specific indicators, or metadata from all UIS datasets. This package is currently a beta version and could be unstable. No testing have been done yet.
+A programmatic and pythonic way to extract data from UNESCO Institute of Statistics (UIS) [bulk download services](https://apiportal.uis.unesco.org/bdds). This package lets you extract bulk data, specific indicators, or metadata from all UIS datasets. This package is currently a beta version and could be unstable. No testing has been done yet.
 
 ## Motivation
 
