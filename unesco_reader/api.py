@@ -57,6 +57,7 @@ def datasets():
             "https://apimgmtstzgjpfeq2u763lag.blob.core.windows.net/content/MediaLibrary/bdds/SDG11.zip",
             "https://apimgmtstzgjpfeq2u763lag.blob.core.windows.net/content/MediaLibrary/bdds/DEM.zip",
         ],
+        'regional':[True, True, True, False, False, False, False, False, False]
     }
 
     return pd.DataFrame(dataset_dict)
@@ -112,7 +113,11 @@ def get_bulk(dataset_code: str, grouping: Optional[str] = "NATIONAL") -> pd.Data
         raise ValueError(f"{dataset_code} is not a valid code")
     if grouping not in ["NATIONAL", "REGIONAL"]:
         raise ValueError(f"{grouping} is not a valid grouping")
-
+    #if grouping is REGIONAL, check if it is available
+    if dataset_code not in list(ds.loc[ds.regional, 'code']):
+        raise ValueError(f'{dataset_code} does not have a REGIONAL option')
+        
+        
     url = ds.loc[ds.code == dataset_code, "link"].values[0]
     df = read_zip(url, file_name=f"{dataset_code}_DATA_{grouping}.csv")
 
