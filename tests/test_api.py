@@ -29,7 +29,7 @@ def __loop_datasets(func, *args, **kwargs):
         assert len(result)>0
     
 
-'''
+
 def test_datasets():
     ds = api.datasets()
     assert isinstance(ds, pd.core.frame.DataFrame)
@@ -46,7 +46,7 @@ def test_indicators():
     with pytest.raises(ValueError):
         indicator_df = api.indicators(not_a_dataset)
         
-'''
+
 def test_get_bulk():
     
     
