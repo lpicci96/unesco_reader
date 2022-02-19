@@ -8,9 +8,9 @@ import pandas as pd
 
 test_dataset = 'SDR'
 test_indicator = ''
-errors = {'dataset_code': 'not_a_dataset',
-          'indicator_code': 'not_an_indicator',
-          'grouping': 'not_a_grouping'}
+errors = {'dataset_code': 'invalid_dataset',
+          'indicator_code': 'invalid_indicator',
+          'grouping': 'invalid_grouping'}
 
 def __loop_datasets(func, *args, **kwargs):
     """
@@ -37,21 +37,28 @@ def test_datasets():
     assert len(ds)>0
 
 
-def test_indicators():
-    
+def test_indicators():  
     not_a_dataset = 'not_a_real_dataset'
     __loop_datasets(func = api.indicators)
     
     
     with pytest.raises(ValueError):
-        indicator_df = api.indicators(not_a_dataset)
+        indicator_df = api.indicators(errors.dataset_code)
         
 
-def test_get_bulk():
-    
-    
-    #__loop_datasets(func=api.get_bulk)
+def test_get_bulk():  
+    __loop_datasets(func=api.get_bulk)
     __loop_datasets(func=api.get_bulk, grouping='REGIONAL')
+    
+    with pytest.raises(ValueError):
+        api.get_bulk(dataset_code = errors.dataset_code) #invalid dataset code
+        api.get_bulk(dataset_code = test_dataset, grouping = errors.grouping) #invalid grouping
+        
+
+def test_get_indicator():
+    
+    
+
     
     
     
