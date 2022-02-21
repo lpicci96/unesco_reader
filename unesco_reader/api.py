@@ -79,7 +79,7 @@ def indicators(dataset_code: str) -> pd.DataFrame:
     ds = datasets()
     if dataset_code not in list(ds.code):
         raise ValueError(
-            f"{dataset_code} is not a valid code. Available datasets are {list(ds['code'])}"
+            f"{dataset_code} is not a valid code."
         )
     url = ds.loc[ds.code == dataset_code, "link"].values[0]
     df = read_zip(url, file_name=f"{dataset_code}_LABEL.csv")
@@ -110,12 +110,13 @@ def get_bulk(dataset_code: str, grouping: Optional[str] = "NATIONAL") -> pd.Data
 
     # parameter error handling
     if dataset_code not in list(ds.code):
-        raise ValueError(f"{dataset_code} is not a valid code")
+        raise ValueError(f"{dataset_code} is not a valid code.")
     if grouping not in ["NATIONAL", "REGIONAL"]:
-        raise ValueError(f"{grouping} is not a valid grouping")
+        raise ValueError(f"{grouping} is not a valid grouping.")
+        
     #if grouping is REGIONAL, check if it is available
-    if dataset_code not in list(ds.loc[ds.regional, 'code']):
-        raise ValueError(f'{dataset_code} does not have a REGIONAL option')
+    if (grouping == 'REGIONAL')&(dataset_code not in list(ds.loc[ds.regional, 'code'])):
+        raise ValueError(f'{dataset_code} does not have a REGIONAL option.')
         
         
     url = ds.loc[ds.code == dataset_code, "link"].values[0]
