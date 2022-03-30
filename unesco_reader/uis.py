@@ -13,6 +13,7 @@ def read_csv(folder, file_name: str) -> pd.DataFrame:
         raise ValueError(f"{file_name} is not found in the folder")
     return pd.read_csv(folder.open(file_name), low_memory=False)
 
+
 def filter_df(filter_value:Union[str, list], df:pd.DataFrame, column:str)-> pd.DataFrame:
     """filters a dataframe using a string or list"""
     if isinstance(filter_value, str):
@@ -31,14 +32,15 @@ def filter_df(filter_value:Union[str, list], df:pd.DataFrame, column:str)-> pd.D
 class Fetcher:
 
     dataset: str = None
-    grouping: str = None #NATIONAL, REGIONAL, ALL
+    grouping: str = 'NATIONAL' # NATIONAL, REGIONAL
 
     def __post_init__(self):
 
+        self.ds = pd.read_csv("./datasets.csv") # reformat
         # check that dataset is valid
-        __datasets = pd.read_csv(r"C:\Users\LucaPicci\Documents\GitHub\unesco_reader\unesco_reader\datasets.csv") # reformat
-        if self.dataset in list(__datasets.codes):
-            self.dataset_info = __datasets[__datasets.codes == self.dataset]
+        _datasets = pd.read_csv("./datasets.csv") # reformat
+        if self.dataset in list(_datasets.codes):
+            self.dataset_info = _datasets[__datasets.codes == self.dataset]
         else:
             raise ValueError(f'{self.dataset} is not a valid dataset code')
 
@@ -52,7 +54,7 @@ class Fetcher:
         # check if grouping is valid
         if self.grouping not in ['NATIONAL', 'REGIONAL']:
             raise ValueError('Invalid grouping. Use "NATIONAL" or "REGIONAL"')
-        elif f"{self.dataset}_DATA_{self.grouping}.csv" not in self.folder.NameToInfo.keys()
+        elif f"{self.dataset}_DATA_{self.grouping}.csv" not in self.folder.NameToInfo.keys():
             raise ValueError(f'{self.grouping} is not valid for this dataset')
         else:
             pass
@@ -95,20 +97,19 @@ class UIS(Fetcher):
     as_region_name:Optional[bool] = False
     as_indicator_name:Optional[bool] = False
 
-
     def __post_init__(self):
-        #filter indicator
+        # filter indicator
         if self.indicator_code is not None:
             self.df = filter_df(self.indicator_code, self.df, 'INDICATOR_ID')
 
-        #filter region
+        # filter region
         if self.region is not None:
             if self.grouping == 'NATIONAL':
                 self.df = filter_df(self.region, self.df, "COUNTRY_ID")
             else:
                 self.df = filter_df(self.region, self.df, "REGION_ID")
 
-        #filter years
+        # filter years
         if (self.start_year is not None)&(self.end_year is not None):
             if self.start_year > self.end_year:
                 raise ValueError('Start year is earlier than end year')
@@ -135,7 +136,7 @@ class UIS(Fetcher):
 
         if self.as_region_name:
             pass
-        
+
 
 
 
