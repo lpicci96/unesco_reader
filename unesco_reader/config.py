@@ -9,11 +9,11 @@ class Paths:
 
     @property
     def data(self):
-        return os.path.join(self.project_dir, "data")
+        return os.path.join(self.project_dir,"unesco_reader", "data")
 
     @property
     def glossaries(self):
-        return os.path.join(self.project_dir, "glossaries")
+        return os.path.join(self.project_dir, "unesco_reader", "glossaries")
 
 
 PATHS = Paths(os.path.dirname(os.path.dirname(__file__)))
@@ -43,3 +43,5 @@ class Datasets:
 
 
 datasets = Datasets()
+
+
