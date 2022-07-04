@@ -12,7 +12,7 @@ import requests
 
 def get_zip_from_web(url: str) -> ZipFile:
     """ """
-
+    print(url)
     try:
         response = requests.get(url)
         folder = ZipFile(io.BytesIO(response.content))
