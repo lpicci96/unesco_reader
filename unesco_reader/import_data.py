@@ -7,7 +7,6 @@ import os
 from unesco_reader.config import PATHS
 from unesco_reader import utils
 
-
 BASE_URL = "https://apimgmtstzgjpfeq2u763lag.blob.core.windows.net/content/MediaLibrary/bdds/"
 
 DATASETS = pd.read_csv(f'{PATHS.glossaries}/datasets.csv')
@@ -47,8 +46,8 @@ class UIS:
     of Statistics (UIS) Bulk Download Services"""
 
     dataset: str  # either dataset name or code
-    include_metadata: bool = False
-    update: bool = False  # update directly from UIS bulk download services
+    update: bool = False  # update directly from UIS bulk download services, False - checks if data is in disk
+    include_metadata: bool = False  # include metadata columns in data
 
     def __post_init__(self):
 
@@ -107,11 +106,33 @@ class UIS:
                      'available_indicators': len(self.labels),
                      'available_countries': len(self.countries)}
 
-        self.data = pd.read_csv(f'{PATHS.data}/{self._file_names["data"]}')
+        self.data = pd.read_csv(f'{PATHS.data}/{self._file_names["data"]}',
+                                low_memory=False,
+                                usecols={'INDICATOR_ID': str,
+                                         'COUNTRY_ID': str,
+                                         'YEAR': int,
+                                         'VALUE': float,
+                                         'MAGNITUDE': str,
+                                         'QUALIFIER': str})
+        if self.include_metadata:
+            self.add_metadata(inplace=True)
 
-    def add_metadata(self):
+    def add_metadata(self, inplace=False):
         """ """
-        pass
+
+        meta = (self.metadata
+                .groupby(by=['INDICATOR_ID', 'COUNTRY_ID', 'YEAR', 'TYPE'], as_index=False)['METADATA']
+                .apply(' / '.join)
+                .pivot(index=['INDICATOR_ID', 'COUNTRY_ID', 'YEAR'], columns='TYPE', values='METADATA')
+                .reset_index()
+                )
+
+        if inplace:
+            self.data = pd.merge(self.data, meta, on = ['INDICATOR_ID', 'COUNTRY_ID', 'YEAR'])
+        else:
+            return pd.merge(self.data, meta, on = ['INDICATOR_ID', 'COUNTRY_ID', 'YEAR'])
+
+
 
     def add_country_names(self):
         pass
