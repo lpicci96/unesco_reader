@@ -7,7 +7,8 @@
 
 **Tools to extract and work with UNESCO Institute of Statistics (UIS) data**
 
-**This package is unstable and still under development**
+**This package is unstable and under new development. To use a simple version of the package 
+see https://test.pypi.org/project/unesco-reader/**
 
 
 
