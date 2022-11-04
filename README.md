@@ -7,14 +7,20 @@
 
 **Tools to extract and work with UNESCO Institute of Statistics (UIS) data**
 
+**This package is unstable and still under development**
+
+
+
 
 -   Free software: MIT license
 -   Documentation: https://lpicci96.github.io/unesco_reader
     
 
-## Features
-
--   TODO
+## Motivation
+Currently there is so API service to query UIS data (as of 23 June 2020). 
+The only way to download UIS data is through their bulk download services,
+by locally downloading a zipped folder for each dataset. 
+This package allows you to explore UIS datasets programmatically.
 
 ## Credits
 
