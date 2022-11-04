@@ -5,7 +5,7 @@
 import pytest
 
 
-from unesco_reader import unesco_reader
+from unesco_reader import uis
 
 
 @pytest.fixture
