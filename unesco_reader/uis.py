@@ -36,7 +36,7 @@ def available_datasets() -> pd.DataFrame:
     """Return a dataframe with available datasets, and relevant information"""
 
     return (pd.DataFrame({'code': DATASETS.keys(), 'name': DATASETS.values()})
-            .assign(link = lambda df: df.code.apply(lambda x: f"{BASE_URL}{x}.zip")))
+            .assign(link=lambda df: df.code.apply(lambda x: f"{BASE_URL}{x}.zip")))
 
 
 def read_dataset(code: str) -> pd.DataFrame:
@@ -69,7 +69,7 @@ def mapping_dict(df: pd.DataFrame, key_col: str = 'left') -> dict:
         raise ValueError('Invalid key_col. Please choose from ["left", "right"]')
 
     if key_col == 'left':
-        k, v= 0, 1
+        k, v = 0, 1
     else:
         k, v = 1, 0
     return (df
@@ -79,3 +79,20 @@ def mapping_dict(df: pd.DataFrame, key_col: str = 'left') -> dict:
             )
 
 
+def format_metadata(metadata_df: pd.DataFrame) -> pd.DataFrame:
+    """Format the metadata DataFrame
+
+    Args:
+        metadata_df: DataFrame containing metadata
+
+    Returns:
+        A metadata DataFrame pivoted so that metadata types are joined and stored in columns
+    """
+
+    return (metadata_df.groupby(by=['INDICATOR_ID', 'COUNTRY_ID', 'YEAR', 'TYPE'], as_index=False)
+            ['METADATA']
+            .apply(' / '.join)
+            .pivot(index=['INDICATOR_ID', 'COUNTRY_ID', 'YEAR'], columns='TYPE', values='METADATA')
+            .reset_index()
+            .rename_axis(None, axis=1)
+            )
