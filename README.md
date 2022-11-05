@@ -2,7 +2,7 @@
 
 
 [![image](https://img.shields.io/pypi/v/unesco_reader.svg)](https://pypi.python.org/pypi/unesco_reader)
-[![image](https://img.shields.io/conda/vn/conda-forge/unesco_reader.svg)](https://anaconda.org/conda-forge/unesco_reader)
+![image](https://img.shields.io/pypi/dm/unesco-reader)
 
 
 **Tools to extract and work with UNESCO Institute of Statistics (UIS) data**
