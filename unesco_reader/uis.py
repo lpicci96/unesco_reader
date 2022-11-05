@@ -39,18 +39,6 @@ def available_datasets() -> pd.DataFrame:
             .assign(link=lambda df: df.code.apply(lambda x: f"{BASE_URL}{x}.zip")))
 
 
-def read_dataset(code: str) -> pd.DataFrame:
-    """Read a dataset from the UIS website"""
-
-    if code not in DATASETS.keys():
-        raise ValueError(f"Dataset code not found: {code}")
-
-    url = f"{BASE_URL}{code}.zip"
-    folder = unzip_folder(url)
-
-    return read_csv(folder, f"{code}_DATA_NATIONAL.csv")
-
-
 def mapping_dict(df: pd.DataFrame, key_col: str = 'left') -> dict:
     """Create a mapping dictionary from a dataframe
 
@@ -96,3 +84,42 @@ def format_metadata(metadata_df: pd.DataFrame) -> pd.DataFrame:
             .reset_index()
             .rename_axis(None, axis=1)
             )
+
+
+def read_dataset(code: str, metadata: bool = False) -> pd.DataFrame:
+    """Read a dataset from the UIS website
+
+    Extract country level data from the UIS website for a specific dataset.
+    This function joins the data stored in different files into a single DataFrame.
+
+    Args:
+        code: dataset code. To see available datasets, use available_datasets()
+        metadata: whether to include metadata in the output. Default is False
+
+    Returns:
+        A DataFrame with the data for the specified dataset including country names, indicator
+        names, and metadata if specified.
+
+    """
+
+    if code not in DATASETS.keys():
+        raise ValueError(f"Dataset code not found: {code}")
+
+    url = f"{BASE_URL}{code}.zip"
+    folder = unzip_folder(url)
+
+    df = read_csv(folder, f"{code}_DATA_NATIONAL.csv")
+    labels = read_csv(folder, f"{code}_LABEL.csv")
+    countries = read_csv(folder, f"{code}_COUNTRY.csv")
+
+    df = (df
+          .assign(COUNTRY_NAME = lambda d: d.COUNTRY_ID.map(mapping_dict(countries)),
+                  INDICATOR_NAME = lambda d: d.INDICATOR_ID.map(mapping_dict(labels)))
+          )
+    if metadata:
+        metadata = read_csv(folder, f"{code}_METADATA.csv")
+        metadata = format_metadata(metadata)
+        df = df.merge(metadata, on=['INDICATOR_ID', 'COUNTRY_ID', 'YEAR'], how='left')
+
+    return df
+
