@@ -5,10 +5,7 @@ import io
 from zipfile import ZipFile
 import pandas as pd
 
-DATASETS = {'SDG': "SDG Global and Thematic Indicators",
-            'OPRI': "Other Policy Relevant Indicators (OPRI)"}
-
-BASE_URL = "https://apimgmtstzgjpfeq2u763lag.blob.core.windows.net/content/MediaLibrary/bdds/"
+from unesco_reader.config import PATHS
 
 
 def unzip_folder(url: str) -> ZipFile:
@@ -35,8 +32,10 @@ def read_csv(folder: ZipFile, path: str) -> pd.DataFrame:
 def available_datasets() -> pd.DataFrame:
     """Return a dataframe with available datasets, and relevant information"""
 
-    return (pd.DataFrame({'code': DATASETS.keys(), 'name': DATASETS.values()})
-            .assign(link=lambda df: df.code.apply(lambda x: f"{BASE_URL}{x}.zip")))
+    return (pd.read_csv(PATHS.DATASETS / 'uis_datasets.csv')
+            .assign(link=lambda df: df.dataset_code.apply(lambda x: f"{PATHS.BASE_URL}{x}.zip")))
+
+datasets = available_datasets()
 
 
 def mapping_dict(df: pd.DataFrame, key_col: str = 'left') -> dict:
@@ -102,10 +101,10 @@ def read_dataset(code: str, metadata: bool = False) -> pd.DataFrame:
 
     """
 
-    if code not in DATASETS.keys():
+    if code not in datasets.dataset_code.values:
         raise ValueError(f"Dataset code not found: {code}")
 
-    url = f"{BASE_URL}{code}.zip"
+    url = datasets.loc[datasets.dataset_code == code, 'link'].values[0]
     folder = unzip_folder(url)
 
     df = read_csv(folder, f"{code}_DATA_NATIONAL.csv")
