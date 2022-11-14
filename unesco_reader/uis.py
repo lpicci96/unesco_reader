@@ -1,32 +1,9 @@
 """UNESCO Institute of Statistics (UIS) data reader."""
 
-import requests
-import io
-from zipfile import ZipFile
 import pandas as pd
 
 from unesco_reader.config import PATHS
-
-
-def unzip_folder(url: str) -> ZipFile:
-    """Unzip a folder from a url."""
-
-    try:
-        response = requests.get(url)
-        folder = ZipFile(io.BytesIO(response.content))
-        return folder
-
-    except ConnectionError:
-        raise ConnectionError(f"Could not read file from url: {url}")
-
-
-def read_csv(folder: ZipFile, path: str) -> pd.DataFrame:
-    """Read a csv file from a folder."""
-
-    if path not in folder.namelist():
-        raise FileNotFoundError(f"Could not find file: {path}")
-
-    return pd.read_csv(folder.open(path), low_memory=False)
+from unesco_reader import common
 
 
 def available_datasets() -> pd.DataFrame:
@@ -36,34 +13,6 @@ def available_datasets() -> pd.DataFrame:
             .assign(link=lambda df: df.dataset_code.apply(lambda x: f"{PATHS.BASE_URL}{x}.zip")))
 
 datasets = available_datasets()
-
-
-def mapping_dict(df: pd.DataFrame, key_col: str = 'left') -> dict:
-    """Create a mapping dictionary from a dataframe
-
-    Args:
-        df: dataframe with two columns, left and right
-        key_col: column to use as keys in the dictionary. Choose from 'left' or 'right'. Default is 'left'
-
-    Returns:
-        A dictionary with the values from the left column as keys,
-        and the values from the right column as values
-    """
-
-    if len(df.columns) != 2:
-        raise ValueError('df can only contain 2 columns')
-    if key_col not in ['left', 'right']:
-        raise ValueError('Invalid key_col. Please choose from ["left", "right"]')
-
-    if key_col == 'left':
-        k, v = 0, 1
-    else:
-        k, v = 1, 0
-    return (df
-            .set_index(df.iloc[:, k])
-            .iloc[:, v]
-            .to_dict()
-            )
 
 
 def format_metadata(metadata_df: pd.DataFrame) -> pd.DataFrame:
@@ -105,18 +54,18 @@ def read_dataset(code: str, metadata: bool = False) -> pd.DataFrame:
         raise ValueError(f"Dataset code not found: {code}")
 
     url = datasets.loc[datasets.dataset_code == code, 'link'].values[0]
-    folder = unzip_folder(url)
+    folder = common.unzip_folder(url)
 
-    df = read_csv(folder, f"{code}_DATA_NATIONAL.csv")
-    labels = read_csv(folder, f"{code}_LABEL.csv")
-    countries = read_csv(folder, f"{code}_COUNTRY.csv")
+    df = common.read_csv(folder, f"{code}_DATA_NATIONAL.csv")
+    labels = common.read_csv(folder, f"{code}_LABEL.csv")
+    countries = common.read_csv(folder, f"{code}_COUNTRY.csv")
 
     df = (df
-          .assign(COUNTRY_NAME = lambda d: d.COUNTRY_ID.map(mapping_dict(countries)),
-                  INDICATOR_NAME = lambda d: d.INDICATOR_ID.map(mapping_dict(labels)))
+          .assign(COUNTRY_NAME = lambda d: d.COUNTRY_ID.map(common.mapping_dict(countries)),
+                  INDICATOR_NAME = lambda d: d.INDICATOR_ID.map(common.mapping_dict(labels)))
           )
     if metadata:
-        metadata = read_csv(folder, f"{code}_METADATA.csv")
+        metadata = common.read_csv(folder, f"{code}_METADATA.csv")
         metadata = format_metadata(metadata)
         df = df.merge(metadata, on=['INDICATOR_ID', 'COUNTRY_ID', 'YEAR'], how='left')
 
