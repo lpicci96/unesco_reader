@@ -7,10 +7,16 @@
 
 **Tools to extract and work with UNESCO Institute of Statistics (UIS) data**
 
-**This package is unstable and under new development. To use a simple version of the package 
-see https://test.pypi.org/project/unesco-reader/**
+**This package is unstable and under new active development.**
 
+Installation
+------------
 
+unesco_reader can be installed from PyPI: from the command line:
+
+```
+pip install unesco-reader
+```
 
 
 -   Free software: MIT license
