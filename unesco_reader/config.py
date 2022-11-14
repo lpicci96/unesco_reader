@@ -12,3 +12,5 @@ class PATHS:
 
     DATASETS = package / 'unesco_reader' / 'glossaries'
 
+    TEST_FILES = package / 'tests' / 'test_files'
+
