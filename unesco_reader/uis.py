@@ -1,9 +1,9 @@
 """UNESCO Institute of Statistics (UIS) data reader."""
 
 import pandas as pd
-
 from unesco_reader.config import PATHS
 from unesco_reader import common
+from zipfile import ZipFile
 
 
 def available_datasets() -> pd.DataFrame:
@@ -12,7 +12,8 @@ def available_datasets() -> pd.DataFrame:
     return (pd.read_csv(PATHS.DATASETS / 'uis_datasets.csv')
             .assign(link=lambda df: df.dataset_code.apply(lambda x: f"{PATHS.BASE_URL}{x}.zip")))
 
-datasets = available_datasets()
+
+DATASETS = available_datasets()
 
 
 def format_metadata(metadata_df: pd.DataFrame) -> pd.DataFrame:
@@ -34,40 +35,88 @@ def format_metadata(metadata_df: pd.DataFrame) -> pd.DataFrame:
             )
 
 
-def read_dataset(code: str, metadata: bool = False) -> pd.DataFrame:
-    """Read a dataset from the UIS website
-
-    Extract country level data from the UIS website for a specific dataset.
-    This function joins the data stored in different files into a single DataFrame.
-
-    Args:
-        code: dataset code. To see available datasets, use available_datasets()
-        metadata: whether to include metadata in the output. Default is False
-
-    Returns:
-        A DataFrame with the data for the specified dataset including country names, indicator
-        names, and metadata if specified.
-
+def map_dataset_name(name: str) -> str:
+    """Map a dataset to its code. Raise an error if the dataset is not found.
     """
 
-    if code not in datasets.dataset_code.values:
-        raise ValueError(f"Dataset code not found: {code}")
+    if name in DATASETS.dataset_name.values:
+        return DATASETS.loc[DATASETS.dataset_name == name, 'dataset_code'].values[0]
+    elif name in DATASETS.dataset_code.values:
+        return name
+    else:
+        raise ValueError(f"Dataset not found: {name}")
 
-    url = datasets.loc[datasets.dataset_code == code, 'link'].values[0]
-    folder = common.unzip_folder(url)
 
-    df = common.read_csv(folder, f"{code}_DATA_NATIONAL.csv")
-    labels = common.read_csv(folder, f"{code}_LABEL.csv")
-    countries = common.read_csv(folder, f"{code}_COUNTRY.csv")
+def transform_data(folder: ZipFile, dataset_code: str) -> pd.DataFrame:
+    """ """
 
-    df = (df
-          .assign(COUNTRY_NAME = lambda d: d.COUNTRY_ID.map(common.mapping_dict(countries)),
-                  INDICATOR_NAME = lambda d: d.INDICATOR_ID.map(common.mapping_dict(labels)))
+    df = common.read_csv(folder, f"{dataset_code}_DATA_NATIONAL.csv")
+    labels = common.read_csv(folder, f"{dataset_code}_LABEL.csv")
+    countries = common.read_csv(folder, f"{dataset_code}_COUNTRY.csv")
+    metadata = (common.read_csv(folder, f"{dataset_code}_METADATA.csv")
+                .pipe(format_metadata)
+                )
+
+    return (df
+            .assign(COUNTRY_NAME=lambda d: d.COUNTRY_ID.map(common.mapping_dict(countries)),
+                  INDICATOR_NAME=lambda d: d.INDICATOR_ID.map(common.mapping_dict(labels)))
+            .merge(metadata, on=['INDICATOR_ID', 'COUNTRY_ID', 'YEAR'], how='left')
           )
-    if metadata:
-        metadata = common.read_csv(folder, f"{code}_METADATA.csv")
-        metadata = format_metadata(metadata)
-        df = df.merge(metadata, on=['INDICATOR_ID', 'COUNTRY_ID', 'YEAR'], how='left')
 
-    return df
 
+class UIS:
+    """ """
+
+    # available_datasets: ClassVar[list] = available_datasets()
+
+    def __init__(self, dataset: str):
+        self.__dataset_code = map_dataset_name(dataset)
+        self.__dataset_name = DATASETS.loc[DATASETS.dataset_code == self.__dataset_code, 'dataset_name'].values[0]
+        self.__url = DATASETS.loc[DATASETS.dataset_code == self.__dataset_code, 'link'].values[0]
+        self.__dataset_category = DATASETS.loc[DATASETS.dataset_code == self.__dataset_code, 'dataset_category'].values[
+            0]
+
+        self.__folder = None
+        self.__data = None
+
+    @property
+    def dataset_code(self):
+        """Return dataset code"""
+        return self.__dataset_code
+
+    @property
+    def dataset_name(self):
+        """Return dataset name"""
+        return self.__dataset_name
+
+    @property
+    def url(self):
+        """Return dataset url"""
+        return self.__url
+
+    @property
+    def dataset_category(self):
+        """Return dataset category"""
+        return self.__dataset_category
+
+    def load_data(self):  # add path: str = None later
+        """Load data to the object"""
+
+        self.__folder = common.unzip_folder(self.__url)
+        self.__data = transform_data(self.__folder, self.__dataset_code)
+
+    def get_data(self):
+        """Return data"""
+        return self.__data
+
+    def save_to_disk(self, path: str):
+        """Save data to disk"""
+        pass
+
+    def dataset_info(self):
+        """Return dataset information"""
+        pass
+
+    def describe(self, indicator: str = None):
+        """Return dataset description"""
+        pass
