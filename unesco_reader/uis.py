@@ -59,55 +59,47 @@ def transform_data(folder: ZipFile, dataset_code: str) -> pd.DataFrame:
 
     return (df
             .assign(COUNTRY_NAME=lambda d: d.COUNTRY_ID.map(common.mapping_dict(countries)),
-                  INDICATOR_NAME=lambda d: d.INDICATOR_ID.map(common.mapping_dict(labels)))
+                    INDICATOR_NAME=lambda d: d.INDICATOR_ID.map(common.mapping_dict(labels)))
             .merge(metadata, on=['INDICATOR_ID', 'COUNTRY_ID', 'YEAR'], how='left')
-          )
+            )
 
 
 class UIS:
-    """ """
+    """Object to read, store, and explore UIS data
+
+    To use, create an instance of the class, and call the load_data() method. To get the data
+    as a pandas DataFrame, call the get_data() method.
+
+    Params:
+        dataset: the name or code for a dataset
+
+    Examples:
+        >>> uis = UIS('SDG')
+        >>> uis.load_data()
+        >>> uis.get_data()
+    """
 
     # available_datasets: ClassVar[list] = available_datasets()
 
     def __init__(self, dataset: str):
-        self.__dataset_code = map_dataset_name(dataset)
-        self.__dataset_name = DATASETS.loc[DATASETS.dataset_code == self.__dataset_code, 'dataset_name'].values[0]
-        self.__url = DATASETS.loc[DATASETS.dataset_code == self.__dataset_code, 'link'].values[0]
-        self.__dataset_category = DATASETS.loc[DATASETS.dataset_code == self.__dataset_code, 'dataset_category'].values[
+        self.dataset_code = map_dataset_name(dataset)
+        self.dataset_name = DATASETS.loc[DATASETS.dataset_code == self.dataset_code, 'dataset_name'].values[0]
+        self.url = DATASETS.loc[DATASETS.dataset_code == self.dataset_code, 'link'].values[0]
+        self.category = DATASETS.loc[DATASETS.dataset_code == self.dataset_code, 'dataset_category'].values[
             0]
 
-        self.__folder = None
-        self.__data = None
-
-    @property
-    def dataset_code(self):
-        """Return dataset code"""
-        return self.__dataset_code
-
-    @property
-    def dataset_name(self):
-        """Return dataset name"""
-        return self.__dataset_name
-
-    @property
-    def url(self):
-        """Return dataset url"""
-        return self.__url
-
-    @property
-    def dataset_category(self):
-        """Return dataset category"""
-        return self.__dataset_category
+        self._folder = None
+        self.data = None
 
     def load_data(self):  # add path: str = None later
         """Load data to the object"""
 
-        self.__folder = common.unzip_folder(self.__url)
-        self.__data = transform_data(self.__folder, self.__dataset_code)
+        self._folder = common.unzip_folder(self.url)
+        self.data = transform_data(self._folder, self.dataset_code)
 
     def get_data(self):
         """Return data"""
-        return self.__data
+        return self.data
 
     def save_to_disk(self, path: str):
         """Save data to disk"""
