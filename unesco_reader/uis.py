@@ -1,18 +1,20 @@
 """UNESCO Institute of Statistics (UIS) data reader."""
 
 import pandas as pd
-
 from unesco_reader.config import PATHS
 from unesco_reader import common
+from zipfile import ZipFile
 
 
 def available_datasets() -> pd.DataFrame:
     """Return a dataframe with available datasets, and relevant information"""
 
-    return (pd.read_csv(PATHS.DATASETS / 'uis_datasets.csv')
-            .assign(link=lambda df: df.dataset_code.apply(lambda x: f"{PATHS.BASE_URL}{x}.zip")))
+    return pd.read_csv(PATHS.DATASETS / "uis_datasets.csv").assign(
+        link=lambda df: df.dataset_code.apply(lambda x: f"{PATHS.BASE_URL}{x}.zip")
+    )
 
-datasets = available_datasets()
+
+DATASETS = available_datasets()
 
 
 def format_metadata(metadata_df: pd.DataFrame) -> pd.DataFrame:
@@ -25,49 +27,104 @@ def format_metadata(metadata_df: pd.DataFrame) -> pd.DataFrame:
         A metadata DataFrame pivoted so that metadata types are joined and stored in columns
     """
 
-    return (metadata_df.groupby(by=['INDICATOR_ID', 'COUNTRY_ID', 'YEAR', 'TYPE'], as_index=False)
-            ['METADATA']
-            .apply(' / '.join)
-            .pivot(index=['INDICATOR_ID', 'COUNTRY_ID', 'YEAR'], columns='TYPE', values='METADATA')
-            .reset_index()
-            .rename_axis(None, axis=1)
-            )
+    return (
+        metadata_df.groupby(
+            by=["INDICATOR_ID", "COUNTRY_ID", "YEAR", "TYPE"], as_index=False
+        )["METADATA"]
+        .apply(" / ".join)
+        .pivot(
+            index=["INDICATOR_ID", "COUNTRY_ID", "YEAR"],
+            columns="TYPE",
+            values="METADATA",
+        )
+        .reset_index()
+        .rename_axis(None, axis=1)
+    )
 
 
-def read_dataset(code: str, metadata: bool = False) -> pd.DataFrame:
-    """Read a dataset from the UIS website
-
-    Extract country level data from the UIS website for a specific dataset.
-    This function joins the data stored in different files into a single DataFrame.
+def map_dataset_name(name: str) -> str:
+    """Map a dataset to its code. Raise an error if the dataset is not found.
 
     Args:
-        code: dataset code. To see available datasets, use available_datasets()
-        metadata: whether to include metadata in the output. Default is False
+        name: Name of the dataset, either the code or the name
 
     Returns:
-        A DataFrame with the data for the specified dataset including country names, indicator
-        names, and metadata if specified.
-
+        The dataset code
     """
 
-    if code not in datasets.dataset_code.values:
-        raise ValueError(f"Dataset code not found: {code}")
+    if name in DATASETS.dataset_name.values:
+        return DATASETS.loc[DATASETS.dataset_name == name, "dataset_code"].values[0]
+    elif name in DATASETS.dataset_code.values:
+        return name
+    else:
+        raise ValueError(f"Dataset not found: {name}")
 
-    url = datasets.loc[datasets.dataset_code == code, 'link'].values[0]
-    folder = common.unzip_folder(url)
 
-    df = common.read_csv(folder, f"{code}_DATA_NATIONAL.csv")
-    labels = common.read_csv(folder, f"{code}_LABEL.csv")
-    countries = common.read_csv(folder, f"{code}_COUNTRY.csv")
+def transform_data(folder: ZipFile, dataset_code: str) -> pd.DataFrame:
+    """Transform the data from the zip file into a DataFrame
 
-    df = (df
-          .assign(COUNTRY_NAME = lambda d: d.COUNTRY_ID.map(common.mapping_dict(countries)),
-                  INDICATOR_NAME = lambda d: d.INDICATOR_ID.map(common.mapping_dict(labels)))
-          )
-    if metadata:
-        metadata = common.read_csv(folder, f"{code}_METADATA.csv")
-        metadata = format_metadata(metadata)
-        df = df.merge(metadata, on=['INDICATOR_ID', 'COUNTRY_ID', 'YEAR'], how='left')
+    Args:
+        folder: ZipFile object containing the data
+        dataset_code: Code of the dataset to be read
 
-    return df
+    Returns:
+        A DataFrame with the data
+    """
 
+    df = common.read_csv(folder, f"{dataset_code}_DATA_NATIONAL.csv")
+    labels = common.read_csv(folder, f"{dataset_code}_LABEL.csv")
+    countries = common.read_csv(folder, f"{dataset_code}_COUNTRY.csv")
+    metadata = common.read_csv(folder, f"{dataset_code}_METADATA.csv").pipe(
+        format_metadata
+    )
+
+    return df.assign(
+        COUNTRY_NAME=lambda d: d.COUNTRY_ID.map(common.mapping_dict(countries)),
+        INDICATOR_NAME=lambda d: d.INDICATOR_ID.map(common.mapping_dict(labels)),
+    ).merge(metadata, on=["INDICATOR_ID", "COUNTRY_ID", "YEAR"], how="left")
+
+
+class UIS:
+    """Object to read, store, and explore UIS data
+
+    To use, create an instance of the class, and call the load_data() method. To get the data
+    as a pandas DataFrame, call the get_data() method.
+
+    Params:
+        dataset: the name or code for a dataset
+
+    Examples:
+        >>> uis = UIS('SDG')
+        >>> uis.load_data()
+        >>> uis.get_data()
+    """
+
+    available_datasets = list(DATASETS.dataset_code.values)
+
+    def __init__(self, dataset: str):
+        self.dataset_code = map_dataset_name(dataset)
+        self.dataset_name = DATASETS.loc[
+            DATASETS.dataset_code == self.dataset_code, "dataset_name"
+        ].values[0]
+        self.url = DATASETS.loc[
+            DATASETS.dataset_code == self.dataset_code, "link"
+        ].values[0]
+        self.category = DATASETS.loc[
+            DATASETS.dataset_code == self.dataset_code, "dataset_category"
+        ].values[0]
+
+        self._folder = None
+        self.data = None
+
+    def load_data(self):  # add path: str = None later
+        """Load data to the object"""
+
+        self._folder = common.unzip_folder(self.url)
+        self.data = transform_data(self._folder, self.dataset_code)
+
+    def get_data(self):
+        """Return data"""
+
+        if self.data is None:
+            raise ValueError("No data loaded. Call load_data() first")
+        return self.data
