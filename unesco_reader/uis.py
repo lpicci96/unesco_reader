@@ -48,7 +48,7 @@ def map_dataset_name(name: str) -> str:
 
 
 def transform_data(folder: ZipFile, dataset_code: str) -> pd.DataFrame:
-    """ """
+    """Transform the data from the zip file into a DataFrame"""
 
     df = common.read_csv(folder, f"{dataset_code}_DATA_NATIONAL.csv")
     labels = common.read_csv(folder, f"{dataset_code}_LABEL.csv")
@@ -79,7 +79,7 @@ class UIS:
         >>> uis.get_data()
     """
 
-    # available_datasets: ClassVar[list] = available_datasets()
+    available_datasets = list(DATASETS.dataset_code.values)
 
     def __init__(self, dataset: str):
         self.dataset_code = map_dataset_name(dataset)
@@ -99,16 +99,7 @@ class UIS:
 
     def get_data(self):
         """Return data"""
+
+        if self.data is None:
+            raise ValueError("No data loaded. Call load_data() first")
         return self.data
-
-    def save_to_disk(self, path: str):
-        """Save data to disk"""
-        pass
-
-    def dataset_info(self):
-        """Return dataset information"""
-        pass
-
-    def describe(self, indicator: str = None):
-        """Return dataset description"""
-        pass
