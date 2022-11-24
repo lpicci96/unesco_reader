@@ -116,10 +116,15 @@ class UIS:
         self._folder = None
         self.data = None
 
-    def load_data(self):  # add path: str = None later
+    def load_data(self, path: str = None):  # add path: str = None later
         """Load data to the object"""
 
-        self._folder = common.unzip_folder(self.url)
+        if path is None:
+
+            self._folder = common.unzip_folder_from_web(self.url)
+        else:
+            self._folder = common.unzip_folder_from_disk(path)
+
         self.data = transform_data(self._folder, self.dataset_code)
 
     def get_data(self):
@@ -128,3 +133,5 @@ class UIS:
         if self.data is None:
             raise ValueError("No data loaded. Call load_data() first")
         return self.data
+
+
