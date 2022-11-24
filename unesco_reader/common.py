@@ -34,7 +34,7 @@ def mapping_dict(df: pd.DataFrame, key_col: str = 'left') -> dict:
             )
 
 
-def unzip_folder(url: str) -> ZipFile:
+def unzip_folder_from_web(url: str) -> ZipFile:
     """unzip a folder from a url."""
 
     try:
@@ -46,6 +46,15 @@ def unzip_folder(url: str) -> ZipFile:
 
     except ConnectionError:
         raise ConnectionError(f"Could not read file from url: {url}")
+
+
+def unzip_folder_from_disk(path: str) -> ZipFile:
+    """unzip a folder from a path."""
+
+    try:
+        return ZipFile(path)
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Could not find file: {path}")
 
 
 def read_csv(folder: ZipFile, path: str) -> pd.DataFrame:
