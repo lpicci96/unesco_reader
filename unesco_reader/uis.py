@@ -1,9 +1,10 @@
 """UNESCO Institute of Statistics (UIS) data reader."""
 
 import pandas as pd
-from unesco_reader.config import PATHS
-from unesco_reader import common
 from zipfile import ZipFile
+
+from unesco_reader.config import PATHS, logger
+from unesco_reader import common
 
 
 def available_datasets() -> pd.DataFrame:
@@ -92,6 +93,7 @@ def read_national_data(folder: ZipFile, dataset_code: str) -> pd.DataFrame:
         return df.merge(metadata, on=["INDICATOR_ID", "COUNTRY_ID", "YEAR"], how="left")
 
     else:
+        logger.debug(f"No metadata found for {dataset_code}")
         return df
 
 
@@ -108,6 +110,13 @@ class UIS:
     available_datasets = list(DATASETS.dataset_code.values)
 
     def __init__(self, dataset: str, *, regional_data: bool = True):
+        """Initialize the object
+
+        Args:
+            dataset: Name or code of the dataset
+            regional_data: Whether to load regional data
+
+        """
 
         self._regional_data = regional_data
 
@@ -134,7 +143,7 @@ class UIS:
     def info(self):
         return self._info
 
-    def load_data(self, path: str = None):  # add path: str = None later
+    def load_data(self, path: str = None) -> 'UIS':  # add path: str = None later
         """Load data to the object"""
 
         if path is None:
@@ -155,8 +164,11 @@ class UIS:
                 )
 
             else:
-                print(f"No regional data available for {self._code}")
+                logger.debug(f"No regional data available for {self._code}")
                 self._regional_data = False
+
+        logger.info(f"Data loaded for {self._code}")
+        return self
 
     def get_data(self, grouping: str = "national") -> pd.DataFrame:
         """Return data"""
