@@ -89,12 +89,22 @@ def _read_national_data(folder: ZipFile, dataset_code: str, country_dict: dict, 
         return df
 
 
-def _read_regional_data(folder: ZipFile, dataset_code: str) -> dict:
-    """ """
+def _read_regional_data(folder: ZipFile, dataset_code: str) -> dict[str: pd.DataFrame]:
+    """Read regional data from folder
+
+    Args:
+        folder: ZipFile object containing the data
+        dataset_code: Code of the dataset
+
+    Returns:
+        dict: dictionary with dataframe for regional data and region codes/names
+    """
 
     if f"{dataset_code}_DATA_REGIONAL.csv" in folder.namelist():
         return {'regional_data': common.read_csv(folder, f"{dataset_code}_DATA_REGIONAL.csv"),
-                'regions': common.read_csv(folder, f"{dataset_code}_REGION.csv")
+                'regions': (common.read_csv(folder, f"{dataset_code}_REGION.csv")
+                            .rename(columns={'COUNTRY_NAME_EN': 'COUNTRY_NAME'})
+                            )
                 }
     else:
         logger.debug(f"No metadata found for {dataset_code}")
@@ -156,7 +166,109 @@ class UIS:
                       "category": DATASETS.loc[DATASETS.dataset_code == self._code, "dataset_category"].values[0]
                       }
         self._data = {}
+        self._descr = {}
         self._regional_data = False
+
+    def __check_if_loaded(self) -> None:
+        """Check if data has been loaded"""
+
+        if len(self._data) == 0:
+            raise ValueError("No data loaded. Call `load_data()` method first")
+
+    @property
+    def code(self):
+        return self._code
+
+    @property
+    def name(self):
+        return self._info['name']
+
+    @property
+    def url(self):
+        return self._info['url']
+
+    @property
+    def category(self):
+        return self._info['category']
+
+    @property
+    def info(self):
+        return self._info
+
+    def available_indicators(self, names: bool = False) -> list:
+        """List available indicators
+
+        Args:
+            names: False by default to return indicator codes. Set to True, to return indicator names
+
+        Returns:
+            list of indicators
+        """
+
+        self.__check_if_loaded()
+
+        if names:
+            return list(self._data['indicators'].values())
+        else:
+            return list(self._data['indicators'])
+
+    def available_countries(self, names: bool = False, regions: str | list = None) -> list:
+        """List available countries
+
+        Args:
+            names: False by default to return country codes. Set to True, to return country names
+            regions: Select only countries that belong to specific region(s). None by default
+
+        Returns:
+            list of countries
+        """
+
+        self.__check_if_loaded()
+
+        if regions is not None:
+            if self._regional_data:
+                if isinstance(regions, str):
+                    regions = [regions]
+                return (self
+                        ._data['regions']
+                        .loc[lambda d: d['REGION_ID'].isin(regions),
+                             "COUNTRY_NAME" if names else "COUNTRY_ID"]
+                        .unique()
+                        )
+            else:
+                raise ValueError(f"No regional data available for {self._code}")
+
+        else:
+            return list(self._data['countries'].values()) if names else list(self._data['countries'])
+
+    def available_regions(self):
+        """ """
+
+        self.__check_if_loaded()
+
+        if self._regional_data:
+            return self._data['regions']['REGION_ID'].unique()
+        else:
+            raise ValueError(f"No regional data available for {self._code}")
+
+    def __update_info(self) -> None:
+        """Updated the dataset description dictionary"""
+
+        self.__check_if_loaded()
+
+        info = {'available indicators': len(self._data['indicators']),
+                'available countries': len(self._data['countries']),
+                'time range': f"{self._data['national_data']['YEAR'].min()} - {self._data['national_data']['YEAR'].max()}"
+                }
+
+        if self._regional_data is True:
+            info.update({
+                'available regions': len(self._data['regions']['REGION_ID'].unique())
+            })
+        else:
+            info.update({'available regions': None})
+
+        self._info.update(info)
 
     def load_data(self, local_path: str = None) -> 'UIS':
         """Load data to the object
@@ -179,6 +291,9 @@ class UIS:
         # flag is regional data is available
         if self._data['regional_data'] is not None:
             self._regional_data = True
+
+        # update dataset info
+        self.__update_info()
 
         logger.info(f"Data loaded for dataset: {self._code}")
         return self
@@ -212,7 +327,7 @@ class UIS:
                 else:
                     return (self._data["regional_data"]
                                 .loc[:, ["INDICATOR_ID", "INDICATOR_NAME", "REGION_ID", "YEAR", "VALUE"]]
-                            )
+                                )
 
             else:
                 raise ValueError(f"No regional data available for {self._code}")
