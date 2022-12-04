@@ -29,7 +29,7 @@ def format_metadata(metadata_df: pd.DataFrame) -> pd.DataFrame:
     """
 
     # filter for the rows that need to be joined together
-    formatted = (metadata_df[metadata_df.duplicated(subset = ['INDICATOR_ID', 'COUNTRY_ID', 'YEAR', 'TYPE'],
+    formatted = (metadata_df[metadata_df.duplicated(subset=['INDICATOR_ID', 'COUNTRY_ID', 'YEAR', 'TYPE'],
                                                     keep=False)]
                  .groupby(by=["INDICATOR_ID", "COUNTRY_ID", "YEAR", "TYPE"]
                           )
@@ -38,7 +38,7 @@ def format_metadata(metadata_df: pd.DataFrame) -> pd.DataFrame:
                  .reset_index()
                  )
 
-    return (pd.concat([metadata_df[~metadata_df.duplicated(subset =
+    return (pd.concat([metadata_df[~metadata_df.duplicated(subset=
                                                            ['INDICATOR_ID', 'COUNTRY_ID', 'YEAR', 'TYPE'],
                                                            keep=False)],
                        formatted
@@ -68,7 +68,40 @@ def get_dataset_code(dataset: str) -> str:
         raise ValueError(f"Dataset not found: {dataset}")
 
 
-def read_national_data(folder: ZipFile, dataset_code: str) -> pd.DataFrame:
+def _read_national_data(folder: ZipFile, dataset_code: str, country_dict: dict, label_dict: dict) -> pd.DataFrame:
+    """ """
+
+    df = common.read_csv(folder, f"{dataset_code}_DATA_NATIONAL.csv")
+    df = df.assign(
+        COUNTRY_NAME=lambda d: d.COUNTRY_ID.map(country_dict),
+        INDICATOR_NAME=lambda d: d.INDICATOR_ID.map(label_dict),
+    )
+
+    # add metadata
+    if f"{dataset_code}_METADATA.csv" in folder.namelist():
+        metadata = common.read_csv(folder, f"{dataset_code}_METADATA.csv").pipe(
+            format_metadata
+        )
+        return df.merge(metadata, on=["INDICATOR_ID", "COUNTRY_ID", "YEAR"], how="left")
+
+    else:
+        logger.debug(f"No metadata found for {dataset_code}")
+        return df
+
+
+def _read_regional_data(folder: ZipFile, dataset_code: str) -> dict:
+    """ """
+
+    if f"{dataset_code}_DATA_REGIONAL.csv" in folder.namelist():
+        return {'regional_data': common.read_csv(folder, f"{dataset_code}_DATA_REGIONAL.csv"),
+                'regions': common.read_csv(folder, f"{dataset_code}_REGION.csv")
+                }
+    else:
+        logger.debug(f"No metadata found for {dataset_code}")
+        return {'regional_data': None, 'regions': None}
+
+
+def read_data(folder: ZipFile, dataset_code: str) -> dict:
     """Read national data from a zip file
 
     Args:
@@ -79,29 +112,22 @@ def read_national_data(folder: ZipFile, dataset_code: str) -> pd.DataFrame:
         A DataFrame with the data
     """
 
-    df = common.read_csv(folder, f"{dataset_code}_DATA_NATIONAL.csv")
-    labels = common.read_csv(folder, f"{dataset_code}_LABEL.csv").pipe(
-        common.mapping_dict
-    )
-    countries = common.read_csv(folder, f"{dataset_code}_COUNTRY.csv").pipe(
-        common.mapping_dict
-    )
+    data = {}
 
-    df = df.assign(
-        COUNTRY_NAME=lambda d: d.COUNTRY_ID.map(countries),
-        INDICATOR_NAME=lambda d: d.INDICATOR_ID.map(labels),
-    )
+    # read labels and countries
+    data.update({'indicators': (common.read_csv(folder, f"{dataset_code}_LABEL.csv")
+                                .pipe(common.mapping_dict)),
+                 'countries': (common.read_csv(folder, f"{dataset_code}_COUNTRY.csv")
+                               .pipe(common.mapping_dict))
+                 })
 
-    if f"{dataset_code}_METADATA.csv" in folder.namelist():
+    # add national data
+    data.update({'national_data': _read_national_data(folder, dataset_code, data['countries'], data['indicators'])})
 
-        metadata = common.read_csv(folder, f"{dataset_code}_METADATA.csv").pipe(
-            format_metadata
-        )
-        return df.merge(metadata, on=["INDICATOR_ID", "COUNTRY_ID", "YEAR"], how="left")
+    # add regional data
+    data.update(_read_regional_data(folder, dataset_code))
 
-    else:
-        logger.debug(f"No metadata found for {dataset_code}")
-        return df
+    return data
 
 
 class UIS:
@@ -116,77 +142,80 @@ class UIS:
 
     available_datasets = list(DATASETS.dataset_code.values)
 
-    def __init__(self, dataset: str, *, regional_data: bool = True):
+    def __init__(self, dataset: str):
         """Initialize the object
 
         Args:
             dataset: Name or code of the dataset
-            regional_data: Whether to load regional data
-
         """
 
-        self._regional_data = regional_data
-
         self._code = get_dataset_code(dataset)
-        name = DATASETS.loc[DATASETS.dataset_code == self._code, "dataset_name"].values[
-            0
-        ]
+        self._info = {"code": self._code,
+                      "name": DATASETS.loc[DATASETS.dataset_code == self._code, "dataset_name"].values[0],
+                      "url": DATASETS.loc[DATASETS.dataset_code == self._code, "link"].values[0],
+                      "category": DATASETS.loc[DATASETS.dataset_code == self._code, "dataset_category"].values[0]
+                      }
+        self._data = {}
+        self._regional_data = False
 
-        url = DATASETS.loc[DATASETS.dataset_code == self._code, "link"].values[0]
+    def load_data(self, local_path: str = None) -> 'UIS':
+        """Load data to the object
 
-        category = DATASETS.loc[
-            DATASETS.dataset_code == self._code, "dataset_category"
-        ].values[0]
+        Args:
+            local_path: Optional local path to the downloaded zip file.
+            If no path is provided, the data will be read from the web
 
-        self._info: dict = {
-            "code": self._code,
-            "name": name,
-            "url": url,
-            "category": category,
-        }
-        self._data: dict = {}
+        Returns:
+            UIS: same object to allow chaining
+        """
 
-    @property
-    def info(self):
-        return self._info
-
-    def load_data(self, path: str = None) -> 'UIS':  # add path: str = None later
-        """Load data to the object"""
-
-        if path is None:
-
+        if local_path is None:
             folder = common.unzip_folder_from_web(self._info["url"])
         else:
-            folder = common.unzip_folder_from_disk(path)
+            folder = common.unzip_folder_from_disk(local_path)
 
-        self._data["national_data"] = read_national_data(folder, self._code)
+        self._data.update(read_data(folder, self._code))
 
-        if self._regional_data:
-            if f"{self._code}_DATA_REGIONAL.csv" in folder.namelist():
-                self._data["regional_data"] = pd.read_csv(
-                    folder.open(f"{self._code}_DATA_REGIONAL.csv")
-                )
-                self._data["regions"] = pd.read_csv(
-                    folder.open(f"{self._code}_REGION.csv")
-                )
+        # flag is regional data is available
+        if self._data['regional_data'] is not None:
+            self._regional_data = True
 
-            else:
-                logger.debug(f"No regional data available for {self._code}")
-                self._regional_data = False
-
-        logger.info(f"Data loaded for {self._code}")
+        logger.info(f"Data loaded for dataset: {self._code}")
         return self
 
-    def get_data(self, grouping: str = "national") -> pd.DataFrame:
-        """Return data"""
+    def get_data(self, grouping: str = "national", include_metadata: bool = False) -> pd.DataFrame:
+        """Return data
+
+        Args:
+            grouping: geographical grouping, either 'national' or 'regional'. Default is 'national'.
+            include_metadata: include metadata in the dataframe. Default is False
+
+        Returns:
+            pd.DataFrame: dataframe containing the data
+        """
 
         if len(self._data) == 0:
-            raise ValueError("No data loaded. Call load_data() first")
+            raise ValueError("No data loaded. Call `load_data()` method first")
 
         if grouping == "national":
-            return self._data["national_data"]
+            if include_metadata:
+                return self._data["national_data"]
+            else:
+                return (self._data["national_data"]
+                            .loc[:, ["INDICATOR_ID", "INDICATOR_NAME", "COUNTRY_ID", "COUNTRY_NAME", "YEAR", "VALUE"]]
+                        )
+
         elif grouping == "regional":
             if self._regional_data:
-                return self._data["regional_data"]
+                if include_metadata:
+                    return self._data["regional_data"]
+                else:
+                    return (self._data["regional_data"]
+                                .loc[:, ["INDICATOR_ID", "INDICATOR_NAME", "REGION_ID", "YEAR", "VALUE"]]
+                            )
+
             else:
                 raise ValueError(f"No regional data available for {self._code}")
+
+        else:
+            raise ValueError(f'Invalid grouping: {grouping}')
