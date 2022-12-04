@@ -241,8 +241,12 @@ class UIS:
         else:
             return list(self._data['countries'].values()) if names else list(self._data['countries'])
 
-    def available_regions(self):
-        """ """
+    def available_regions(self) -> list:
+        """List available regions
+
+        Returns:
+            list: available regions
+        """
 
         self.__check_if_loaded()
 
