@@ -7,7 +7,7 @@ import pandas as pd
 
 
 def mapping_dict(df: pd.DataFrame, key_col: str = 'left') -> dict:
-    """Create a mapping dictionary from a dataframe
+    """Create a mapping dictionary from a dataframe with 2 columns
 
     Args:
         df: dataframe with two columns, left and right
@@ -35,7 +35,14 @@ def mapping_dict(df: pd.DataFrame, key_col: str = 'left') -> dict:
 
 
 def unzip_folder_from_web(url: str) -> ZipFile:
-    """unzip a folder from a url."""
+    """unzip a folder from a url.
+
+    Args:
+        url: url to unzip
+
+    Returns:
+        Zipfile: object containing unzipped folder
+    """
 
     try:
         response = requests.get(url)
@@ -49,7 +56,14 @@ def unzip_folder_from_web(url: str) -> ZipFile:
 
 
 def unzip_folder_from_disk(path: str) -> ZipFile:
-    """unzip a folder from a path."""
+    """unzip a folder from disk.
+
+    Args:
+        path: local path to folder
+
+    Returns:
+        Zipfile: object containing unzipped folder
+    """
 
     try:
         return ZipFile(path)
@@ -58,7 +72,15 @@ def unzip_folder_from_disk(path: str) -> ZipFile:
 
 
 def read_csv(folder: ZipFile, path: str) -> pd.DataFrame:
-    """Read a csv file from a folder."""
+    """Read a CSV file from a ZipFile object.
+
+    Args:
+        folder: ZipFile object containing the CSV file
+        path: path to the CVS in the zipped folder
+
+    Returns:
+        pd.DataFrame: dataframe containing the data from the CSV
+    """
 
     if path not in folder.namelist():
         raise FileNotFoundError(f"Could not find file: {path}")
