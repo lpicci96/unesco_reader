@@ -28,37 +28,44 @@ def format_metadata(metadata_df: pd.DataFrame) -> pd.DataFrame:
         A metadata DataFrame pivoted so that metadata types are joined and stored in columns
     """
 
-    return (
-        metadata_df.groupby(
-            by=["INDICATOR_ID", "COUNTRY_ID", "YEAR", "TYPE"], as_index=False
-        )["METADATA"]
-        .apply(" / ".join)
-        .pivot(
-            index=["INDICATOR_ID", "COUNTRY_ID", "YEAR"],
-            columns="TYPE",
-            values="METADATA",
-        )
-        .reset_index()
-        .rename_axis(None, axis=1)
-    )
+    # filter for the rows that need to be joined together
+    formatted = (metadata_df[metadata_df.duplicated(subset = ['INDICATOR_ID', 'COUNTRY_ID', 'YEAR', 'TYPE'],
+                                                    keep=False)]
+                 .groupby(by=["INDICATOR_ID", "COUNTRY_ID", "YEAR", "TYPE"]
+                          )
+                 ['METADATA']
+                 .apply(' | '.join)
+                 .reset_index()
+                 )
+
+    return (pd.concat([metadata_df[~metadata_df.duplicated(subset =
+                                                           ['INDICATOR_ID', 'COUNTRY_ID', 'YEAR', 'TYPE'],
+                                                           keep=False)],
+                       formatted
+                       ])
+            .pivot(index=["INDICATOR_ID", "COUNTRY_ID", "YEAR"],
+                   columns="TYPE",
+                   values="METADATA")
+            .reset_index()
+            )
 
 
-def get_dataset_code(name: str) -> str:
+def get_dataset_code(dataset: str) -> str:
     """Return the dataset code from either a code or name. Raise an error if the dataset is not found.
 
     Args:
-        name: Name of the dataset, either the code or the name
+        dataset: Name of the dataset, either the code or the name
 
     Returns:
         The dataset code
     """
 
-    if name in DATASETS.dataset_name.values:
-        return DATASETS.loc[DATASETS.dataset_name == name, "dataset_code"].values[0]
-    elif name in DATASETS.dataset_code.values:
-        return name
+    if dataset in DATASETS.dataset_name.values:
+        return DATASETS.loc[DATASETS.dataset_name == dataset, "dataset_code"].values[0]
+    elif dataset in DATASETS.dataset_code.values:
+        return dataset
     else:
-        raise ValueError(f"Dataset not found: {name}")
+        raise ValueError(f"Dataset not found: {dataset}")
 
 
 def read_national_data(folder: ZipFile, dataset_code: str) -> pd.DataFrame:
