@@ -1,5 +1,7 @@
 """UNESCO Institute of Statistics (UIS) data reader."""
 
+from typing import Dict, List, Union
+
 import pandas as pd
 from zipfile import ZipFile
 from tabulate import tabulate
@@ -70,7 +72,7 @@ def format_metadata(metadata_df: pd.DataFrame) -> pd.DataFrame:
         ['METADATA']
         .apply(' | '.join)
         .reset_index()
-        )
+    )
 
     return (pd.concat([metadata_df[~metadata_df.duplicated(subset=
                                                            ['INDICATOR_ID', 'COUNTRY_ID', 'YEAR',
@@ -105,7 +107,7 @@ def get_dataset_code(dataset: str) -> str:
 
 def _read_national_data(
         folder: ZipFile, dataset_code: str, country_dict: dict, label_dict: dict
-        ) -> pd.DataFrame:
+) -> pd.DataFrame:
     """ """
 
     df = common.read_csv(folder, f"{dataset_code}_DATA_NATIONAL.csv")
@@ -126,7 +128,8 @@ def _read_national_data(
         return df
 
 
-def _read_regional_data(folder: ZipFile, dataset_code: str) -> dict[str: pd.DataFrame]:
+def _read_regional_data(folder: ZipFile, dataset_code: str) -> Union[
+    Dict[str, pd.DataFrame], Dict[str, None]]:
     """Read regional data from folder
 
     Args:
@@ -251,7 +254,8 @@ class UIS:
         else:
             return list(self._data['indicators'])
 
-    def available_countries(self, as_names: bool = False, regions: str | list = None) -> list:
+    def available_countries(self, as_names: bool = False, regions: Union[str, List[str]] = None) -> \
+            List[str]:
         """List available countries
 
         Args:
@@ -270,8 +274,8 @@ class UIS:
                     regions = [regions]
                 return (self
                         ._data['regions']
-                        .loc[lambda d: d['REGION_ID'].isin(regions),
-                "COUNTRY_NAME" if as_names else "COUNTRY_ID"]
+                        .loc[lambda d: d['REGION_ID'].isin(regions), "COUNTRY_NAME"
+                if as_names else "COUNTRY_ID"]
                         .unique()
                         )
             else:
@@ -382,3 +386,4 @@ class UIS:
         else:
             raise ValueError(f'Invalid grouping: {grouping}')
 
+# %%
