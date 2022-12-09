@@ -1,11 +1,8 @@
 # Changelog
 
-## v0.0.1 - Date
+## v0.1.0 - 2022-12-09
+- Initial release of `unesco_reader` `uis` module
 
-**Improvement**:
+## v0.0.1 - 2022-09-16
 
--   TBD
-
-**New Features**:
-
--   TBD
+- Initial release for testing
