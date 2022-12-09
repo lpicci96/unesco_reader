@@ -74,6 +74,7 @@ To exctract and explore the data in a particular dataset, use the `UIS` class. A
 To use, create an instance of `UIS`, passing either the dataset code or name. Here we create an object for the "SDG" dataset.
 
 ```
+from unesco_reader.uis import UIS
 sdg = UIS("SDG")
 ```
 
