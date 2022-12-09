@@ -1,2 +1,4 @@
 requests
 pandas
+setuptools
+tabulate

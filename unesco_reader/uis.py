@@ -2,20 +2,53 @@
 
 import pandas as pd
 from zipfile import ZipFile
+from tabulate import tabulate
 
 from unesco_reader.config import PATHS, logger
 from unesco_reader import common
 
-
-def available_datasets() -> pd.DataFrame:
-    """Return a dataframe with available datasets, and relevant information"""
-
-    return pd.read_csv(PATHS.DATASETS / "uis_datasets.csv").assign(
-        link=lambda df: df.dataset_code.apply(lambda x: f"{PATHS.BASE_URL}{x}.zip")
-    )
+DATASETS = (pd
+            .read_csv(PATHS.DATASETS / "uis_datasets.csv")
+            .assign(link=lambda df: df.dataset_code.apply(lambda x: f"{PATHS.BASE_URL}{x}.zip"))
+            )
 
 
-DATASETS = available_datasets()
+def available_datasets(*, as_names: bool = False, category: str = None) -> list:
+    """Return a list of available datasets
+
+    Args:
+        as_names: Return the list of datasets as names instead of codes
+        category: Return only datasets from a specific category
+
+    Returns:
+        A list of available datasets
+    """
+
+    if category is None:
+        datasets = DATASETS.dataset_name.values
+    else:
+        if category not in DATASETS.dataset_category.unique():
+            raise ValueError(f"Category not found: {category}")
+        datasets = DATASETS.loc[DATASETS.dataset_category == category, "dataset_name"].values
+
+    if as_names:
+        return datasets
+    else:
+        return [get_dataset_code(dataset) for dataset in datasets]
+
+
+def dataset_info(dataset: str) -> None:
+    """Return information about a dataset
+
+    Args:
+        dataset: Name of the dataset, either the code or the name
+
+    Returns:
+        Information about the dataset
+    """
+
+    dataset_code = get_dataset_code(dataset)
+    print(tabulate(DATASETS.loc[DATASETS.dataset_code == dataset_code, :].T))
 
 
 def format_metadata(metadata_df: pd.DataFrame) -> pd.DataFrame:
@@ -29,17 +62,19 @@ def format_metadata(metadata_df: pd.DataFrame) -> pd.DataFrame:
     """
 
     # filter for the rows that need to be joined together
-    formatted = (metadata_df[metadata_df.duplicated(subset=['INDICATOR_ID', 'COUNTRY_ID', 'YEAR', 'TYPE'],
-                                                    keep=False)]
-                 .groupby(by=["INDICATOR_ID", "COUNTRY_ID", "YEAR", "TYPE"]
-                          )
-                 ['METADATA']
-                 .apply(' | '.join)
-                 .reset_index()
+    formatted = (
+        metadata_df[metadata_df.duplicated(subset=['INDICATOR_ID', 'COUNTRY_ID', 'YEAR', 'TYPE'],
+                                           keep=False)]
+        .groupby(by=["INDICATOR_ID", "COUNTRY_ID", "YEAR", "TYPE"]
                  )
+        ['METADATA']
+        .apply(' | '.join)
+        .reset_index()
+        )
 
     return (pd.concat([metadata_df[~metadata_df.duplicated(subset=
-                                                           ['INDICATOR_ID', 'COUNTRY_ID', 'YEAR', 'TYPE'],
+                                                           ['INDICATOR_ID', 'COUNTRY_ID', 'YEAR',
+                                                            'TYPE'],
                                                            keep=False)],
                        formatted
                        ])
@@ -68,7 +103,9 @@ def get_dataset_code(dataset: str) -> str:
         raise ValueError(f"Dataset not found: {dataset}")
 
 
-def _read_national_data(folder: ZipFile, dataset_code: str, country_dict: dict, label_dict: dict) -> pd.DataFrame:
+def _read_national_data(
+        folder: ZipFile, dataset_code: str, country_dict: dict, label_dict: dict
+        ) -> pd.DataFrame:
     """ """
 
     df = common.read_csv(folder, f"{dataset_code}_DATA_NATIONAL.csv")
@@ -132,7 +169,8 @@ def read_data(folder: ZipFile, dataset_code: str) -> dict:
                  })
 
     # add national data
-    data.update({'national_data': _read_national_data(folder, dataset_code, data['countries'], data['indicators'])})
+    data.update({'national_data': _read_national_data(folder, dataset_code, data['countries'],
+                                                      data['indicators'])})
 
     # add regional data
     data.update(_read_regional_data(folder, dataset_code))
@@ -150,9 +188,7 @@ class UIS:
         dataset: the name or code for a dataset
     """
 
-    available_datasets = list(DATASETS.dataset_code.values)
-
-    def __init__(self, dataset: str):
+    def __init__(self, dataset):
         """Initialize the object
 
         Args:
@@ -161,9 +197,12 @@ class UIS:
 
         self._code = get_dataset_code(dataset)
         self._info = {"code": self._code,
-                      "name": DATASETS.loc[DATASETS.dataset_code == self._code, "dataset_name"].values[0],
+                      "name":
+                          DATASETS.loc[DATASETS.dataset_code == self._code, "dataset_name"].values[
+                              0],
                       "url": DATASETS.loc[DATASETS.dataset_code == self._code, "link"].values[0],
-                      "category": DATASETS.loc[DATASETS.dataset_code == self._code, "dataset_category"].values[0]
+                      "category": DATASETS.loc[
+                          DATASETS.dataset_code == self._code, "dataset_category"].values[0]
                       }
         self._data = {}
         self._descr = {}
@@ -191,9 +230,9 @@ class UIS:
     def category(self):
         return self._info['category']
 
-    @property
     def info(self):
-        return self._info
+        """Print information about the dataset"""
+        print(tabulate([[i, j] for i, j in self._info.items()]))
 
     def available_indicators(self, names: bool = False) -> list:
         """List available indicators
@@ -212,11 +251,11 @@ class UIS:
         else:
             return list(self._data['indicators'])
 
-    def available_countries(self, names: bool = False, regions: str | list = None) -> list:
+    def available_countries(self, as_names: bool = False, regions: str | list = None) -> list:
         """List available countries
 
         Args:
-            names: False by default to return country codes. Set to True, to return country names
+            as_names: False by default to return country codes. Set to True, to return country names
             regions: Select only countries that belong to specific region(s). None by default
 
         Returns:
@@ -232,14 +271,15 @@ class UIS:
                 return (self
                         ._data['regions']
                         .loc[lambda d: d['REGION_ID'].isin(regions),
-                             "COUNTRY_NAME" if names else "COUNTRY_ID"]
+                "COUNTRY_NAME" if as_names else "COUNTRY_ID"]
                         .unique()
                         )
             else:
                 raise ValueError(f"No regional data available for {self._code}")
 
         else:
-            return list(self._data['countries'].values()) if names else list(self._data['countries'])
+            return list(self._data['countries'].values()) if as_names else list(
+                self._data['countries'])
 
     def available_regions(self) -> list:
         """List available regions
@@ -321,7 +361,9 @@ class UIS:
                 return self._data["national_data"]
             else:
                 return (self._data["national_data"]
-                            .loc[:, ["INDICATOR_ID", "INDICATOR_NAME", "COUNTRY_ID", "COUNTRY_NAME", "YEAR", "VALUE"]]
+                        .loc[:,
+                        ["INDICATOR_ID", "INDICATOR_NAME", "COUNTRY_ID", "COUNTRY_NAME", "YEAR",
+                         "VALUE"]]
                         )
 
         elif grouping == "regional":
@@ -330,11 +372,13 @@ class UIS:
                     return self._data["regional_data"]
                 else:
                     return (self._data["regional_data"]
-                                .loc[:, ["INDICATOR_ID", "INDICATOR_NAME", "REGION_ID", "YEAR", "VALUE"]]
-                                )
+                            .loc[:,
+                            ["INDICATOR_ID", "INDICATOR_NAME", "REGION_ID", "YEAR", "VALUE"]]
+                            )
 
             else:
                 raise ValueError(f"No regional data available for {self._code}")
 
         else:
             raise ValueError(f'Invalid grouping: {grouping}')
+
