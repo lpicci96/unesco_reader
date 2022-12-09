@@ -13,6 +13,7 @@ Currently there is so API service to query UIS data (as of 23 June 2020).
 The only way to download UIS data is through the explorer or through their bulk download services,
 by downloading a zipped folder for each dataset locally. 
 This package allows you to explore UIS datasets programmatically.
+The other motivation is to actively learn python development, packaging, and testing.
 
 
 Installation
