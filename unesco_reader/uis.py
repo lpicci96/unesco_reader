@@ -9,10 +9,9 @@ from tabulate import tabulate
 from unesco_reader.config import PATHS, logger
 from unesco_reader import common
 
-DATASETS = (pd
-            .read_csv(PATHS.DATASETS / "uis_datasets.csv")
-            .assign(link=lambda df: df.dataset_code.apply(lambda x: f"{PATHS.BASE_URL}{x}.zip"))
-            )
+DATASETS = pd.read_csv(PATHS.DATASETS / "uis_datasets.csv").assign(
+    link=lambda df: df.dataset_code.apply(lambda x: f"{PATHS.BASE_URL}{x}.zip")
+)
 
 
 def available_datasets(*, as_names: bool = False, category: str = None) -> list:
@@ -31,7 +30,9 @@ def available_datasets(*, as_names: bool = False, category: str = None) -> list:
     else:
         if category not in DATASETS.dataset_category.unique():
             raise ValueError(f"Category not found: {category}")
-        datasets = DATASETS.loc[DATASETS.dataset_category == category, "dataset_name"].values
+        datasets = DATASETS.loc[
+            DATASETS.dataset_category == category, "dataset_name"
+        ].values
 
     if as_names:
         return datasets
@@ -65,26 +66,35 @@ def format_metadata(metadata_df: pd.DataFrame) -> pd.DataFrame:
 
     # filter for the rows that need to be joined together
     formatted = (
-        metadata_df[metadata_df.duplicated(subset=['INDICATOR_ID', 'COUNTRY_ID', 'YEAR', 'TYPE'],
-                                           keep=False)]
-        .groupby(by=["INDICATOR_ID", "COUNTRY_ID", "YEAR", "TYPE"]
-                 )
-        ['METADATA']
-        .apply(' | '.join)
+        metadata_df[
+            metadata_df.duplicated(
+                subset=["INDICATOR_ID", "COUNTRY_ID", "YEAR", "TYPE"], keep=False
+            )
+        ]
+        .groupby(by=["INDICATOR_ID", "COUNTRY_ID", "YEAR", "TYPE"])["METADATA"]
+        .apply(" | ".join)
         .reset_index()
     )
 
-    return (pd.concat([metadata_df[~metadata_df.duplicated(subset=
-                                                           ['INDICATOR_ID', 'COUNTRY_ID', 'YEAR',
-                                                            'TYPE'],
-                                                           keep=False)],
-                       formatted
-                       ])
-            .pivot(index=["INDICATOR_ID", "COUNTRY_ID", "YEAR"],
-                   columns="TYPE",
-                   values="METADATA")
-            .reset_index()
-            )
+    return (
+        pd.concat(
+            [
+                metadata_df[
+                    ~metadata_df.duplicated(
+                        subset=["INDICATOR_ID", "COUNTRY_ID", "YEAR", "TYPE"],
+                        keep=False,
+                    )
+                ],
+                formatted,
+            ]
+        )
+        .pivot(
+            index=["INDICATOR_ID", "COUNTRY_ID", "YEAR"],
+            columns="TYPE",
+            values="METADATA",
+        )
+        .reset_index()
+    )
 
 
 def get_dataset_code(dataset: str) -> str:
@@ -106,7 +116,7 @@ def get_dataset_code(dataset: str) -> str:
 
 
 def _read_national_data(
-        folder: ZipFile, dataset_code: str, country_dict: dict, label_dict: dict
+    folder: ZipFile, dataset_code: str, country_dict: dict, label_dict: dict
 ) -> pd.DataFrame:
     """ """
 
@@ -128,8 +138,9 @@ def _read_national_data(
         return df
 
 
-def _read_regional_data(folder: ZipFile, dataset_code: str) -> Union[
-    Dict[str, pd.DataFrame], Dict[str, None]]:
+def _read_regional_data(
+    folder: ZipFile, dataset_code: str
+) -> Union[Dict[str, pd.DataFrame], Dict[str, None]]:
     """Read regional data from folder
 
     Args:
@@ -141,14 +152,19 @@ def _read_regional_data(folder: ZipFile, dataset_code: str) -> Union[
     """
 
     if f"{dataset_code}_DATA_REGIONAL.csv" in folder.namelist():
-        return {'regional_data': common.read_csv(folder, f"{dataset_code}_DATA_REGIONAL.csv"),
-                'regions': (common.read_csv(folder, f"{dataset_code}_REGION.csv")
-                            .rename(columns={'COUNTRY_NAME_EN': 'COUNTRY_NAME'})
-                            )
-                }
+        return {
+            "regional_data": common.read_csv(
+                folder, f"{dataset_code}_DATA_REGIONAL.csv"
+            ),
+            "regions": (
+                common.read_csv(folder, f"{dataset_code}_REGION.csv").rename(
+                    columns={"COUNTRY_NAME_EN": "COUNTRY_NAME"}
+                )
+            ),
+        }
     else:
         logger.debug(f"No metadata found for {dataset_code}")
-        return {'regional_data': None, 'regions': None}
+        return {"regional_data": None, "regions": None}
 
 
 def read_data(folder: ZipFile, dataset_code: str) -> dict:
@@ -165,15 +181,29 @@ def read_data(folder: ZipFile, dataset_code: str) -> dict:
     data = {}
 
     # read labels and countries
-    data.update({'indicators': (common.read_csv(folder, f"{dataset_code}_LABEL.csv")
-                                .pipe(common.mapping_dict)),
-                 'countries': (common.read_csv(folder, f"{dataset_code}_COUNTRY.csv")
-                               .pipe(common.mapping_dict))
-                 })
+    data.update(
+        {
+            "indicators": (
+                common.read_csv(folder, f"{dataset_code}_LABEL.csv").pipe(
+                    common.mapping_dict
+                )
+            ),
+            "countries": (
+                common.read_csv(folder, f"{dataset_code}_COUNTRY.csv").pipe(
+                    common.mapping_dict
+                )
+            ),
+        }
+    )
 
     # add national data
-    data.update({'national_data': _read_national_data(folder, dataset_code, data['countries'],
-                                                      data['indicators'])})
+    data.update(
+        {
+            "national_data": _read_national_data(
+                folder, dataset_code, data["countries"], data["indicators"]
+            )
+        }
+    )
 
     # add regional data
     data.update(_read_regional_data(folder, dataset_code))
@@ -199,14 +229,16 @@ class UIS:
         """
 
         self._code = get_dataset_code(dataset)
-        self._info = {"code": self._code,
-                      "name":
-                          DATASETS.loc[DATASETS.dataset_code == self._code, "dataset_name"].values[
-                              0],
-                      "url": DATASETS.loc[DATASETS.dataset_code == self._code, "link"].values[0],
-                      "category": DATASETS.loc[
-                          DATASETS.dataset_code == self._code, "dataset_category"].values[0]
-                      }
+        self._info = {
+            "code": self._code,
+            "name": DATASETS.loc[
+                DATASETS.dataset_code == self._code, "dataset_name"
+            ].values[0],
+            "url": DATASETS.loc[DATASETS.dataset_code == self._code, "link"].values[0],
+            "category": DATASETS.loc[
+                DATASETS.dataset_code == self._code, "dataset_category"
+            ].values[0],
+        }
         self._data = {}
         self._descr = {}
         self._regional_data = False
@@ -223,15 +255,15 @@ class UIS:
 
     @property
     def name(self):
-        return self._info['name']
+        return self._info["name"]
 
     @property
     def url(self):
-        return self._info['url']
+        return self._info["url"]
 
     @property
     def category(self):
-        return self._info['category']
+        return self._info["category"]
 
     def info(self):
         """Print information about the dataset"""
@@ -250,12 +282,13 @@ class UIS:
         self.__check_if_loaded()
 
         if names:
-            return list(self._data['indicators'].values())
+            return list(self._data["indicators"].values())
         else:
-            return list(self._data['indicators'])
+            return list(self._data["indicators"])
 
-    def available_countries(self, as_names: bool = False, regions: Union[str, List[str]] = None) -> \
-            List[str]:
+    def available_countries(
+        self, as_names: bool = False, regions: Union[str, List[str]] = None
+    ) -> List[str]:
         """List available countries
 
         Args:
@@ -272,18 +305,23 @@ class UIS:
             if self._regional_data:
                 if isinstance(regions, str):
                     regions = [regions]
-                return (self
-                        ._data['regions']
-                        .loc[lambda d: d['REGION_ID'].isin(regions), "COUNTRY_NAME"
-                if as_names else "COUNTRY_ID"]
-                        .unique()
-                        )
+                return (
+                    self._data["regions"]
+                    .loc[
+                        lambda d: d["REGION_ID"].isin(regions),
+                        "COUNTRY_NAME" if as_names else "COUNTRY_ID",
+                    ]
+                    .unique()
+                )
             else:
                 raise ValueError(f"No regional data available for {self._code}")
 
         else:
-            return list(self._data['countries'].values()) if as_names else list(
-                self._data['countries'])
+            return (
+                list(self._data["countries"].values())
+                if as_names
+                else list(self._data["countries"])
+            )
 
     def available_regions(self) -> list:
         """List available regions
@@ -295,7 +333,7 @@ class UIS:
         self.__check_if_loaded()
 
         if self._regional_data:
-            return self._data['regions']['REGION_ID'].unique()
+            return self._data["regions"]["REGION_ID"].unique()
         else:
             raise ValueError(f"No regional data available for {self._code}")
 
@@ -304,21 +342,22 @@ class UIS:
 
         self.__check_if_loaded()
 
-        info = {'available indicators': len(self._data['indicators']),
-                'available countries': len(self._data['countries']),
-                'time range': f"{self._data['national_data']['YEAR'].min()} - {self._data['national_data']['YEAR'].max()}"
-                }
+        info = {
+            "available indicators": len(self._data["indicators"]),
+            "available countries": len(self._data["countries"]),
+            "time range": f"{self._data['national_data']['YEAR'].min()} - {self._data['national_data']['YEAR'].max()}",
+        }
 
         if self._regional_data is True:
-            info.update({
-                'available regions': len(self._data['regions']['REGION_ID'].unique())
-            })
+            info.update(
+                {"available regions": len(self._data["regions"]["REGION_ID"].unique())}
+            )
         else:
-            info.update({'available regions': None})
+            info.update({"available regions": None})
 
         self._info.update(info)
 
-    def load_data(self, local_path: str = None) -> 'UIS':
+    def load_data(self, local_path: str = None) -> "UIS":
         """Load data to the object
 
         Args:
@@ -337,7 +376,7 @@ class UIS:
         self._data.update(read_data(folder, self._code))
 
         # flag is regional data is available
-        if self._data['regional_data'] is not None:
+        if self._data["regional_data"] is not None:
             self._regional_data = True
 
         # update dataset info
@@ -346,7 +385,9 @@ class UIS:
         logger.info(f"Data loaded for dataset: {self._code}")
         return self
 
-    def get_data(self, grouping: str = "national", include_metadata: bool = False) -> pd.DataFrame:
+    def get_data(
+        self, grouping: str = "national", include_metadata: bool = False
+    ) -> pd.DataFrame:
         """Return data
 
         Args:
@@ -364,26 +405,38 @@ class UIS:
             if include_metadata:
                 return self._data["national_data"]
             else:
-                return (self._data["national_data"]
-                        .loc[:,
-                        ["INDICATOR_ID", "INDICATOR_NAME", "COUNTRY_ID", "COUNTRY_NAME", "YEAR",
-                         "VALUE"]]
-                        )
+                return self._data["national_data"].loc[
+                    :,
+                    [
+                        "INDICATOR_ID",
+                        "INDICATOR_NAME",
+                        "COUNTRY_ID",
+                        "COUNTRY_NAME",
+                        "YEAR",
+                        "VALUE",
+                    ],
+                ]
 
         elif grouping == "regional":
             if self._regional_data:
                 if include_metadata:
                     return self._data["regional_data"]
                 else:
-                    return (self._data["regional_data"]
-                            .loc[:,
-                            ["INDICATOR_ID", "INDICATOR_NAME", "REGION_ID", "YEAR", "VALUE"]]
-                            )
+                    return self._data["regional_data"].loc[
+                        :,
+                        [
+                            "INDICATOR_ID",
+                            "INDICATOR_NAME",
+                            "REGION_ID",
+                            "YEAR",
+                            "VALUE",
+                        ],
+                    ]
 
             else:
                 raise ValueError(f"No regional data available for {self._code}")
 
         else:
-            raise ValueError(f'Invalid grouping: {grouping}')
+            raise ValueError(f"Invalid grouping: {grouping}")
 
-# %%
+
