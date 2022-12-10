@@ -6,7 +6,7 @@ from zipfile import ZipFile
 import pandas as pd
 
 
-def mapping_dict(df: pd.DataFrame, key_col: str = 'left') -> dict:
+def mapping_dict(df: pd.DataFrame, key_col: str = "left") -> dict:
     """Create a mapping dictionary from a dataframe with 2 columns
 
     Args:
@@ -19,19 +19,15 @@ def mapping_dict(df: pd.DataFrame, key_col: str = 'left') -> dict:
     """
 
     if len(df.columns) != 2:
-        raise ValueError('df can only contain 2 columns')
-    if key_col not in ['left', 'right']:
+        raise ValueError("df can only contain 2 columns")
+    if key_col not in ["left", "right"]:
         raise ValueError('Invalid key_col. Please choose from ["left", "right"]')
 
-    if key_col == 'left':
+    if key_col == "left":
         k, v = 0, 1
     else:
         k, v = 1, 0
-    return (df
-            .set_index(df.iloc[:, k])
-            .iloc[:, v]
-            .to_dict()
-            )
+    return df.set_index(df.iloc[:, k]).iloc[:, v].to_dict()
 
 
 def unzip_folder_from_web(url: str) -> ZipFile:
@@ -86,8 +82,3 @@ def read_csv(folder: ZipFile, path: str) -> pd.DataFrame:
         raise FileNotFoundError(f"Could not find file: {path}")
 
     return pd.read_csv(folder.open(path), low_memory=False)
-
-
-
-
-

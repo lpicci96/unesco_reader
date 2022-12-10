@@ -72,8 +72,9 @@ def format_metadata(metadata_df: pd.DataFrame) -> pd.DataFrame:
                 subset=["INDICATOR_ID", "COUNTRY_ID", "YEAR", "TYPE"], keep=False
             )
         ]
-        .groupby(by=["INDICATOR_ID", "COUNTRY_ID", "YEAR", "TYPE"], group_keys=False)
-        ["METADATA"]
+        .groupby(by=["INDICATOR_ID", "COUNTRY_ID", "YEAR", "TYPE"], group_keys=False)[
+            "METADATA"
+        ]
         .apply(" | ".join)
         .reset_index()
     )
@@ -211,9 +212,9 @@ def read_data(folder: ZipFile, dataset_code: str) -> dict:
     regional = _read_regional_data(folder, dataset_code)
     # if regional data exists, assign indicator names
     if regional["regional_data"] is not None:
-        regional["regional_data"] = (regional["regional_data"]
-                                     .assign(INDICATOR_NAME=lambda d: d.INDICATOR_ID.map(data["indicators"]))
-                                     )
+        regional["regional_data"] = regional["regional_data"].assign(
+            INDICATOR_NAME=lambda d: d.INDICATOR_ID.map(data["indicators"])
+        )
 
     data.update(regional)
 
@@ -447,4 +448,3 @@ class UIS:
 
         else:
             raise ValueError(f"Invalid grouping: {grouping}")
-
