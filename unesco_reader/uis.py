@@ -165,7 +165,7 @@ def _read_regional_data(
             ),
         }
     else:
-        logger.debug(f"No metadata found for {dataset_code}")
+        logger.info(f"No metadata found for {dataset_code}")
         return {"regional_data": None, "regions": None}
 
 
@@ -210,7 +210,7 @@ def read_data(folder: ZipFile, dataset_code: str) -> dict:
     # add regional data
     regional = _read_regional_data(folder, dataset_code)
     # if regional data exists, assign indicator names
-    if  regional["regional_data"] is not None:
+    if regional["regional_data"] is not None:
         regional["regional_data"] = (regional["regional_data"]
                                      .assign(INDICATOR_NAME=lambda d: d.INDICATOR_ID.map(data["indicators"]))
                                      )
@@ -314,7 +314,7 @@ class UIS:
             if self._regional_data:
                 if isinstance(regions, str):
                     regions = [regions]
-                return (
+                return list(
                     self._data["regions"]
                     .loc[
                         lambda d: d["REGION_ID"].isin(regions),
@@ -342,9 +342,9 @@ class UIS:
         self.__check_if_loaded()
 
         if self._regional_data:
-            return self._data["regions"]["REGION_ID"].unique()
+            return list(self._data["regions"]["REGION_ID"].unique())
         else:
-            raise ValueError(f"No regional data available for {self._code}")
+            logger.debug(f"No regional data available for {self._code}")
 
     def __update_info(self) -> None:
         """Updated the dataset description dictionary"""
@@ -443,9 +443,8 @@ class UIS:
                     ]
 
             else:
-                raise ValueError(f"No regional data available for {self._code}")
+                raise logger.debug(f"No regional data available for {self._code}")
 
         else:
             raise ValueError(f"Invalid grouping: {grouping}")
-
 
