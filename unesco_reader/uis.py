@@ -19,7 +19,8 @@ def available_datasets(*, as_names: bool = False, category: str = None) -> list:
 
     Args:
         as_names: Return the list of datasets as names instead of codes
-        category: Return only datasets from a specific category
+        category: Return only datasets from a specific category. Available catagories
+        are ['education', 'science', 'culture', 'external']
 
     Returns:
         A list of available datasets
@@ -35,7 +36,7 @@ def available_datasets(*, as_names: bool = False, category: str = None) -> list:
         ].values
 
     if as_names:
-        return datasets
+        return list(datasets)
     else:
         return [get_dataset_code(dataset) for dataset in datasets]
 
@@ -71,7 +72,8 @@ def format_metadata(metadata_df: pd.DataFrame) -> pd.DataFrame:
                 subset=["INDICATOR_ID", "COUNTRY_ID", "YEAR", "TYPE"], keep=False
             )
         ]
-        .groupby(by=["INDICATOR_ID", "COUNTRY_ID", "YEAR", "TYPE"])["METADATA"]
+        .groupby(by=["INDICATOR_ID", "COUNTRY_ID", "YEAR", "TYPE"], group_keys=False)
+        ["METADATA"]
         .apply(" | ".join)
         .reset_index()
     )
@@ -206,7 +208,14 @@ def read_data(folder: ZipFile, dataset_code: str) -> dict:
     )
 
     # add regional data
-    data.update(_read_regional_data(folder, dataset_code))
+    regional = _read_regional_data(folder, dataset_code)
+    # if regional data exists, assign indicator names
+    if  regional["regional_data"] is not None:
+        regional["regional_data"] = (regional["regional_data"]
+                                     .assign(INDICATOR_NAME=lambda d: d.INDICATOR_ID.map(data["indicators"]))
+                                     )
+
+    data.update(regional)
 
     return data
 
@@ -375,7 +384,7 @@ class UIS:
 
         self._data.update(read_data(folder, self._code))
 
-        # flag is regional data is available
+        # flag if regional data is available
         if self._data["regional_data"] is not None:
             self._regional_data = True
 
