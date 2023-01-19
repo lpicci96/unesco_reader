@@ -2,7 +2,7 @@
 
 import requests
 import io
-from zipfile import ZipFile
+from zipfile import ZipFile, BadZipFile
 import pandas as pd
 
 
@@ -30,41 +30,50 @@ def mapping_dict(df: pd.DataFrame, key_col: str = "left") -> dict:
     return df.set_index(df.iloc[:, k]).iloc[:, v].to_dict()
 
 
-def unzip_folder_from_web(url: str) -> ZipFile:
-    """unzip a folder from a url.
+def make_request(url: str) -> requests.models.Response:
+    """Make a request to a url.
 
     Args:
-        url: url to unzip
+        url: url to make request to
 
     Returns:
-        Zipfile: object containing unzipped folder
+        requests.models.Response: response object
     """
 
     try:
         response = requests.get(url)
-        if response.status_code == 200:
-            return ZipFile(io.BytesIO(response.content))
-        else:
-            raise ConnectionError(f"Could not read file from url: {url}")
+        if response.status_code != 200:
+            raise ConnectionError(f"Could not connect to {url}")
 
-    except ConnectionError:
-        raise ConnectionError(f"Could not read file from url: {url}")
+        if not response.headers['content-type'] == 'application/x-zip-compressed':
+            raise ValueError("The file is not a zip file")
+
+        return response
+
+    except requests.exceptions.RequestException as e:
+        raise ConnectionError(f"Could not read file from url: {url}. Error : {str(e)}")
 
 
-def unzip_folder_from_disk(path: str) -> ZipFile:
-    """unzip a folder from disk.
+def unzip(file: str | io.BytesIO) -> ZipFile:
+    """Unzip a file
+
+    Create a ZipFile object from a file on disk or a file-like object from a requests
+    response.
 
     Args:
-        path: local path to folder
+        file: path to zipfile or file-like object. If zipfile is extracted from a url,
+        the file like object can be obtained by calling `io.BytesIO(response.content)`
 
     Returns:
-        Zipfile: object containing unzipped folder
+        ZipFile: object containing unzipped folder
     """
 
     try:
-        return ZipFile(path)
+        return ZipFile(file)
+    except BadZipFile as e:
+        raise ValueError(f"The file could not be unzipped. Error : {str(e)}")
     except FileNotFoundError:
-        raise FileNotFoundError(f"Could not find file: {path}")
+        raise FileNotFoundError(f"Could not find file: {file}")
 
 
 def read_csv(folder: ZipFile, path: str) -> pd.DataFrame:

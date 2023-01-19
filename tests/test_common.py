@@ -1,89 +1,123 @@
 """Tests for `common` module."""
 
-import pytest
-from unesco_reader import common
+
+from unesco_reader.common import *
 import pandas as pd
-from unesco_reader.config import PATHS
+import pytest
+from unittest.mock import patch, MagicMock
 from zipfile import ZipFile
 
 
+
 def test_mapping_dict():
-    """Test mapping_dict function."""
+    """Test mapping_dict"""
 
-    mock_df = pd.DataFrame(
-        {
-            "COUNTRY_ID": {
-                0: "AFG",
-                1: "ALB",
-                2: "DZA",
-                3: "ASM",
-                4: "AND",
-                5: "AGO",
-                6: "AIA",
-                7: "ATG",
-                8: "ARG",
-                9: "ARM",
-            },
-            "COUNTRY_NAME_EN": {
-                0: "Afghanistan",
-                1: "Albania",
-                2: "Algeria",
-                3: "American Samoa",
-                4: "Andorra",
-                5: "Angola",
-                6: "Anguilla",
-                7: "Antigua and Barbuda",
-                8: "Argentina",
-                9: "Armenia",
-            },
-        }
-    )
+    test_df = pd.DataFrame({"left": [1, 2, 3], "right": ["a", "b", "c"]})
 
-    result_dict = common.mapping_dict(mock_df)
-    assert result_dict == {
-        "AFG": "Afghanistan",
-        "ALB": "Albania",
-        "DZA": "Algeria",
-        "ASM": "American Samoa",
-        "AND": "Andorra",
-        "AGO": "Angola",
-        "AIA": "Anguilla",
-        "ATG": "Antigua and Barbuda",
-        "ARG": "Argentina",
-        "ARM": "Armenia",
-    }
-    result_dict_rev = common.mapping_dict(mock_df, key_col="right")
-    assert result_dict_rev == {
-        "Afghanistan": "AFG",
-        "Albania": "ALB",
-        "Algeria": "DZA",
-        "American Samoa": "ASM",
-        "Andorra": "AND",
-        "Angola": "AGO",
-        "Anguilla": "AIA",
-        "Antigua and Barbuda": "ATG",
-        "Argentina": "ARG",
-        "Armenia": "ARM",
-    }
+    # test default
+    result = mapping_dict(test_df)
+    expected = {1: "a", 2: "b", 3: "c"}
+    assert result == expected
 
-    with pytest.raises(ValueError) as err:
-        common.mapping_dict(mock_df, "invalid_key_col")
-    assert str(err.value) == 'Invalid key_col. Please choose from ["left", "right"]'
+    # test key_col = "right"
+    result = mapping_dict(test_df, key_col="right")
+    expected = {"a": 1, "b": 2, "c": 3}
+    assert result == expected
 
-    with pytest.raises(ValueError) as err:
-        common.mapping_dict(mock_df.assign(new_col="invalid column value"))
-    assert str(err.value) == "df can only contain 2 columns"
+    # test key_col is not left or right
+    with pytest.raises(ValueError, match="Invalid key_col. Please choose from"):
+        mapping_dict(test_df, key_col="invalid_key_col")
+
+    # test df has more than 2 columns
+    invalid_df = pd.DataFrame({"left": [1, 2, 3],
+                               "right": ["a", "b", "c"],
+                               "additional": [True, False, True]})
+    with pytest.raises(ValueError, match="df can only contain 2 columns"):
+        mapping_dict(invalid_df)
+
+
+def test_make_request():
+    """Test make_request"""
+
+    with patch('requests.get') as mock_get:
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.headers = {'content-type': 'application/x-zip-compressed'}
+        assert make_request('http://test.com') == mock_get.return_value
+
+
+def test_make_request_bad_status():
+    """Test make_request when the response status is not 200"""
+
+    with patch('requests.get') as mock_get:
+        mock_get.return_value.status_code = 404
+        with pytest.raises(ConnectionError, match='Could not connect to http://test.com'):
+            make_request('http://test.com')
+
+
+def test_make_request_not_zip():
+    """Test make_request when the response is not a zip file"""
+
+    with patch('requests.get') as mock_get:
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.headers = {'content-type': 'application/pdf'}
+        with pytest.raises(ValueError, match='The file is not a zip file'):
+            make_request('http://test.com')
+
+
+def test_unzip():
+    """ """
+
+    # create a mock file-like object
+    mock_zip = io.BytesIO()
+    with ZipFile(mock_zip, 'w') as zf:
+        zf.writestr('test.txt', 'This is a test file')
+
+    assert isinstance(unzip(mock_zip), ZipFile)
+
+
+def test_unzip_exceptions():
+    """Test unzip exceptions"""
+
+    # test file not found
+    with pytest.raises(FileNotFoundError, match='Could not find file'):
+        unzip('non_existent_file.zip')
+
+    # test bad zip file
+    mock_zip = io.BytesIO(b'invalid zip data')
+    with pytest.raises(ValueError, match='The file could not be unzipped'):
+        unzip(mock_zip)
 
 
 def test_read_csv():
-    """test read_csv"""
+    """Test read_csv"""
 
-    folder = ZipFile(f"{PATHS.TEST_FILES}/test_SDG.zip")
+    expected_df = pd.DataFrame({'col1': [1, 4], 'col2': [2, 5], 'col3': [3, 6]})
 
-    df = common.read_csv(folder, "SDG_COUNTRY.csv")
-    assert isinstance(df, pd.DataFrame)
+    # create a mock file-like object
+    mock_zip = MagicMock()
+    mock_zip.namelist.return_value = ['file1.csv']
+    mock_file = io.StringIO("col1,col2,col3\n1,2,3\n4,5,6")
+    mock_zip.open.return_value = mock_file
 
-    with pytest.raises(FileNotFoundError) as err:
-        common.read_csv(folder, "invalid_file.csv")
+    # Run the function and save the output
+    df = read_csv(mock_zip, 'file1.csv')
 
-    assert str(err.value) == "Could not find file: invalid_file.csv"
+    # Test that the output is as expected
+    pd.testing.assert_frame_equal(df, expected_df)
+
+def test_read_csv_file_not_found():
+    """Test read_csv when the file is not found"""
+
+    mock_zip = MagicMock()
+    mock_zip.namelist.return_value = ['file1.csv']
+
+    with pytest.raises(FileNotFoundError, match='Could not find file: file2.csv'):
+        read_csv(mock_zip, 'file2.csv')
+
+
+
+
+
+
+
+

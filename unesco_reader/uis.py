@@ -5,6 +5,7 @@ from typing import Dict, List, Union
 import pandas as pd
 from zipfile import ZipFile
 from tabulate import tabulate
+import io
 
 from unesco_reader.config import PATHS, logger
 from unesco_reader import common
@@ -379,9 +380,10 @@ class UIS:
         """
 
         if local_path is None:
-            folder = common.unzip_folder_from_web(self._info["url"])
+            response = common.make_request(self._info["url"])
+            folder = common.unzip(io.BytesIO(response.content))
         else:
-            folder = common.unzip_folder_from_disk(local_path)
+            folder = common.unzip(local_path)
 
         self._data.update(read_data(folder, self._code))
 
