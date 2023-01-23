@@ -4,6 +4,7 @@ import requests
 import io
 from zipfile import ZipFile, BadZipFile
 import pandas as pd
+from typing import Union
 
 
 def mapping_dict(df: pd.DataFrame, key_col: str = "left") -> dict:
@@ -45,7 +46,7 @@ def make_request(url: str) -> requests.models.Response:
         if response.status_code != 200:
             raise ConnectionError(f"Could not connect to {url}")
 
-        if not response.headers['content-type'] == 'application/x-zip-compressed':
+        if not response.headers["content-type"] == "application/x-zip-compressed":
             raise ValueError("The file is not a zip file")
 
         return response
@@ -54,7 +55,7 @@ def make_request(url: str) -> requests.models.Response:
         raise ConnectionError(f"Could not read file from url: {url}. Error : {str(e)}")
 
 
-def unzip(file: str | io.BytesIO) -> ZipFile:
+def unzip(file: Union[str, io.BytesIO]) -> ZipFile:
     """Unzip a file
 
     Create a ZipFile object from a file on disk or a file-like object from a requests
