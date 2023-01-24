@@ -9,8 +9,6 @@ class PATHS:
 
     package = Path(__file__).resolve().parent.parent
 
-    BASE_URL = "https://apimgmtstzgjpfeq2u763lag.blob.core.windows.net/content/MediaLibrary/bdds/"
-
     DATASETS = package / "unesco_reader" / "glossaries"
 
     TEST_FILES = package / "tests" / "test_files"

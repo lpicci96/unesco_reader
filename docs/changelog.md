@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.2.0 - 2022-12-10
+- Created tests to cover `common` and `uis` modules
+- Reformatted uis module function to read CSVs from zip file
+- Reformatted UIS class attributes to be set in `__init__` method
+
 ## v0.1.2 - 2022-12-10
 - Fixed bug preventing regional data from being returned
 - Optimized metadata retrieval

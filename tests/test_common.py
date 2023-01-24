@@ -1,89 +1,143 @@
 """Tests for `common` module."""
 
-import pytest
 from unesco_reader import common
 import pandas as pd
-from unesco_reader.config import PATHS
+import pytest
+from unittest.mock import patch, MagicMock
 from zipfile import ZipFile
+import tempfile
+import os
+import io
 
 
 def test_mapping_dict():
-    """Test mapping_dict function."""
+    """Test mapping_dict"""
 
-    mock_df = pd.DataFrame(
-        {
-            "COUNTRY_ID": {
-                0: "AFG",
-                1: "ALB",
-                2: "DZA",
-                3: "ASM",
-                4: "AND",
-                5: "AGO",
-                6: "AIA",
-                7: "ATG",
-                8: "ARG",
-                9: "ARM",
-            },
-            "COUNTRY_NAME_EN": {
-                0: "Afghanistan",
-                1: "Albania",
-                2: "Algeria",
-                3: "American Samoa",
-                4: "Andorra",
-                5: "Angola",
-                6: "Anguilla",
-                7: "Antigua and Barbuda",
-                8: "Argentina",
-                9: "Armenia",
-            },
-        }
+    test_df = pd.DataFrame({"left": [1, 2, 3], "right": ["a", "b", "c"]})
+
+    # test default
+    result = common.mapping_dict(test_df)
+    expected = {1: "a", 2: "b", 3: "c"}
+    assert result == expected
+
+    # test key_col = "right"
+    result = common.mapping_dict(test_df, key_col="right")
+    expected = {"a": 1, "b": 2, "c": 3}
+    assert result == expected
+
+    # test key_col is not left or right
+    with pytest.raises(ValueError, match="Invalid key_col. Please choose from"):
+        common.mapping_dict(test_df, key_col="invalid_key_col")
+
+    # test df has more than 2 columns
+    invalid_df = pd.DataFrame(
+        {"left": [1, 2, 3], "right": ["a", "b", "c"], "additional": [True, False, True]}
     )
-
-    result_dict = common.mapping_dict(mock_df)
-    assert result_dict == {
-        "AFG": "Afghanistan",
-        "ALB": "Albania",
-        "DZA": "Algeria",
-        "ASM": "American Samoa",
-        "AND": "Andorra",
-        "AGO": "Angola",
-        "AIA": "Anguilla",
-        "ATG": "Antigua and Barbuda",
-        "ARG": "Argentina",
-        "ARM": "Armenia",
-    }
-    result_dict_rev = common.mapping_dict(mock_df, key_col="right")
-    assert result_dict_rev == {
-        "Afghanistan": "AFG",
-        "Albania": "ALB",
-        "Algeria": "DZA",
-        "American Samoa": "ASM",
-        "Andorra": "AND",
-        "Angola": "AGO",
-        "Anguilla": "AIA",
-        "Antigua and Barbuda": "ATG",
-        "Argentina": "ARG",
-        "Armenia": "ARM",
-    }
-
-    with pytest.raises(ValueError) as err:
-        common.mapping_dict(mock_df, "invalid_key_col")
-    assert str(err.value) == 'Invalid key_col. Please choose from ["left", "right"]'
-
-    with pytest.raises(ValueError) as err:
-        common.mapping_dict(mock_df.assign(new_col="invalid column value"))
-    assert str(err.value) == "df can only contain 2 columns"
+    with pytest.raises(ValueError, match="df can only contain 2 columns"):
+        common.mapping_dict(invalid_df)
 
 
-def test_read_csv():
-    """test read_csv"""
+@pytest.fixture
+def mock_request(status_code, headers):
+    with patch("requests.get") as mock_get:
+        mock_get.return_value.status_code = status_code
+        mock_get.return_value.headers = headers
+        yield mock_get
 
-    folder = ZipFile(f"{PATHS.TEST_FILES}/test_SDG.zip")
 
-    df = common.read_csv(folder, "SDG_COUNTRY.csv")
-    assert isinstance(df, pd.DataFrame)
+@pytest.mark.parametrize(
+    "status_code, headers", [(200, {"content-type": "application/x-zip-compressed"})]
+)
+def test_make_request(mock_request, status_code, headers):
+    """Test make_request"""
 
-    with pytest.raises(FileNotFoundError) as err:
-        common.read_csv(folder, "invalid_file.csv")
+    assert common.make_request("http://test.com") == mock_request.return_value
 
-    assert str(err.value) == "Could not find file: invalid_file.csv"
+
+@pytest.mark.parametrize(
+    "status_code, headers", [(404, {"content-type": "application/x-zip-compressed"})]
+)
+def test_make_request_bad_status(mock_request, status_code, headers):
+    """Test make_request when the response status is not 200"""
+
+    with pytest.raises(ConnectionError, match="Could not connect to http://test.com"):
+        common.make_request("http://test.com")
+
+
+@pytest.mark.parametrize(
+    "status_code, headers", [(200, {"content-type": "application/pdf"})]
+)
+def test_make_request_not_zip(mock_request, status_code, headers):
+    """Test make_request when the response is not a zip file"""
+
+    with pytest.raises(ValueError, match="The file is not a zip file"):
+        common.make_request("http://test.com")
+
+
+def test_unzip():
+    """Test unzip with a valid file-like object"""
+
+    # create a mock file-like object
+    mock_zip = io.BytesIO()
+    with ZipFile(mock_zip, "w") as zf:
+        zf.writestr("test.txt", "This is a test file")
+
+    assert isinstance(common.unzip(mock_zip), ZipFile)
+
+
+def test_unzip_exceptions():
+    """Test unzip exceptions"""
+
+    # test file not found
+    with pytest.raises(FileNotFoundError, match="Could not find file"):
+        common.unzip("non_existent_file.zip")
+
+    # test bad zip file
+    mock_zip = io.BytesIO(b"invalid zip data")
+    with pytest.raises(ValueError, match="The file could not be unzipped"):
+        common.unzip(mock_zip)
+
+
+def test_unzip_valid_path():
+    """Test unzip when the path is valid"""
+
+    # create a temporary zipfile
+    with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as temp:
+        with ZipFile(temp.name, "w") as zf:
+            zf.writestr("test.txt", "This is a test file")
+        temp.close()
+        # pass the path of the zipfile to the unzip function
+        assert isinstance(common.unzip(temp.name), ZipFile)
+    # remove the tempfile after the test
+    os.remove(temp.name)
+
+
+@pytest.fixture
+def mock_zip_file():
+    """Create a mock zipfile from which to read a csv"""
+
+    mock_zip = MagicMock()
+    mock_zip.namelist.return_value = ["file1.csv"]
+    mock_file = io.StringIO("col1,col2,col3\n1,2,3\n4,5,6")
+    mock_zip.open.return_value = mock_file
+
+    return mock_zip
+
+
+def test_read_csv(mock_zip_file):
+    """Test read_csv"""
+
+    expected_df = pd.DataFrame({"col1": [1, 4], "col2": [2, 5], "col3": [3, 6]})
+
+    # Run the function and save the output
+    df = common.read_csv(mock_zip_file, "file1.csv")
+
+    # Test that the output is as expected
+    pd.testing.assert_frame_equal(df, expected_df)
+
+
+def test_read_csv_file_not_found(mock_zip_file):
+    """Test read_csv when the file is not found"""
+
+    with pytest.raises(FileNotFoundError, match="Could not find file: file2.csv"):
+        common.read_csv(mock_zip_file, "file2.csv")
