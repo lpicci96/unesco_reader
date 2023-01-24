@@ -202,13 +202,25 @@ def read_data(folder: ZipFile, dataset_code: str) -> dict:
 
 
 class UIS:
-    """ """
+    """An object to extract and explore UNESCO Institute of Statistics (UIS) data
+
+    To use, create an instance of the class, passing a dataset code or name as an argument.
+    The dataset code can be found using the `available_datasets` function.
+
+    To load data to the object, call the `load_data()` Optionally, you can pass a path
+    to a zipped folder for the dataset downloaded from the UIS website. If no path is passed,
+    the data will be extracted directly from the UIS website.
+
+    To get the data, use the `get_data` method. This will return a dataframe containing the data.
+
+    For more information see the full [documentation](https://github.com/lpicci96/unesco_reader)
+    """
 
     def __init__(self, dataset: str):
 
-        self.__code = get_dataset_code(dataset)
+        code = get_dataset_code(dataset)
         self._info = (DATASETS
-                      .loc[DATASETS.dataset_code == self.__code, :]
+                      .loc[DATASETS.dataset_code == code, :]
                       .T
                       .reset_index()
                       .pipe(common.mapping_dict)
@@ -255,7 +267,8 @@ class UIS:
 
         Args:
             local_path: Optional local path to the downloaded zip file.
-            If no path is provided, the data will be read from the UIS Bulk Download website
+            If no path is provided, the data will be read from the
+            [UIS Bulk Download website](https://apiportal.uis.unesco.org/bdds)
 
         Returns:
             UIS: same object to allow chaining
@@ -267,13 +280,13 @@ class UIS:
         else:
             folder = common.unzip(local_path)
 
-        self._data = read_data(folder, self.__code)
+        self._data = read_data(folder, self._info["dataset_code"])
         self._update_info()  # update info using the loaded data
-        logger.info(f"Data loaded for dataset: {self.__code}")
+        logger.info(f"Data loaded for dataset: {self._info['dataset_code']}")
 
         return self
 
-    def get_data(self, grouping: str = 'national', include_metadata: bool = False):
+    def get_data(self, grouping: str = 'national', include_metadata: bool = False) -> pd.DataFrame:
         """Return data
 
         Args:
@@ -388,6 +401,7 @@ class UIS:
 
         return list(self._data["regions"]["REGION_ID"].unique())
 
-    def info(self):
+    def info(self) -> None:
         """Print information about the dataset"""
+
         print(tabulate([[i, j] for i, j in self._info.items()]))
