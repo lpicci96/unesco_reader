@@ -5,7 +5,7 @@ Pythonic access to UNESCO data
 ## Installation
 
 ```bash
-$ pip install unesco_reader
+$ pip install unesco-reader
 ```
 
 ## Usage
