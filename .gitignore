@@ -104,6 +104,4 @@ ENV/
 
 # IDE settings
 .vscode/
-.idea/modules.xml
-.idea/unesco_reader.iml
-.idea/workspace.xml
+.idea/
