@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "unesco_reader"
-version = "0.1.2"
+version = "0.2.0"
 description = "Pythonic access to UNESCO data"
 authors = ["Luca Picci"]
 license = "MIT"
