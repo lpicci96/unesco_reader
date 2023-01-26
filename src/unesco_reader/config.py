@@ -9,7 +9,7 @@ class PATHS:
 
     package = Path(__file__).resolve().parent.parent
 
-    DATASETS = package / "src" / "unesco_reader" / "glossaries"
+    DATASETS = package / "unesco_reader" / "glossaries"
 
     TEST_FILES = package / "tests" / "test_files"
 
