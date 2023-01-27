@@ -1,5 +1,7 @@
 # unesco_reader
 
+|pypi| |python| |Documentation| |codecov| |tests| |black| |downloads| 
+
 Pythonic access to UNESCO data
 
 `unesco_reader` is a Python package providing a simple interface to access UNESCO data. 

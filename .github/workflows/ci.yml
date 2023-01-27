@@ -1,0 +1,61 @@
+# this workflow will run tests, generate code coverage, check codestyle, and build documentation
+name: ci
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  ci:
+
+    runs-on: ${{ matrix.config.os }}
+    name: ${{ matrix.config.os }} (${{ matrix.config.py }})
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - { os: windows-latest, py: "3.10" }
+          - { os: macOS-latest, py: "3.10" }
+          - { os: ubuntu-latest, py: "3.7" }
+          - { os: ubuntu-latest, py: "3.8" }
+          - { os: ubuntu-latest, py: "3.9" }
+          - { os: ubuntu-latest, py: "3.10" }
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python ${{ matrix.config.py }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.config.py }}
+
+      - name: Install poetry
+        uses: snok/install-poetry@v1
+
+      - name: Install package
+        run: poetry install
+
+      - name: Test with pytest
+        run: poetry run pytest tests/ --cov=unesco_reader --cov-report=xml
+
+      - name: Use Codecov to track coverage
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml   # coverage report
+          fail_ci_if_error: true
+          verbose: true
+
+      - name: Check code style
+        run: poetry run black /tests --check
+
+      - name: Build documentation
+        run: poetry run make html --directory docs/
+
+
+
+
+
+
