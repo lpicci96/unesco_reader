@@ -3,7 +3,7 @@ name: cd
 
 on:
   release:
-    types: [created]
+      types: [created]
 
 jobs:
   cd:
