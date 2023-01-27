@@ -1,6 +1,12 @@
 # unesco_reader
 
-|pypi| |python| |Documentation| |codecov| |tests| |black| |downloads| 
+[![PyPI](https://img.shields.io/pypi/v/unesco_reader.svg)](https://pypi.org/project/YOUR_PACKAGE_NAME/)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/unesco_reader.svg)](https://pypi.org/project/YOUR_PACKAGE_NAME/)
+[![Documentation Status](https://readthedocs.org/projects/unesco-reader/badge/?version=latest)](https://unesco-reader.readthedocs.io/en/latest/?badge=latest)
+[![codecov](https://codecov.io/gh/lpicci96/unesco_reader/branch/main/graph/badge.svg)](https://codecov.io/gh/lpicci96/unesco_reader)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/unesco_reader.svg)](https://pypi.org/project/YOUR_PACKAGE_NAME/)
+![Black](https://img.shields.io/badge/code%20style-black-000000.svg)
+
 
 Pythonic access to UNESCO data
 
@@ -131,4 +137,3 @@ By contributing to this project, you agree to abide by its terms.
 
 `unesco_reader` was created with [`cookiecutter`](https://cookiecutter.readthedocs.io/en/latest/) and the
 `py-pkgs-cookiecutter` [template](https://github.com/py-pkgs/py-pkgs-cookiecutter).
-
