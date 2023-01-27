@@ -49,7 +49,7 @@ jobs:
           verbose: true
 
       - name: Check code style
-        run: poetry run black /tests --check
+        run: poetry run black tests --check
 
       - name: Build documentation
         run: poetry run make html --directory docs/
