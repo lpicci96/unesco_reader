@@ -1,12 +1,12 @@
 # this workflow will upload the package to pypi when a new release is created
-name: cd
+name: release
 
 on:
   release:
     types: [created]
 
 jobs:
-  cd:
+  release:
     runs-on: ubuntu-latest
 
     steps:
