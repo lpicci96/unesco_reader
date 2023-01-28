@@ -192,7 +192,7 @@ def read_metadata(folder: ZipFile, dataset_code: str) -> Union[pd.DataFrame, Non
 
 def read_regional_data(
     folder: ZipFile, dataset_code: str, indicators_dict: dict
-) -> Tuple[pd.DataFrame, pd.DataFrame] | Tuple[None, None]:
+) -> Union[Tuple[pd.DataFrame, pd.DataFrame], Tuple[None, None]]:
     """Read regional data from a zipped folder
 
     Args:
