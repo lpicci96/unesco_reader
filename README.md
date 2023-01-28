@@ -1,10 +1,9 @@
 # unesco_reader
 
-[![PyPI](https://img.shields.io/pypi/v/unesco_reader.svg)](https://pypi.org/project/YOUR_PACKAGE_NAME/)
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/unesco_reader.svg)](https://pypi.org/project/YOUR_PACKAGE_NAME/)
+[![PyPI](https://img.shields.io/pypi/v/unesco_reader.svg)](https://pypi.org/project/unesco_reader/)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/unesco_reader.svg)](https://pypi.org/project/unesco_reader/)
 [![Documentation Status](https://readthedocs.org/projects/unesco-reader/badge/?version=latest)](https://unesco-reader.readthedocs.io/en/latest/?badge=latest)
 [![codecov](https://codecov.io/gh/lpicci96/unesco_reader/branch/main/graph/badge.svg)](https://codecov.io/gh/lpicci96/unesco_reader)
-[![PyPI - Downloads](https://img.shields.io/pypi/dm/unesco_reader.svg)](https://pypi.org/project/YOUR_PACKAGE_NAME/)
 ![Black](https://img.shields.io/badge/code%20style-black-000000.svg)
 
 
@@ -21,6 +20,13 @@ and must be read programmatically. UNESCO provides some guidance on how to do th
 With `unesco_reader`, users don't need to worry about downloading the data, extracting it from the zip file,
 and following the python tutorial - this is all taken care of. This package handles accessing the data directly from the UNESCO website, and provides a simple interface to
 explore the data.
+
+<b>Note</b>:
+
+This package is currently in development, and only supports UIS datasets.
+It contains basic functionality to extract and interact with the data, 
+and will be expanded to include more analytical functionality in the future.
+All feedback, suggestions, and contributions are welcome!
 
 
 ## Installation
@@ -65,7 +71,6 @@ Information about the dataset will be printed:
 dataset_name      SDG Global and Thematic Indicators
 dataset_code      SDG
 dataset_category  education
-link              https://apimgmtstzgjpfeq2u763lag.blob...
 ----------------  -----------------------------------------------
 ```
 
@@ -125,8 +130,15 @@ Please see the [documentation](https://unesco-reader.readthedocs.io/en/latest/) 
 
 ## Contributing
 
-Interested in contributing? Check out the contributing guidelines.
-Please note that this project is released with a Code of Conduct.
+All contributions are welcome! If you find a bug, 
+or have a suggestion for a new feature, or an 
+improvement on the documentation please open an issue.
+Since this project is under current development, 
+please check open issues and make sure the issue has 
+not been raised already.
+
+A detailed overview of the contribution process can be found
+[here](https://github.com/lpicci96/unesco_reader/blob/main/CONTRIBUTING.md).
 By contributing to this project, you agree to abide by its terms.
 
 ## License
