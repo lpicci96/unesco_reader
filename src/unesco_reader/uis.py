@@ -8,7 +8,7 @@ https://apiportal.uis.unesco.org/bdds
 import pandas as pd
 from zipfile import ZipFile
 from tabulate import tabulate
-from typing import Tuple
+from typing import Tuple, Union
 import io
 
 from unesco_reader.config import PATHS, logger
@@ -167,7 +167,7 @@ def format_national_data(
     return national_data
 
 
-def read_metadata(folder: ZipFile, dataset_code: str) -> pd.DataFrame | None:
+def read_metadata(folder: ZipFile, dataset_code: str) -> Union[pd.DataFrame, None]:
     """Read metadata from a zipped folder
 
     Args:
