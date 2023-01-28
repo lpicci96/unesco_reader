@@ -1,5 +1,7 @@
-# this workflow will run tests, generate code coverage, check codestyle, and build documentation
-name: ci
+# this workflow runs unit tests and checks code style
+# for different versions of python on different operating systems
+
+name: tests
 
 on:
   push:
@@ -8,8 +10,7 @@ on:
     branches: [ main ]
 
 jobs:
-  ci:
-
+  tests:
     runs-on: ${{ matrix.config.os }}
     name: ${{ matrix.config.os }} (${{ matrix.config.py }})
     strategy:
@@ -52,12 +53,3 @@ jobs:
 
       - name: Check code style
         run: poetry run black src tests --check
-
-      - name: Build documentation
-        run: poetry run make html --directory docs/
-
-
-
-
-
-
