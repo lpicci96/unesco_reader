@@ -1,8 +1,14 @@
-"""UNESCO Institute of Statistics (UIS) data reader."""
+"""UNESCO Institute of Statistics (UIS) data reader.
+
+This package provides functions to read data from the UNESCO Institute of Statistics
+(UIS) bulk data download service. The data is available at
+https://apiportal.uis.unesco.org/bdds
+"""
 
 import pandas as pd
 from zipfile import ZipFile
 from tabulate import tabulate
+from typing import Tuple
 import io
 
 from unesco_reader.config import PATHS, logger
@@ -18,13 +24,16 @@ DATASETS = pd.read_csv(PATHS.DATASETS / "uis_datasets.csv").assign(
 
 
 def get_dataset_code(dataset: str) -> str:
-    """Return the dataset code from either a code or name. Raise an error if the dataset is not found.
+    """Return the dataset code from either a code or name
 
     Args:
         dataset: Name of the dataset, either the code or the name
 
     Returns:
         The dataset code
+
+    Raises:
+        ValueError: If the dataset is not found
     """
 
     if dataset in DATASETS.dataset_name.values:
@@ -35,16 +44,19 @@ def get_dataset_code(dataset: str) -> str:
         raise ValueError(f"Dataset not found: {dataset}")
 
 
-def available_datasets(*, as_names: bool = False, category: str = None) -> list:
+def available_datasets(as_names: bool = False, category: str = None) -> list:
     """Return a list of available datasets
 
     Args:
         as_names: Return the list of datasets as names instead of codes
-        category: Return only datasets from a specific category. Available catagories
-        are ['education', 'science', 'culture', 'external']
+        category: Return only datasets from a specific category.
+            Available catagories are ['education', 'science', 'culture', 'external']
 
     Returns:
         A list of available datasets
+
+    Raises:
+        ValueError: If the category is not found
     """
 
     datasets = DATASETS.copy()
@@ -128,7 +140,21 @@ def format_national_data(
     countries_dict: dict,
     metadata: pd.DataFrame = None,
 ) -> pd.DataFrame:
-    """ """
+    """Format the national data DataFrame
+
+    This function is used to format the national data DataFrame, by assigning a COUNTRY_NAME
+    and INDICATOR_NAME column using countries_dict and indicators_dict dictionaries as mappers,
+    and merging the metadata DataFrame if provided.
+
+    Args:
+        national_data: DataFrame containing national data
+        indicators_dict: Dictionary containing the mapping of INDICATOR_ID to INDICATOR_NAME
+        countries_dict: Dictionary containing the mapping of COUNTRY_ID to COUNTRY_NAME
+        metadata: DataFrame containing metadata
+
+    Returns:
+        A formatted national data DataFrame
+    """
 
     national_data = national_data.assign(
         COUNTRY_NAME=lambda d: d.COUNTRY_ID.map(countries_dict),
@@ -144,7 +170,7 @@ def format_national_data(
 
 
 def read_metadata(folder: ZipFile, dataset_code: str) -> pd.DataFrame | None:
-    """Read metadata from folder
+    """Read metadata from a zipped folder
 
     Args:
         folder: ZipFile object containing the data
@@ -152,6 +178,9 @@ def read_metadata(folder: ZipFile, dataset_code: str) -> pd.DataFrame | None:
 
     Returns:
         A DataFrame containing the metadata or None if no metadata is found
+
+    Logs:
+        - a message if no metadata is found
     """
 
     if f"{dataset_code}_METADATA.csv" in folder.namelist():
@@ -165,8 +194,21 @@ def read_metadata(folder: ZipFile, dataset_code: str) -> pd.DataFrame | None:
 
 def read_regional_data(
     folder: ZipFile, dataset_code: str, indicators_dict: dict
-) -> pd.DataFrame | tuple:
-    """ """
+) -> Tuple[pd.DataFrame, pd.DataFrame] | Tuple[None, None]:
+    """Read regional data from a zipped folder
+
+    Args:
+        folder: ZipFile object containing the data
+        dataset_code: Code of the dataset
+        indicators_dict: Dictionary containing the mapping of INDICATOR_ID to INDICATOR_NAME
+
+    Returns:
+        A tuple with 2 dataframes, the first containing the regional data and the second
+        containing the regions or None if no regional data is found
+
+    Logs:
+        - a message if no regional data is found
+    """
 
     if (
         f"{dataset_code}_DATA_REGIONAL.csv" in folder.namelist()
@@ -193,6 +235,10 @@ def read_data(folder: ZipFile, dataset_code: str) -> dict:
     Args:
         folder: ZipFile object containing the data
         dataset_code: Code of the dataset
+
+    Returns:
+        A dictionary containing the data including dictionaries for indicators and countries,
+        and dataframes for national and regional data
     """
 
     indicators_dict = common.read_csv(folder, f"{dataset_code}_LABEL.csv").pipe(
@@ -217,42 +263,57 @@ def read_data(folder: ZipFile, dataset_code: str) -> dict:
 
 
 class UIS:
-    """An object to extract and explore UNESCO Institute of Statistics (UIS) data
+    """An object to extract, store and explore a UNESCO Institute of Statistics (UIS) dataset
 
-    To use, create an instance of the class, passing a dataset code or name as an argument.
+    Basic usage:
+
+    - Create an instance of the class, passing a dataset code or name as an argument.
     The dataset code can be found using the `available_datasets` function.
-
-    To load data to the object, call the `load_data()` Optionally, you can pass a path
+    - Load data to the object calling the `load_data()` Optionally, you can pass a path
     to a zipped folder for the dataset downloaded from the UIS website. If no path is passed,
     the data will be extracted directly from the UIS website.
+    - Get the data, use the `get_data` method. This will return a dataframe containing the data.
 
-    To get the data, use the `get_data` method. This will return a dataframe containing the data.
+    For more information on the available functionalities, see the
+    full [documentation](https://unesco-reader.readthedocs.io/en/latest/)
 
-    For more information see the full [documentation](https://github.com/lpicci96/unesco_reader)
+    Attributes:
+        dataset: The dataset name or code. Call `available_datasets()`
+            to get a list of available datasets.
     """
 
     def __init__(self, dataset: str):
 
-        code = get_dataset_code(dataset)
+        code = get_dataset_code(dataset)  # get dataset code
+
+        # pass the dataset info to the object
         self._info = (
             DATASETS.loc[DATASETS.dataset_code == code, :]
             .T.reset_index()
             .pipe(common.mapping_dict)
         )
-        self._data = {}
+        self._data = {}  # initialize data dictionary
 
         # set attribute for items in info
         for key in self._info:
             setattr(self, key, self._info[key])
 
     def _check_if_loaded(self) -> None:
-        """Check if data is loaded to the object"""
+        """Check if data is loaded to the object
+
+        Raises:
+            ValueError: If no data is loaded
+        """
 
         if len(self._data) == 0:
             raise ValueError("No data loaded. Call `load_data()` method first")
 
     def _update_info(self) -> None:
-        """Updated the dataset info dictionary"""
+        """Update the dataset info dictionary using loaded data
+
+        This methods adds some info using the loaded data inclusing
+        the number of indicators, countries, regions, and time range.
+        """
 
         self._check_if_loaded()  # check if data is loaded
 
@@ -285,11 +346,14 @@ class UIS:
 
         Args:
             local_path: Optional local path to the downloaded zip file.
-            If no path is provided, the data will be read from the
-            [UIS Bulk Download website](https://apiportal.uis.unesco.org/bdds)
+                If no path is provided, the data will be read from the
+                [UIS Bulk Download website](https://apiportal.uis.unesco.org/bdds)
 
         Returns:
             UIS: same object to allow chaining
+
+        Logs:
+            - a message indicating that the data was successfully loaded
         """
 
         if local_path is None:
@@ -314,7 +378,12 @@ class UIS:
             include_metadata: include metadata in the dataframe. Default is False
 
         Returns:
-            pd.DataFrame: dataframe containing the data"""
+            pd.DataFrame: dataframe containing the data
+
+        Raises:
+            ValueError: if regional data is requested and no regional data
+                is available for the dataset, or if an invalid grouping is passed
+        """
 
         self._check_if_loaded()  # check if data is loaded
 
@@ -381,6 +450,10 @@ class UIS:
 
         Returns:
             list of countries
+
+        Raises:
+            ValueError: if a specific region is requested and no regional data is available
+                or the region is not valid
         """
 
         self._check_if_loaded()  # check if data is loaded
@@ -420,6 +493,9 @@ class UIS:
 
         Returns:
             list: available regions
+
+        Raises:
+            ValueError: if no regional data is available
         """
 
         self._check_if_loaded()  # check if data is loaded
