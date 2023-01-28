@@ -18,9 +18,7 @@ BASE_URL = (
     "https://apimgmtstzgjpfeq2u763lag.blob.core.windows.net/content/MediaLibrary/bdds/"
 )
 
-DATASETS = pd.read_csv(PATHS.DATASETS / "uis_datasets.csv").assign(
-    link=lambda df: df.dataset_code.apply(lambda x: f"{BASE_URL}{x}.zip")
-)
+DATASETS = pd.read_csv(PATHS.DATASETS / "uis_datasets.csv")
 
 
 def get_dataset_code(dataset: str) -> str:
@@ -292,11 +290,18 @@ class UIS:
             .T.reset_index()
             .pipe(common.mapping_dict)
         )
+        self._link = f"{BASE_URL}{code}.zip"
         self._data = {}  # initialize data dictionary
 
         # set attribute for items in info
         for key in self._info:
             setattr(self, key, self._info[key])
+
+    @property
+    def link(self):
+        """Return the link to the dataset zip file"""
+
+        return self._link
 
     def _check_if_loaded(self) -> None:
         """Check if data is loaded to the object
@@ -357,7 +362,7 @@ class UIS:
         """
 
         if local_path is None:
-            response = common.make_request(self._info["link"])
+            response = common.make_request(self._link)
             folder = common.unzip(io.BytesIO(response.content))
         else:
             folder = common.unzip(local_path)
