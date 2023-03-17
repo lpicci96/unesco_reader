@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.3.1 - 2023-03-17
+- Fixed bug in data extraction to handle changes in UIS column naming
+  conventions.
+
 ## v0.3.0 - 2023-01-28
 - Reformatted package to use `poetry` for dependency management
 - Removed `link` and `regional` from uis_datasets.csv and from 
