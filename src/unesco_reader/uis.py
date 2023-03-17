@@ -97,6 +97,11 @@ def format_metadata(metadata_df: pd.DataFrame) -> pd.DataFrame:
         A metadata DataFrame pivoted so that metadata types are joined and stored in columns
     """
 
+    # rename columns to avoid UIS changes in upper case or lower case in the future
+    metadata_df = metadata_df.rename(
+        columns={col: col.upper() for col in metadata_df.columns}
+    )
+
     # filter for the rows that need to be joined together
     formatted = (
         metadata_df[
@@ -153,6 +158,9 @@ def format_national_data(
     Returns:
         A formatted national data DataFrame
     """
+
+    # rename columns to avoid UIS changes in upper case or lower case in the future
+    national_data = national_data.rename(columns=lambda x: x.upper())
 
     national_data = national_data.assign(
         COUNTRY_NAME=lambda d: d.COUNTRY_ID.map(countries_dict),
@@ -212,12 +220,20 @@ def read_regional_data(
         f"{dataset_code}_DATA_REGIONAL.csv" in folder.namelist()
         and f"{dataset_code}_REGION.csv" in folder.namelist()
     ):
-        regional_data = common.read_csv(
-            folder, f"{dataset_code}_DATA_REGIONAL.csv"
-        ).assign(INDICATOR_NAME=lambda d: d.INDICATOR_ID.map(indicators_dict))
+        regional_data = (
+            common.read_csv(folder, f"{dataset_code}_DATA_REGIONAL.csv")
+            # rename columns to avoid UIS changes in upper case or lower case in the future
+            .rename(columns=lambda x: x.upper()).assign(
+                INDICATOR_NAME=lambda d: d.INDICATOR_ID.map(indicators_dict)
+            )
+        )
 
-        regions = common.read_csv(folder, f"{dataset_code}_REGION.csv").rename(
-            columns={"COUNTRY_NAME_EN": "COUNTRY_NAME"}
+        regions = (
+            common.read_csv(folder, f"{dataset_code}_REGION.csv")
+            # rename columns to avoid UIS changes in upper case or lower case in the future
+            .rename(columns=lambda x: x.upper()).rename(
+                columns={"COUNTRY_NAME_EN": "COUNTRY_NAME"}
+            )
         )
 
         return regional_data, regions
@@ -239,16 +255,23 @@ def read_data(folder: ZipFile, dataset_code: str) -> dict:
         and dataframes for national and regional data
     """
 
-    indicators_dict = common.read_csv(folder, f"{dataset_code}_LABEL.csv").pipe(
-        common.mapping_dict
+    indicators_dict = (
+        common.read_csv(folder, f"{dataset_code}_LABEL.csv")
+        # rename columns to avoid UIS changes in upper case or lower case in the future
+        .rename(columns=lambda x: x.upper()).pipe(common.mapping_dict)
     )
-    countries_dict = common.read_csv(folder, f"{dataset_code}_COUNTRY.csv").pipe(
-        common.mapping_dict
+    countries_dict = (
+        common.read_csv(folder, f"{dataset_code}_COUNTRY.csv")
+        # rename columns to avoid UIS changes in upper case or lower case in the future
+        .rename(columns=lambda x: x.upper()).pipe(common.mapping_dict)
     )
+
     metadata = read_metadata(folder, dataset_code)
+
     national_data = common.read_csv(folder, f"{dataset_code}_DATA_NATIONAL.csv").pipe(
         format_national_data, indicators_dict, countries_dict, metadata
     )
+
     regional_data, regions = read_regional_data(folder, dataset_code, indicators_dict)
 
     return {
