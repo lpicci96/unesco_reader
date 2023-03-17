@@ -98,9 +98,9 @@ def format_metadata(metadata_df: pd.DataFrame) -> pd.DataFrame:
     """
 
     # rename columns to avoid UIS changes in upper case or lower case in the future
-    metadata_df = (metadata_df
-                   .rename(columns={col: col.upper() for col in metadata_df.columns})
-                   )
+    metadata_df = metadata_df.rename(
+        columns={col: col.upper() for col in metadata_df.columns}
+    )
 
     # filter for the rows that need to be joined together
     formatted = (
@@ -138,10 +138,10 @@ def format_metadata(metadata_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def format_national_data(
-        national_data: pd.DataFrame,
-        indicators_dict: dict,
-        countries_dict: dict,
-        metadata: pd.DataFrame = None,
+    national_data: pd.DataFrame,
+    indicators_dict: dict,
+    countries_dict: dict,
+    metadata: pd.DataFrame = None,
 ) -> pd.DataFrame:
     """Format the national data DataFrame
 
@@ -160,9 +160,7 @@ def format_national_data(
     """
 
     # rename columns to avoid UIS changes in upper case or lower case in the future
-    national_data = (national_data
-                     .rename(columns=lambda x: x.upper())
-                     )
+    national_data = national_data.rename(columns=lambda x: x.upper())
 
     national_data = national_data.assign(
         COUNTRY_NAME=lambda d: d.COUNTRY_ID.map(countries_dict),
@@ -201,7 +199,7 @@ def read_metadata(folder: ZipFile, dataset_code: str) -> Union[pd.DataFrame, Non
 
 
 def read_regional_data(
-        folder: ZipFile, dataset_code: str, indicators_dict: dict
+    folder: ZipFile, dataset_code: str, indicators_dict: dict
 ) -> Union[Tuple[pd.DataFrame, pd.DataFrame], Tuple[None, None]]:
     """Read regional data from a zipped folder
 
@@ -219,20 +217,24 @@ def read_regional_data(
     """
 
     if (
-            f"{dataset_code}_DATA_REGIONAL.csv" in folder.namelist()
-            and f"{dataset_code}_REGION.csv" in folder.namelist()
+        f"{dataset_code}_DATA_REGIONAL.csv" in folder.namelist()
+        and f"{dataset_code}_REGION.csv" in folder.namelist()
     ):
-        regional_data = (common.read_csv(folder, f"{dataset_code}_DATA_REGIONAL.csv")
-                         # rename columns to avoid UIS changes in upper case or lower case in the future
-                         .rename(columns=lambda x: x.upper())
-                         .assign(INDICATOR_NAME=lambda d: d.INDICATOR_ID.map(indicators_dict))
-                         )
+        regional_data = (
+            common.read_csv(folder, f"{dataset_code}_DATA_REGIONAL.csv")
+            # rename columns to avoid UIS changes in upper case or lower case in the future
+            .rename(columns=lambda x: x.upper()).assign(
+                INDICATOR_NAME=lambda d: d.INDICATOR_ID.map(indicators_dict)
+            )
+        )
 
-        regions = (common.read_csv(folder, f"{dataset_code}_REGION.csv")
-                   # rename columns to avoid UIS changes in upper case or lower case in the future
-                   .rename(columns=lambda x: x.upper())
-                   .rename(columns={"COUNTRY_NAME_EN": "COUNTRY_NAME"}
-                           ))
+        regions = (
+            common.read_csv(folder, f"{dataset_code}_REGION.csv")
+            # rename columns to avoid UIS changes in upper case or lower case in the future
+            .rename(columns=lambda x: x.upper()).rename(
+                columns={"COUNTRY_NAME_EN": "COUNTRY_NAME"}
+            )
+        )
 
         return regional_data, regions
 
@@ -253,22 +255,22 @@ def read_data(folder: ZipFile, dataset_code: str) -> dict:
         and dataframes for national and regional data
     """
 
-    indicators_dict = (common.read_csv(folder, f"{dataset_code}_LABEL.csv")
-                       # rename columns to avoid UIS changes in upper case or lower case in the future
-                       .rename(columns=lambda x: x.upper())
-                       .pipe(common.mapping_dict)
-                       )
-    countries_dict = (common.read_csv(folder, f"{dataset_code}_COUNTRY.csv")
-                      # rename columns to avoid UIS changes in upper case or lower case in the future
-                      .rename(columns=lambda x: x.upper())
-                      .pipe(common.mapping_dict)
-                      )
+    indicators_dict = (
+        common.read_csv(folder, f"{dataset_code}_LABEL.csv")
+        # rename columns to avoid UIS changes in upper case or lower case in the future
+        .rename(columns=lambda x: x.upper()).pipe(common.mapping_dict)
+    )
+    countries_dict = (
+        common.read_csv(folder, f"{dataset_code}_COUNTRY.csv")
+        # rename columns to avoid UIS changes in upper case or lower case in the future
+        .rename(columns=lambda x: x.upper()).pipe(common.mapping_dict)
+    )
 
     metadata = read_metadata(folder, dataset_code)
 
-    national_data = (common.read_csv(folder, f"{dataset_code}_DATA_NATIONAL.csv")
-                     .pipe(format_national_data, indicators_dict, countries_dict, metadata)
-                     )
+    national_data = common.read_csv(folder, f"{dataset_code}_DATA_NATIONAL.csv").pipe(
+        format_national_data, indicators_dict, countries_dict, metadata
+    )
 
     regional_data, regions = read_regional_data(folder, dataset_code, indicators_dict)
 
@@ -395,7 +397,7 @@ class UIS:
         return self
 
     def get_data(
-            self, grouping: str = "national", include_metadata: bool = False
+        self, grouping: str = "national", include_metadata: bool = False
     ) -> pd.DataFrame:
         """Return data
 
@@ -419,16 +421,16 @@ class UIS:
                 df = self._data["national_data"]
             else:
                 df = self._data["national_data"].loc[
-                     :,
-                     [
-                         "INDICATOR_ID",
-                         "INDICATOR_NAME",
-                         "COUNTRY_ID",
-                         "COUNTRY_NAME",
-                         "YEAR",
-                         "VALUE",
-                     ],
-                     ]
+                    :,
+                    [
+                        "INDICATOR_ID",
+                        "INDICATOR_NAME",
+                        "COUNTRY_ID",
+                        "COUNTRY_NAME",
+                        "YEAR",
+                        "VALUE",
+                    ],
+                ]
 
         # get regional data
         elif grouping == "regional":
@@ -439,8 +441,8 @@ class UIS:
                 df = self._data["regional_data"]
             else:
                 df = self._data["regional_data"].loc[
-                     :, ["INDICATOR_ID", "INDICATOR_NAME", "REGION_ID", "YEAR", "VALUE"]
-                     ]
+                    :, ["INDICATOR_ID", "INDICATOR_NAME", "REGION_ID", "YEAR", "VALUE"]
+                ]
 
         # raise error if grouping is not valid
         else:
