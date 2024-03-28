@@ -1,17 +1,15 @@
-""" Functionality to scrape UNESCO data from the web.
+""" Functionality to scrape and read UNESCO data from the web.
 
 
 TODO: Add error handling in LinkScraper.get_links when no links are found
 
-
-TODO: function to read zipfile to ZipFile object from web with error handling
 
 """
 
 import requests
 from bs4 import BeautifulSoup
 import re
-from zipfile import ZipFile, BadZipFile
+from zipfile import ZipFile
 import io
 
 HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/['
