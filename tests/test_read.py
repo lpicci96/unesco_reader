@@ -166,3 +166,31 @@ def test_read_csv(tmp_path):
             read.read_csv(zip_file, "invalid.csv")
 
 
+def test_read_md(tmp_path):
+    """Test the read_md function."""
+
+    # Create a markdown string
+    md_content = "# This is a test markdown file"
+
+    # Create a temporary markdown file
+    md_path = tmp_path / "test.md"
+    with open(md_path, 'w') as f:
+        f.write(md_content)
+
+    # Create a temporary zip file and add the markdown file to it
+    zip_path = tmp_path / "test.zip"
+    with zipfile.ZipFile(zip_path, 'w') as zip_file:
+        zip_file.write(md_path, arcname=os.path.basename(md_path))
+
+    # Use the read_md function to read the markdown file from the zip file
+    with zipfile.ZipFile(zip_path, 'r') as zip_file:
+        result = read.read_md(zip_file, "test.md")
+
+    # Check that the result is a string with the correct content
+    assert result == md_content
+
+    # test file not found
+    with zipfile.ZipFile(zip_path, 'r') as zip_file:
+        with pytest.raises(FileNotFoundError, match="Could not find file: invalid.md"):
+            read.read_md(zip_file, "invalid.md")
+

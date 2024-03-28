@@ -147,5 +147,24 @@ def read_csv(zipfile: ZipFile, path: str) -> pd.DataFrame:
     return pd.read_csv(zipfile.open(path), low_memory=False)
 
 
+def read_md(zipfile: ZipFile, path: str) -> str:
+    """Read a Markdown file from a ZipFile object.
+
+    Args:
+        zipfile: ZipFile object containing the Markdown file
+        path: path to the Markdown file in the zipped folder
+
+    Returns:
+        str: string containing the Markdown text
+    """
+
+    if path not in zipfile.namelist():
+        raise FileNotFoundError(f"Could not find file: {path}")
+
+    with zipfile.open(path) as md_file:
+        # Read and decode the content of the .md file
+        content = md_file.read().decode('utf-8')
+
+    return content
 
 
