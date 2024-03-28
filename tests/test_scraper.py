@@ -84,6 +84,18 @@ class TestLinkScraper:
         expected = ('Test Data', None)
         assert result == expected
 
+        # test with "-" in name
+        link_text = "Test - Data - April 2024"
+        result = scraper.LinkScraper.parse_link_text(link_text)
+        expected = ('Test - Data', "April 2024")
+        assert result == expected
+
+        # test with "()" in name
+        link_text = "Test (Data) (last update: May 2024)"
+        result = scraper.LinkScraper.parse_link_text(link_text)
+        expected = ('Test (Data)', "May 2024")
+        assert result == expected
+
     def test_get_links(self):
         """Test get_links"""
         with patch.object(scraper.LinkScraper, 'get_soup') as mock_get_soup:

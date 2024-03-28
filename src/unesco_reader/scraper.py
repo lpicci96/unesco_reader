@@ -67,7 +67,6 @@ class LinkScraper:
 
         date_pattern = (r"(January|February|March|April|May|June|July|August|September|October|November|December)\s+("
                         r"\d{4})")
-        other_text_pattern = r"[-(]|(\s*last update:\s*)"  # to remove unwanted text from name
 
         # Check if the link text contains a date
         match = re.search(date_pattern, link_text)
@@ -81,7 +80,8 @@ class LinkScraper:
             name = link_text
             latest_update = None
 
-        name = re.sub(other_text_pattern, "", name).strip()  # remove unwanted text from name
+        other_text_pattern = r"\s*[\-\(\):]*\s*last update\s*[\-\(\):]*\s*"  # to remove "last update"
+        name = re.sub(other_text_pattern, "", name).strip("(- ")  # remove unwanted text from name
 
         return name, latest_update
 
