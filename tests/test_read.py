@@ -7,6 +7,8 @@ from unittest.mock import patch
 from bs4 import BeautifulSoup
 import zipfile
 import io
+import pandas as pd
+import os
 
 TEST_URL = "https://test.com"
 
@@ -134,5 +136,33 @@ def test_get_zipfile():
         mock_get.return_value.content = b"<html></html>"
         with pytest.raises(ValueError, match="The file is not an accepted zip file"):
             read.get_zipfile(TEST_URL)
+
+
+def test_read_csv(tmp_path):
+    """Test the read_csv function."""
+
+    # Create a DataFrame
+    df = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+
+    # Create a temporary CSV file
+    csv_path = tmp_path / "test.csv"
+    df.to_csv(csv_path, index=False)
+
+    # Create a temporary zip file and add the CSV file to it
+    zip_path = tmp_path / "test.zip"
+    with zipfile.ZipFile(zip_path, 'w') as zip_file:
+        zip_file.write(csv_path, arcname=os.path.basename(csv_path))
+
+    # Use the read_csv function to read the CSV file from the zip file
+    with zipfile.ZipFile(zip_path, 'r') as zip_file:
+        result = read.read_csv(zip_file, "test.csv")
+
+    # Check that the result is a DataFrame with the correct data
+    pd.testing.assert_frame_equal(result, df)
+
+    # test file not found
+    with zipfile.ZipFile(zip_path, 'r') as zip_file:
+        with pytest.raises(FileNotFoundError, match="Could not find file: invalid.csv"):
+            read.read_csv(zip_file, "invalid.csv")
 
 

@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 import re
 from zipfile import ZipFile
 import io
+import pandas as pd
 
 HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/['
                          'version] Safari/537.36'}
@@ -127,3 +128,24 @@ def get_zipfile(url: str) -> ZipFile:
         raise ValueError("The file is not an accepted zip file")
 
     return ZipFile(io.BytesIO(response.content))
+
+
+def read_csv(zipfile: ZipFile, path: str) -> pd.DataFrame:
+    """Read a CSV file from a ZipFile object.
+
+    Args:
+        zipfile: ZipFile object containing the CSV file
+        path: path to the CVS in the zipped folder
+
+    Returns:
+        pd.DataFrame: dataframe containing the data from the CSV
+    """
+
+    if path not in zipfile.namelist():
+        raise FileNotFoundError(f"Could not find file: {path}")
+
+    return pd.read_csv(zipfile.open(path), low_memory=False)
+
+
+
+
