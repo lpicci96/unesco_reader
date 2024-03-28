@@ -1,18 +1,23 @@
 """ Functionality to scrape UNESCO data from the web.
 
 
-#TODO: Add error handling in LinkScraper.get_links when no links are found
+TODO: Add error handling in LinkScraper.get_links when no links are found
 
+
+TODO: function to read zipfile to ZipFile object from web with error handling
 
 """
 
 import requests
 from bs4 import BeautifulSoup
 import re
+from zipfile import ZipFile, BadZipFile
+import io
 
 HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/['
                          'version] Safari/537.36'}
 BASE_URL = 'https://uis.unesco.org/bdds'
+MIME_TYPES = ['application/zip', 'application/x-zip-compressed']  # multipurpose internet mail extensions types accepted
 
 
 def make_request(url: str) -> requests.models.Response:
@@ -105,3 +110,22 @@ class LinkScraper:
                     links_list.append(parsed_links_dict)
 
         return links_list
+
+
+def get_zipfile(url: str) -> ZipFile:
+    """Extract a zipfile from a url and return a ZipFile object.
+
+    Args:
+        url: url to the zipfile
+
+    Returns:
+        ZipFile: ZipFile object containing the zipfile
+    """
+
+    response = make_request(url)
+
+    # check that response is a zip file
+    if not response.headers["Content-Type"] in MIME_TYPES:
+        raise ValueError("The file is not an accepted zip file")
+
+    return ZipFile(io.BytesIO(response.content))

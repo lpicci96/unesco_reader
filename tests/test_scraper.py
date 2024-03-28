@@ -5,6 +5,8 @@ import pytest
 import requests
 from unittest.mock import patch
 from bs4 import BeautifulSoup
+import zipfile
+import io
 
 TEST_URL = "https://test.com"
 
@@ -106,5 +108,31 @@ class TestLinkScraper:
             result = scraper.LinkScraper.get_links()
             expected = [{'theme': 'Education', 'name': 'Test Data', 'latest_update': 'January 2022', 'href': 'test.zip'}]
             assert result == expected
+
+
+def test_get_zipfile():
+    """Test get_zipfile function."""
+
+    # Create a valid zip file in memory
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        zip_file.writestr('test.txt', 'This is a test file')
+    zip_content = zip_buffer.getvalue()
+
+    # test successful request
+    with patch("requests.get") as mock_get:
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.headers = {"Content-Type": "application/zip"}
+        mock_get.return_value.content = zip_content
+        result = scraper.get_zipfile(TEST_URL)
+        assert isinstance(result, zipfile.ZipFile)
+
+    # test failed request (not a zip file)
+    with patch("requests.get") as mock_get:
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.headers = {"Content-Type": "text/html"}
+        mock_get.return_value.content = b"<html></html>"
+        with pytest.raises(ValueError, match="The file is not an accepted zip file"):
+            scraper.get_zipfile(TEST_URL)
 
 
