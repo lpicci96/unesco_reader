@@ -78,9 +78,9 @@ def test_squash_duplicates():
     result_df = formatting.squash_duplicates(df, ['country', 'type'], 'metadata')
 
     expected_df = pd.DataFrame({
-        'country': ['AFG', 'AFG', 'IND'],
-        'type': ['source', 'value type', 'source'],
-        'metadata': ['UIS / WB', 'estimate', 'UIS']
+        'country': ['AFG', 'IND', 'AFG'],
+        'type': ['value type', 'source', 'source'],
+        'metadata': ['estimate', 'UIS', 'UIS / WB']
     })
 
     pd.testing.assert_frame_equal(result_df, expected_df)
@@ -248,10 +248,13 @@ class TestUISData:
         """Test the metadata property when the file is present"""
 
         expected_df = pd.DataFrame({"indicator_id": ["ind1", "ind1", 'ind1'],
-                                    "country_id": [1, 1, 2],
+                                    "country_id": [1, 2, 1],
                                     "year": [2020, 2020, 2020],
-                                    "type": ["Source", "value type", "Source"],
-                                    "metadata": ['UIS / WB', 'estimate', 'UIS']})
+                                    "type": ["value type", "Source", "Source"],
+                                    "metadata": ['estimate', 'UIS', 'UIS / WB'],
+                                    "indicator_label": ["Test Indicator", "Test Indicator", "Test Indicator"],
+                                    "country_name": ["Test Country", np.nan, "Test Country"]
+                                    })
         assert uis_data.metadata.equals(expected_df)
 
     def test_metadata_missing_file(self, uis_data_missing_files):

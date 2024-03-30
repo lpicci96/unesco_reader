@@ -1,4 +1,9 @@
-""" Format module """
+""" Formatting module
+
+This module contains functions to clean and format UIS data
+The main class UISData is used to process UIS data from a zipped folder
+The data is processed at the time of instantiation and stored in class attributes
+"""
 
 from zipfile import ZipFile
 import pandas as pd
@@ -47,6 +52,9 @@ def remove_en_suffix(df, inplace=True) -> pd.DataFrame | None:
 def squash_duplicates(df: pd.DataFrame, index_cols: list[str], squashed_col: str) -> pd.DataFrame:
     """Squash duplicates in a DataFrame separating values by '/' in the squashed column.
 
+    To optimize efficiency, the squashing operation is only performed on the duplicated rows. The squashed rows are
+    then appended to the original DataFrame excluding the duplicated rows.
+
     Args:
         df: The DataFrame to process.
         index_cols: The columns to group by.
@@ -55,30 +63,72 @@ def squash_duplicates(df: pd.DataFrame, index_cols: list[str], squashed_col: str
     Returns:
         pd.DataFrame: The DataFrame with duplicates squashed.
     """
-    return (df
-            .groupby(index_cols)[squashed_col]
-            .apply(" / ".join)
-            .reset_index()
-            )
+
+    # find duplicates
+    duplicates = df.duplicated(subset=index_cols, keep=False)
+
+    # if no duplicates, return the original dataframe
+    if not duplicates.any():
+        return df
+
+    # squashed duplicates
+    squashed_df = (df[duplicates]
+                   .groupby(index_cols, as_index=False)
+                   .agg({squashed_col: " / ".join})
+                   )
+
+    # Remove duplicates from the original DataFrame and append the squashed duplicates
+    unique_df = df.drop(df[duplicates].index)
+    return pd.concat([unique_df, squashed_df], ignore_index=True)
 
 
 class UISData:
-    """Class to understand file name formats"""
+    """Class to process UIS data from a zipped folder
+
+    This class reads and formats UIS data stored in a zipped file. The data is processed at the time of instantiation
+    and stored in class attributes.
+
+    Attributes:
+        folder: zipped folder containing the UIS data extracted from the UIS Bulk Download website
+
+        dataset_code: the dataset code extracted from file names in the zipped folder. Naming convention for filed
+                    is 'DATASET_CODE_...'. The dataset code is the first part of the file name. If multiple dataset
+                    codes are found, an error is raised. This may be a result of an error in the folder structure from UIS
+                    or a change in the naming convention. If this error is raised the folder structure should be checked
+                    and the code updated to handle the new structure.
+
+        file_names: dictionary of file names in the folder. All the possible files
+                    contained in the folder are COUNTRY.csv (country concordance file), REGION.csv (regional
+                    concordance file), DATA_NATIONAL.csv (national data), DATA_REGIONAL.csv (regional data), LABEL.csv
+                    (variable concordance file), METADATA.csv (metadata file), README (documentation readme file).
+
+        All other attributes are the dataframes read from the files in the folder, and a string for the readme file.
+        If a file is not found in the folder, the attribute is set to None.
+    """
 
     def __init__(self, folder: ZipFile):
-        self.folder = folder
+        self.folder: ZipFile = folder
         self.dataset_code = self.get_dataset_code()
         self.file_names = self.get_file_names()
 
+        # data
+        self.readme: str | None = self.get_readme()
+        self.country_concordance: pd.DataFrame | None = self.get_country_concordance()
+        self.region_concordance: pd.DataFrame | None = self.get_region_concordance()
+        self.variable_concordance: pd.DataFrame | None = self.get_variable_concordance()
+        self.metadata: pd.DataFrame | None = self.get_metadata()
+        self.country_data: pd.DataFrame | None = self.get_country_data()
+        self.region_data: pd.DataFrame | None = self.get_region_data()
+
     @staticmethod
     def _format_col_names(df) -> None:
-        """Format column names. Convert to lowercase and remove '_en' suffix."""
+        """Format column names in a dataframe in place. Convert to lowercase and remove '_en' suffix."""
 
         cols_to_lower(df)
         remove_en_suffix(df)
 
     def add_variable_names(self, df: pd.DataFrame) -> None:
-        """Add variable names to a dataframe using the variable concordance file"""
+        """Add variable names to a dataframe in place using the variable concordance file"""
         if self.variable_concordance is not None:
             mapper = self.variable_concordance.set_index('indicator_id').loc[:, 'indicator_label'].to_dict()
             df['indicator_label'] = df['indicator_id'].map(mapper)
@@ -122,15 +172,13 @@ class UISData:
                     files[k] = file
         return files
 
-    @property
-    def readme(self) -> str | None:
+    def get_readme(self) -> str | None:
         """Read the readme file"""
         if self.file_names.get('README'):
             return read.read_md(self.folder, self.file_names['README'])
         return None
 
-    @property
-    def country_concordance(self) -> pd.DataFrame | None:
+    def get_country_concordance(self) -> pd.DataFrame | None:
         """Read the country concordance file"""
         if self.file_names.get('COUNTRY_CONCORDANCE'):
             df = read.read_csv(self.folder, self.file_names['COUNTRY_CONCORDANCE'])
@@ -138,8 +186,7 @@ class UISData:
             return df
         return None
 
-    @property
-    def region_concordance(self) -> pd.DataFrame | None:
+    def get_region_concordance(self) -> pd.DataFrame | None:
         """Read the region concordance file"""
         if self.file_names.get('REGION_CONCORDANCE'):
             df = read.read_csv(self.folder, self.file_names['REGION_CONCORDANCE'])
@@ -149,8 +196,7 @@ class UISData:
             return df
         return None
 
-    @property
-    def variable_concordance(self) -> pd.DataFrame | None:
+    def get_variable_concordance(self) -> pd.DataFrame | None:
         """Read the variable concordance file"""
         if self.file_names.get('VARIABLE_CONCORDANCE'):
             df = read.read_csv(self.folder, self.file_names['VARIABLE_CONCORDANCE'])
@@ -158,18 +204,18 @@ class UISData:
             return df
         return None
 
-    @property
-    def metadata(self) -> pd.DataFrame | None:
+    def get_metadata(self) -> pd.DataFrame | None:
         """Read the metadata file"""
         if self.file_names.get('METADATA'):
             df = read.read_csv(self.folder, self.file_names['METADATA'])
             self._format_col_names(df)
             df = squash_duplicates(df, ['indicator_id', 'country_id', 'year', 'type'], 'metadata')
+            self.add_variable_names(df)  # add variable names
+            self.add_country_names(df)
             return df
         return None
 
-    @property
-    def country_data(self) -> pd.DataFrame | None:
+    def get_country_data(self) -> pd.DataFrame | None:
         """Read the country data file"""
         if self.file_names.get('COUNTRY_DATA'):
             df = read.read_csv(self.folder, self.file_names['COUNTRY_DATA'])
@@ -188,8 +234,7 @@ class UISData:
             return df
         return None
 
-    @property
-    def region_data(self) -> pd.DataFrame | None:
+    def get_region_data(self) -> pd.DataFrame | None:
         """Read the region data file"""
         if self.file_names.get('REGION_DATA'):
             df = read.read_csv(self.folder, self.file_names['REGION_DATA'])
@@ -198,4 +243,3 @@ class UISData:
 
             return df
         return None
-
