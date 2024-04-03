@@ -3,6 +3,8 @@
 This module contains functions to clean and format UIS data
 The main class UISData is used to process UIS data from a zipped folder
 The data is processed at the time of instantiation and stored in class attributes
+
+TODO: datasource error handling when the data may be incorrect missing wrong format etc
 """
 
 from zipfile import ZipFile

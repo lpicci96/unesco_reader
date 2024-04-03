@@ -12,6 +12,7 @@ import re
 from zipfile import ZipFile
 import io
 import pandas as pd
+from functools import lru_cache
 
 HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/['
                          'version] Safari/537.36'}
@@ -38,7 +39,7 @@ def make_request(url: str) -> requests.models.Response:
         raise ConnectionError(f"Could not connect to {url}. Error: {str(e)}")
 
 
-class LinkScraper:
+class UISInfoScraper:
     """Class to get data download links and other info from the unesco bulk download page."""
 
     @staticmethod
@@ -61,7 +62,7 @@ class LinkScraper:
         href = link.get('href')  # get the href
 
         text = link.find_parent().text  # get the text section to find name and latest_update
-        name, latest_update = LinkScraper.parse_link_text(text)
+        name, latest_update = UISInfoScraper.parse_link_text(text)
 
         return {'name': name, 'latest_update': latest_update, 'href': href}
 
@@ -90,11 +91,24 @@ class LinkScraper:
         return name, latest_update
 
     @staticmethod
-    def get_links() -> list[dict]:
-        """Get a list of dictionaries containing the theme, name, latest update, and href of each zip file."""
+    #@lru_cache
+    def get_links() -> list[dict]: #refresh: bool = False
+        """Get a list of dictionaries containing the theme, name, latest update, and href of each zip file.
+
+        Args:
+            refresh: if True, refresh the cache and get the links from the website
+
+        Returns:
+            list of dictionaries containing the theme, name, latest update, and href of each zip file
+
+        """
+
+        # Clear the cache if refresh is True
+        # if refresh:
+        #     LinkScraper.get_links.cache_clear()
 
         links_list = []
-        soup = LinkScraper.get_soup()
+        soup = UISInfoScraper.get_soup()
 
         # loop through each theme section
         for theme in soup.find_all('h2'):
@@ -103,7 +117,7 @@ class LinkScraper:
 
             # loop through each link section in the theme section
             for link_section in section.find_all('li'):
-                parsed_links_dict = LinkScraper.parse_link_section(link_section)
+                parsed_links_dict = UISInfoScraper.parse_link_section(link_section)
                 if parsed_links_dict is not None:
                     parsed_links_dict.update({'theme': theme_name})
                     links_list.append(parsed_links_dict)
