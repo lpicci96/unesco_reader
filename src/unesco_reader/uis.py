@@ -1,9 +1,11 @@
 """ UIS User interface module
 
+This module provides a user interface to access data from the UIS database. The UIS class extracts data from the UIS
+database and provides methods to access the data in a structured format. The UIS class also provides methods to access
+metadata, readme files, and information about countries, regions, and variables.
 
-TODO: information function
-TODO: UIS class for accessing data
-TODO: set cache refresh schedule
+Other functions in this module provide information about the datasets available in the UIS database and the themes
+associated with the datasets. Functionality also exists to clear the cache and refresh the data from the UIS website.
 
 """
 
@@ -12,8 +14,7 @@ from unesco_reader.read import UISInfoScraper, get_zipfile
 from tabulate import tabulate
 import pandas as pd
 from functools import lru_cache
-
-CACHING: bool = True  # set to False to disable caching
+from unesco_reader.config import logger
 
 
 @lru_cache
@@ -21,7 +22,7 @@ def fetch_info(refresh: bool = False) -> list[dict]:
     """Fetch information about the datasets available in the UIS database."""
 
     # Clear the cache if refresh is True or if caching is disabled
-    if refresh or not CACHING:
+    if refresh:
         fetch_info.cache_clear()
 
     return UISInfoScraper.get_links()
@@ -36,7 +37,7 @@ def fetch_dataset_info(dataset_name: str, refresh: bool = False) -> dict:
         if dataset_name == dataset['name']:
             return dataset
     else:
-        raise ValueError(f"Dataset not found: {dataset_name}. \nPlease select from the following datasets: "
+        raise ValueError(f"Dataset not found: {dataset_name}. \nPlease select from the following datasets:\n "
                          f"{', '.join([name['name'] for name in datasets])}")
 
 
@@ -45,12 +46,23 @@ def fetch_data(href, refresh: bool = False) -> UISData:
     """Fetch data from a url"""
 
     # Clear the cache if refresh is True or if caching is disabled
-    if refresh or not CACHING:
+    if refresh:
         fetch_data.cache_clear()
 
-    # get the data
-    folder = get_zipfile(href)
-    return UISData(folder)
+    return UISData(get_zipfile(href))
+
+
+def clear_all_caches():
+    """Clear all caches.
+    This function will clear all caches used. Any subsequent calls to the functions
+    that use caching will fetch the data from the website.
+    NOTE: any UIS objects already created will still have the old data. You will need to
+    run the `refresh()` method get the latest data.
+    """
+
+    fetch_info.cache_clear()
+    fetch_data.cache_clear()
+    logger.info("All caches cleared.")
 
 
 def info(refresh: bool = False) -> None:
@@ -73,6 +85,29 @@ def info(refresh: bool = False) -> None:
     print(tabulate(rows_list, headers=headers, tablefmt="simple"))
 
 
+def available_datasets(theme: str = None, refresh=True) -> list[str]:
+    """Return a list of available datasets in the UIS database.
+
+    Args: theme: if specified, return only datasets in the specified theme. To see all themes and get other
+    information run, run info()
+    refresh: if True, refresh the cache and fetch the links from the website
+
+    Returns: list of dataset names
+    """
+
+    datasets = fetch_info(refresh)
+
+    if theme is not None:
+        # check if theme is valid
+        if theme not in [dataset['theme'] for dataset in datasets]:
+            raise ValueError(f"Theme not found: {theme}. \nPlease select from the following themes:\n "
+                             f"{', '.join(theme_name for theme_name in list(set([dataset['theme'] for dataset in datasets])))}")
+
+        return [dataset['name'] for dataset in fetch_info(refresh) if dataset['theme'] == theme]
+
+    return [dataset['name'] for dataset in fetch_info(refresh)]
+
+
 class UIS:
     """Class for accessing data from the UIS database."""
 
@@ -85,7 +120,7 @@ class UIS:
 
         self._dataset_info = fetch_dataset_info(self._dataset_info['name'], refresh=True)
         self._data = fetch_data(self._dataset_info['href'], refresh=True)
-        print("Data refreshed.")
+        logger.info(f"Data refreshed successfully.")
 
     def info(self) -> None:
         """Display information about the dataset."""

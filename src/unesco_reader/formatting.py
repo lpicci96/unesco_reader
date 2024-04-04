@@ -11,6 +11,7 @@ from zipfile import ZipFile
 import pandas as pd
 
 from unesco_reader import read
+from unesco_reader.config import logger
 
 
 def cols_to_lower(df: pd.DataFrame, inplace: bool = True) -> pd.DataFrame | None:
@@ -122,6 +123,8 @@ class UISData:
         self.country_data: pd.DataFrame | None = self.get_country_data()
         self.region_data: pd.DataFrame | None = self.get_region_data()
 
+        logger.debug("UIS data processed successfully")
+
     @staticmethod
     def _format_col_names(df) -> None:
         """Format column names in a dataframe in place. Convert to lowercase and remove '_en' suffix."""
@@ -135,13 +138,16 @@ class UISData:
             mapper = self.variable_concordance.set_index('indicator_id').loc[:, 'indicator_label'].to_dict()
             df['indicator_label'] = df['indicator_id'].map(mapper)
 
-        # TODO: if no variable concordance file, log message
+        else:
+            logger.debug("No variable concordance file found")
 
     def add_country_names(self, df: pd.DataFrame) -> None:
         """Add country names to a dataframe using the country concordance file"""
         if self.country_concordance is not None:
             mapper = self.country_concordance.set_index('country_id').loc[:, 'country_name'].to_dict()
             df['country_name'] = df['country_id'].map(mapper)
+        else:
+            logger.debug("No country concordance file found")
 
     def get_dataset_code(self) -> str:
         """Get the dataset code from the folder name"""
@@ -169,15 +175,22 @@ class UISData:
              }
 
         for k, v in d.items():
-            for file in self.folder.namelist():
-                if v in file:
-                    files[k] = file
+            for file_name in self.folder.namelist():
+                if v in file_name:
+                    files[k] = file_name
+
+        # if there are no files raise an error
+        if not files:
+            raise FileNotFoundError("No files found in folder")
+
         return files
 
     def get_readme(self) -> str | None:
         """Read the readme file"""
         if self.file_names.get('README'):
             return read.read_md(self.folder, self.file_names['README'])
+
+        logger.debug("No readme file found")
         return None
 
     def get_country_concordance(self) -> pd.DataFrame | None:
@@ -186,6 +199,8 @@ class UISData:
             df = read.read_csv(self.folder, self.file_names['COUNTRY_CONCORDANCE'])
             self._format_col_names(df)
             return df
+
+        logger.debug("No country concordance file found")
         return None
 
     def get_region_concordance(self) -> pd.DataFrame | None:
@@ -196,6 +211,8 @@ class UISData:
             # split the REGION_ID into grouping_entity and region_name
             df[['grouping_entity', 'region_name']] = df['region_id'].str.split(': ', n=1, expand=True)
             return df
+
+        logger.debug("No region concordance file found")
         return None
 
     def get_variable_concordance(self) -> pd.DataFrame | None:
@@ -204,6 +221,8 @@ class UISData:
             df = read.read_csv(self.folder, self.file_names['VARIABLE_CONCORDANCE'])
             self._format_col_names(df)
             return df
+
+        logger.debug("No variable concordance file found")
         return None
 
     def get_metadata(self) -> pd.DataFrame | None:
@@ -215,6 +234,8 @@ class UISData:
             self.add_variable_names(df)  # add variable names
             self.add_country_names(df)
             return df
+
+        logger.debug("No metadata file found")
         return None
 
     def get_country_data(self) -> pd.DataFrame | None:
@@ -234,6 +255,8 @@ class UISData:
                 df = df.merge(meta_df, how='left', on=['indicator_id', 'country_id', 'year'])
 
             return df
+
+        logger.debug("No country data file found")
         return None
 
     def get_region_data(self) -> pd.DataFrame | None:

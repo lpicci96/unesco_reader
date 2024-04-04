@@ -100,8 +100,22 @@ def test_fetch_dataset_info():
         assert result == {'theme': 'Education', 'name': 'dataset_1', 'latest_update': 'January 2022', 'href': 'test.zip'}
 
         # Test with a dataset that does not exist
-        with pytest.raises(ValueError, match="Dataset not found: invalid dataset name. \nPlease select from the following datasets: dataset_1, dataset_2"):
+        with pytest.raises(ValueError, match="Dataset not found: invalid dataset name. \nPlease select from the following datasets:\n dataset_1, dataset_2"):
             uis.fetch_dataset_info('invalid dataset name')
+
+
+def test_clear_all_caches():
+    """Test the clear_all_caches function."""
+
+    with patch("unesco_reader.uis.fetch_info") as mock_fetch_info, \
+            patch("unesco_reader.uis.fetch_data") as mock_fetch_data:
+
+        # Call the clear_all_caches function
+        uis.clear_all_caches()
+
+        # Check that the caches for fetch_info and fetch_data have been cleared
+        mock_fetch_info.cache_clear.assert_called_once()
+        mock_fetch_data.cache_clear.assert_called_once()
 
 
 def test_info(capsys):
@@ -126,6 +140,30 @@ def test_info(capsys):
 
         # Check that fetch_info was called once
         mock_fetch_info.assert_called_once()
+
+
+def test_available_datasets():
+    """Test the available_datasets function."""
+
+    with patch("unesco_reader.uis.fetch_info") as mock_fetch_info:
+        # Define the return value for the mock
+        mock_fetch_info.return_value = [
+            {'theme': 'Education', 'name': 'A Data', 'latest_update': 'January 2022', 'href': 'test.zip'},
+            {'theme': 'Education', 'name': 'B Data', 'latest_update': 'March 2022', 'href': 'test.zip'},
+            {'theme': 'Science', 'name': 'C Data', 'latest_update': 'February 2022', 'href': 'new_test.zip'}
+        ]
+
+        # basic functionality
+        result = uis.available_datasets()
+        assert result == ['A Data', 'B Data', "C Data"]
+
+        # specify theme
+        result = uis.available_datasets(theme='Education')
+        assert result == ['A Data', 'B Data']
+
+        # test error when theme is not found
+        with pytest.raises(ValueError, match="^Theme not found: invalid theme."):
+            uis.available_datasets(theme='invalid theme')
 
 
 class TestUIS:

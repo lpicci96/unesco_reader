@@ -123,11 +123,41 @@ class TestUISData:
 
     @pytest.fixture
     def uis_data_missing_files(self):
-        # Simulate a zip file in memory
+        """Simulate a situation where all expected files are missing in the zip file"""
+
         in_memory_zip = io.BytesIO()
         with zipfile.ZipFile(in_memory_zip, 'w') as zf:
             zf.writestr(f'{TEST_DATASET_CODE}_UNEXPECTED.txt', 'Unexpected file')
 
+        in_memory_zip.seek(0)  # Reset file pointer to the beginning
+        folder = zipfile.ZipFile(in_memory_zip, 'r')
+        return folder
+
+    @pytest.fixture
+    def uis_data_missing_only_readme_present(self):
+        """Simulate a situation where only the readme is present in the zip file
+        Intended to test that some attributes will be None rather than causing an error to be raised.
+        """
+
+        in_memory_zip = io.BytesIO()
+        with zipfile.ZipFile(in_memory_zip, 'w') as zf:
+            zf.writestr(f'{TEST_DATASET_CODE}_README_SOME_RELEASE.md', '#This is a test README file.')
+
+        in_memory_zip.seek(0)  # Reset file pointer to the beginning
+        folder = zipfile.ZipFile(in_memory_zip, 'r')
+        return formatting.UISData(folder)
+
+    @pytest.fixture
+    def uis_data_missing_only_country_data_present(self):
+        """Simulate a situation where only the country data is present in the zip file
+        Intended to test that some attributes will be None rather than causing an error to be raised.
+        """
+
+        in_memory_zip = io.BytesIO()
+        with zipfile.ZipFile(in_memory_zip, 'w') as zf:
+            zf.writestr(f'{TEST_DATASET_CODE}_COUNTRY.csv', 'COUNTRY_ID,country_name\n1,Test Country')
+
+        in_memory_zip.seek(0)
         in_memory_zip.seek(0)  # Reset file pointer to the beginning
         folder = zipfile.ZipFile(in_memory_zip, 'r')
         return formatting.UISData(folder)
@@ -187,6 +217,12 @@ class TestUISData:
                           }
         assert uis_data.get_file_names() == expected_files
 
+    def test_get_file_names_missing_files(self, uis_data_missing_files):
+        """Test get_file_names when all files are missing raises an error"""
+
+        with pytest.raises(FileNotFoundError):
+            obj = formatting.UISData(uis_data_missing_files)
+
     def test_get_file_names_no_region(self, uis_data_no_region):
         """Test get_file_names when the regional data is not present"""
 
@@ -204,9 +240,9 @@ class TestUISData:
         expected_readme = '#This is a test README file.'
         assert uis_data.readme == expected_readme
 
-    def test_readme_missing_file(self, uis_data_missing_files):
+    def test_readme_missing_file(self, uis_data_missing_only_country_data_present):
         """Test the readme property when the file is missing"""
-        assert uis_data_missing_files.readme is None
+        assert uis_data_missing_only_country_data_present.readme is None
 
     def test_country_concordance(self, uis_data):
         """Test the country_concordance property when the file is present"""
@@ -215,9 +251,9 @@ class TestUISData:
                                     "country_name": ["Test Country"]})
         assert uis_data.country_concordance.equals(expected_df)
 
-    def test_country_concordance_missing_file(self, uis_data_missing_files):
+    def test_country_concordance_missing_file(self, uis_data_missing_only_readme_present):
         """Test the country_concordance property when the file is missing"""
-        assert uis_data_missing_files.country_concordance is None
+        assert uis_data_missing_only_readme_present.country_concordance is None
 
     def test_region_concordance(self, uis_data):
         """Test the region_concordance property when the file is present"""
@@ -229,9 +265,9 @@ class TestUISData:
 
         pd.testing.assert_frame_equal(uis_data.region_concordance, expected_df, check_dtype=False)
 
-    def test_region_concordance_missing_file(self, uis_data_no_region):
+    def test_region_concordance_missing_file(self, uis_data_missing_only_readme_present):
         """Test the region_concordance property when the file is missing"""
-        assert uis_data_no_region.region_concordance is None
+        assert uis_data_missing_only_readme_present.region_concordance is None
 
     def test_variable_concordance(self, uis_data):
         """Test the variable_concordance property when the file is present"""
@@ -240,9 +276,9 @@ class TestUISData:
                                     "indicator_label": ["Test Indicator"]})
         assert uis_data.variable_concordance.equals(expected_df)
 
-    def test_variable_concordance_missing_file(self, uis_data_missing_files):
+    def test_variable_concordance_missing_file(self, uis_data_missing_only_readme_present):
         """Test the variable_concordance property when the file is missing"""
-        assert uis_data_missing_files.variable_concordance is None
+        assert uis_data_missing_only_readme_present.variable_concordance is None
 
     def test_metadata(self, uis_data):
         """Test the metadata property when the file is present"""
@@ -257,9 +293,9 @@ class TestUISData:
                                     })
         assert uis_data.metadata.equals(expected_df)
 
-    def test_metadata_missing_file(self, uis_data_missing_files):
+    def test_metadata_missing_file(self, uis_data_missing_only_readme_present):
         """Test the metadata property when the file is missing"""
-        assert uis_data_missing_files.metadata is None
+        assert uis_data_missing_only_readme_present.metadata is None
 
     def test_country_data(self, uis_data):
         """Test the country_data property when the file is present"""
@@ -277,9 +313,9 @@ class TestUISData:
                                     })
         pd.testing.assert_frame_equal(uis_data.country_data, expected_df)
 
-    def test_country_data_missing_file(self, uis_data_missing_files):
+    def test_country_data_missing_file(self, uis_data_missing_only_readme_present):
         """Test the country_data property when the file is missing"""
-        assert uis_data_missing_files.country_data is None
+        assert uis_data_missing_only_readme_present.country_data is None
 
     def test_region_data(self, uis_data):
         """Test the region_data property when the file is present"""
@@ -294,9 +330,9 @@ class TestUISData:
                                     })
         pd.testing.assert_frame_equal(uis_data.region_data, expected_df)
 
-    def test_region_data_missing_file(self, uis_data_no_region):
+    def test_region_data_missing_file(self, uis_data_missing_only_readme_present):
         """Test the region_data property when the file is missing"""
-        assert uis_data_no_region.region_data is None
+        assert uis_data_missing_only_readme_present.region_data is None
 
 
 
