@@ -20,6 +20,7 @@ black = "^24.3.0"
 jupyter = "^1.0.0"
 sphinx = "^7.2.6"
 myst-nb = "^1.0.0"
+autoapi = "^2.0.1"
 
 [build-system]
 requires = ["poetry-core"]

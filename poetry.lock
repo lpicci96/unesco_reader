@@ -172,6 +172,19 @@ tests-mypy = ["mypy (>=1.6)", "pytest-mypy-plugins"]
 tests-no-zope = ["attrs[tests-mypy]", "cloudpickle", "hypothesis", "pympler", "pytest (>=4.3.0)", "pytest-xdist[psutil]"]
 
 [[package]]
+name = "autoapi"
+version = "2.0.1"
+description = "Automatic API reference documentation generation for Sphinx inspired by Doxygen"
+optional = false
+python-versions = "*"
+files = [
+    {file = "autoapi-2.0.1.tar.gz", hash = "sha256:4003b17599020652d0738dc1c426d0abf2f58f8a1821f5500816043210b3d1d6"},
+]
+
+[package.dependencies]
+sphinx = "*"
+
+[[package]]
 name = "babel"
 version = "2.14.0"
 description = "Internationalization utilities"
@@ -3057,4 +3070,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "087b5da994b90ad2164f3c60b04a62508d1693fc52afb0fde80ab6edfd26f716"
+content-hash = "1bb30644f11259d498ada6bae99c3e1944a4b24b1f8c661bbbd961bfa06222c1"
