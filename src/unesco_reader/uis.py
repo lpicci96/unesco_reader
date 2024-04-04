@@ -14,7 +14,7 @@ from unesco_reader.read import UISInfoScraper, get_zipfile
 from tabulate import tabulate
 import pandas as pd
 from functools import lru_cache
-from unesco_reader.config import logger
+from unesco_reader.config import logger, NoDataError
 
 
 @lru_cache
@@ -281,7 +281,7 @@ class UIS:
         """Return the metadata as a pandas DataFrame."""
 
         if self._data.metadata is None:
-            raise ValueError("Metadata is not available for this dataset.")
+            raise NoDataError("Metadata is not available for this dataset.")
 
         return self._data.metadata
 
@@ -296,7 +296,7 @@ class UIS:
         """
 
         if self._data.region_data is None:
-            raise ValueError("Regional data is not available for this dataset.")
+            raise NoDataError("Regional data is not available for this dataset.")
 
         df = self._data.region_data
 
@@ -312,7 +312,7 @@ class UIS:
         """
 
         if self._data.country_concordance is None:
-            raise ValueError(
+            raise NoDataError(
                 "Information about countries is not available for this dataset."
             )
 
@@ -326,7 +326,7 @@ class UIS:
         """
 
         if self._data.region_concordance is None:
-            raise ValueError(
+            raise NoDataError(
                 "Information about regions is not available for this dataset."
             )
 
@@ -339,7 +339,7 @@ class UIS:
         """
 
         if self._data.variable_concordance is None:
-            raise ValueError(
+            raise NoDataError(
                 "Information about variables is not available for this dataset."
             )
 
@@ -349,7 +349,7 @@ class UIS:
     def readme(self) -> str:
         """Return the readme file as a string."""
         if self._data.readme is None:
-            raise ValueError("Readme file is not available for this dataset.")
+            raise NoDataError("Readme file is not available for this dataset.")
         return self._data.readme
 
     def display_readme(self) -> None:

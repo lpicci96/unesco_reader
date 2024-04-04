@@ -9,6 +9,7 @@ import io
 
 from unesco_reader import uis
 from unesco_reader.formatting import UISData
+from unesco_reader.config import NoDataError
 
 
 def test_fetch_info():
@@ -465,7 +466,7 @@ class TestUIS:
         mock_uis_data.metadata = None
         obj = uis.UIS("Test Data")
         with pytest.raises(
-            ValueError, match="Metadata is not available for this dataset."
+            NoDataError, match="Metadata is not available for this dataset."
         ):
             obj.get_metadata()
 
@@ -509,7 +510,7 @@ class TestUIS:
         # test when region data is not available
         mock_uis_data.region_data = None
         with pytest.raises(
-            ValueError, match="Regional data is not available for this dataset."
+            NoDataError, match="Regional data is not available for this dataset."
         ):
             obj.get_region_data()
 
@@ -542,7 +543,7 @@ class TestUIS:
         # test when country concordance is not available
         mock_uis_data.country_concordance = None
         with pytest.raises(
-            ValueError,
+                NoDataError,
             match="Information about countries is not available for this dataset.",
         ):
             obj.get_countries()
@@ -576,7 +577,7 @@ class TestUIS:
         # test when region concordance is not available
         mock_uis_data.region_concordance = None
         with pytest.raises(
-            ValueError,
+                NoDataError,
             match="Information about regions is not available for this dataset.",
         ):
             obj.get_regions()
@@ -610,7 +611,7 @@ class TestUIS:
         # test when variables are not available
         mock_uis_data.variable_concordance = None
         with pytest.raises(
-            ValueError,
+                NoDataError,
             match="Information about variables is not available for this dataset.",
         ):
             obj.get_variables()
@@ -642,7 +643,7 @@ class TestUIS:
         # Test when the readme file is not available
         mock_uis_data.readme = None
         with pytest.raises(
-            ValueError, match="Readme file is not available for this dataset."
+                NoDataError, match="Readme file is not available for this dataset."
         ):
             _ = obj.readme
 

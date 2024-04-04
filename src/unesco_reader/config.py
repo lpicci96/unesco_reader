@@ -1,6 +1,18 @@
-"""Configuration file for unesco_reader"""
+"""Configuration file for unesco_reader
+
+This file contains the configuration for the logger used in the unesco_reader package and
+the custom exceptions used in the package.
+
+"""
 
 import logging
+
+
+# Custom Exceptions
+
+class NoDataError(Exception):
+    """This is a custom exception that is raised when no UIS data exists"""
+    pass
 
 
 # Configure Logging
