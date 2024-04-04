@@ -9,25 +9,21 @@
 
 Pythonic access to UNESCO data
 
-`unesco_reader` is a Python package providing a simple interface to access UNESCO data. 
-UNESCO does not currently provide an API to access its data, particularly the widely used 
-UNESCO Institute for Statistics (UIS) data. Users must download the data from the UIS bulk download
-services as a zipped file, and then extract the data from the zip file. This requires several manual steps,
-and some of the datasets are too large to be read easily with a standard spreadsheet program
-and must be read programmatically. UNESCO provides some guidance on how to do this in their 
-[python tutorial](https://apiportal.uis.unesco.org/bdds-tutorial).
+`unesco_reader` is a Python package providing a simple interface to access UNESCO Institute of Statistics (UIS)
+data. UIS currently does not offer API access to its data. Users must download zipped files and extract the data.
+This process requires several manual steps explained in their [python tutorial](https://apiportal.uis.unesco.org/bdds-tutorial). This package simplifies the process by providing a simple
+interface to access, explore, and analyze the data, using pandas DataFrames. This package also
+allows users to view dataset documentation and other information such as the latest update date for, and all
+available datasets from UIS.
 
-With `unesco_reader`, users don't need to worry about downloading the data, extracting it from the zip file,
-and following the python tutorial - this is all taken care of. This package handles accessing the data directly from the UNESCO website, and provides a simple interface to
-explore the data.
+### Note</b>: 
+UIS data is expected to be accessible through the DataCommons API in the future and should
+be the preferred method to access the data. Future versions of this package may include support for the API,
+or may be deprecated and remain as a legacy package.
 
-<b>Note</b>:
-
-This package is currently in development, and only supports UIS datasets.
-It contains basic functionality to extract and interact with the data, 
-and will be expanded to include more analytical functionality in the future.
-All feedback, suggestions, and contributions are welcome!
-
+This package is designed to scrape data from the UIS website. As a result of this approach
+the package may be subject to breakage if the website structure or data file formats change. 
+Please report any unexpected errors or issues you encounter. All feedback, suggestions, and contributions are welcome!
 
 ## Installation
 
@@ -37,95 +33,132 @@ $ pip install unesco-reader
 
 ## Usage
 
-To access UIS data, import the `uis` module from `unesco_reader`
+Importing the package
 ```python
-from unesco_reader import uis
+import unesco_reader as uis
 ```
 
+Retrieve information about all the available datasets from UIS.
+```python
+uis.info()
+```
+This function will display all available datasets and relevant information about them.
+```
+>>>
+name                                                               latest_update    theme
+-----------------------------------------------------------------  ---------------  ---------
+SDG Global and Thematic Indicators                                 February 2024    Education
+Other Policy Relevant Indicators (OPRI)                            February 2024    Education
+Research and Development (R&D) SDG 9.5                             February 2024    Science
+Research and Development (R&D) – Other Policy Relevant Indicators  February 2024    Science
+...
+```
 
-You can see available datasets or retrieve information for a particular dataset. 
-To see all available datasets from UIS, run the following function:
-
+Retrieve a list of all available datasets from UIS.
 ```python
 uis.available_datasets()
-```
-The output will be a list of available dataset codes `['SDG', 'OPRI', 'SCI', 'SDG11', 'DEM']`.
 
-Optionally you can return available datasets as names, and see available 
-datasets that belong to a particular category.
+>>> ['SDG Global and Thematic Indicators',
+     'Other Policy Relevant Indicators (OPRI)',
+     'Research and Development (R&D) SDG 9.5',
+     ...]
+```
+
+Optionally you can specify a theme to filter the datasets.
+```python
+uis.available_datasets(theme='Education')
+```
+
+
+To access data for a particular dataset, use the `UIS` class passing the name of the dataset. 
+A `UIS` object allows a user to easily access, explore, and analyse the data.
+On instantiation, the data will be extracted from the UIS website, or if it has already been 
+extracted, it will be read from the cache (more on caching below)
 
 ```python
-uis.available_datasets(as_names=True, category='education')
+sdg = uis.UIS("SDG Global and Thematic Indicators")
 ```
 
-To see details about a particular dataset, call the `dataset_info()` 
-function passing in either the dataset code or name.
+Basic information about the dataset can be accessed using the `info` method.
+```python
+sdg.info()
+```
+This will display information about the dataset, such as the name, and the latest update, and theme
+
+```
+>>>
+-------------  ----------------------------------
+name           SDG Global and Thematic Indicators
+latest update  February 2024
+theme          Education
+-------------  ----------------------------------
+```
+
+Information is also accessible through the attributes of the object.
+```python
+sdg.name
+sdg.latest_update
+sdg.theme
+sdg.readme
+```
+
+The `readme` attribute contains the dataset documentation. To display the documentation, use the `display_readme` method.
+```python
+sdg.display_readme()
+```
+
+Various methods exist to access the data.
+To access country data:
+```python
+sdg.get_country_data()
+```
+This will return a pandas DataFrame with the country data, in a structured and expected format.
+By default the dataframe will not contain metadata. To include metadata in the output, set the `metadata` parameter to `True`.
+Countries may also be filtered for a specific region by specifying the region's ID in the `region` parameter.
+To see available regions use the `get_regions` method.
 
 ```python
-uis.dataset_info('SDG')
+sdg.get_country_data(metadata=True, region='WB:World')
 ```
 
-Information about the dataset will be printed:
-```
-----------------  -----------------------------------------------
-dataset_name      SDG Global and Thematic Indicators
-dataset_code      SDG
-dataset_category  education
-----------------  -----------------------------------------------
-```
-
-To extract and explore the data in a particular dataset, use the `UIS` class. 
-A `UIS` object allows a user to extract the data, either from directly from
-UIS bulk download services, or from a zipped file downloaded locally, 
-and explore and analyze the data easily.
-
-To use, first create an instance of `UIS`, passing either the dataset code or name. 
-Here we create an object for the "SDG" dataset.
-
+To access regional data:
 ```python
-sdg = uis.UIS("SDG")
+sdg.get_region_data()
 ```
+This will return a pandas DataFrame with the regional data, in a structured and expected format.
+By default the dataframe will not contain metadata. To include metadata in the output, set the `metadata` parameter to `True`.
 
-Once instantiated, you can retrieve relevant information about the dataset
-
+Metadata, available countries, available regions, and variables are also accessible through class objects.
 ```python
-sdg.dataset_name # SDG Global and Thematic Indicators
-sdg.dataset_code # SDG
-sdg.dataset_category # education
-sdg.link # https://apimgmtstzgjpfeq2u763lag.blob.core.windows.net/uisdatastore/SDG.zip
+sdg.get_metadata()
+sdg.get_countries()
+sdg.get_regions()
 ```
 
-To access and start exploring the data, you need to load the data to the object
-using the `load_data` method. This will download the data from the UNESCO website,
-clean it, and format it as a pandas DataFrame stored in the object. Optionally,
-if you have downloaded the zipped file locally, you can pass the path to the file.
-
+To refresh the data and extract the latest data from the UIS website, use the `refresh_data` method.
 ```python
-sdg = UIS("SDG")
-sdg.load_data()
+sdg.refresh_data()
 ```
 
-Once the data is loaded, you can access it using the `get_data` method.
+### Caching
 
+Caching is used to prevent unnecessary requests to the UIS website and enhance performance.
+To refresh data returned by functions, use the `refresh` parameter.
 ```python
-df = sdg.get_data()
-print(df)
+uis.info(refresh=True)
+uis.info(refresh=True)
 ```
-The result will be a pandas DataFrame with the data. Here is a sample what the data looks like:
+`refresh=True` will clear the cache and force extraction of the data and information from the UIS website.
 
-| INDICATOR_ID           | INDICATOR_NAME                                   | COUNTRY_ID | COUNTRY_NAME | YEAR | VALUE |
-| ---------------------- | ------------------------------------------------ | ---------- | ------------ | ---- | ----- |
-| ADMI.ENDOFLOWERSEC.MAT | Administration of a nationally-representative... | ABW        | Aruba        | 2014 | 0.0   |
-| ADMI.ENDOFLOWERSEC.MAT | Administration of a nationally-representative... | ABW        | Aruba        | 2015 | 0.0   |
-| ADMI.ENDOFLOWERSEC.MAT | Administration of a nationally-representative... | ABW        | Aruba        | 2016 | 0.0   |
-| ADMI.ENDOFLOWERSEC.MAT | Administration of a nationally-representative... | ABW        | Aruba        | 2017 | 0.0   |
-| ADMI.ENDOFLOWERSEC.MAT | Administration of a nationally-representative... | ABW        | Aruba        | 2018 | 0.0   |
+For the `UIS` class, the `refresh_data` method will clear the cache and extract the latest data from the UIS website.
+```python
+sdg.refresh_data()
+```
 
-In the `get_data` you can specify whether you want to return country or regional (if available) data,
-and whether to include metadata in the dataframe. 
-
-Several other tools are available to explore the data. 
-Please see the [documentation](https://unesco-reader.readthedocs.io/en/latest/) for more details.
+To clear all cached data, use the `clear_all_caches` method.
+```python
+uis.clear_all_caches()
+```
 
 
 ## Contributing

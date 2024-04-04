@@ -91,21 +91,12 @@ class UISInfoScraper:
         return name, latest_update
 
     @staticmethod
-    #@lru_cache
-    def get_links() -> list[dict]: #refresh: bool = False
+    def get_links() -> list[dict]:
         """Get a list of dictionaries containing the theme, name, latest update, and href of each zip file.
-
-        Args:
-            refresh: if True, refresh the cache and get the links from the website
 
         Returns:
             list of dictionaries containing the theme, name, latest update, and href of each zip file
-
         """
-
-        # Clear the cache if refresh is True
-        # if refresh:
-        #     LinkScraper.get_links.cache_clear()
 
         links_list = []
         soup = UISInfoScraper.get_soup()

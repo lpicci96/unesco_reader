@@ -52,10 +52,12 @@ def fetch_data(href, refresh: bool = False) -> UISData:
     return UISData(get_zipfile(href))
 
 
-def clear_all_caches():
+def clear_all_caches() -> None:
     """Clear all caches.
+
     This function will clear all caches used. Any subsequent calls to the functions
     that use caching will fetch the data from the website.
+
     NOTE: any UIS objects already created will still have the old data. You will need to
     run the `refresh()` method get the latest data.
     """
@@ -70,8 +72,7 @@ def info(refresh: bool = False) -> None:
 
     This function will print dataset names, themes, and date of the last update
     from the UIS website. NOTE: cache is used to store the data and prevent multiple
-    requests to the UIS website. If you want to refresh the cache and get the latest data,
-    set refresh=True.
+    requests to the UIS website. If you want to refresh the cache and get the latest data, set refresh=True.
 
     Args:
         refresh: if True, refresh the cache and fetch the links from the website
@@ -88,9 +89,9 @@ def info(refresh: bool = False) -> None:
 def available_datasets(theme: str = None, refresh=True) -> list[str]:
     """Return a list of available datasets in the UIS database.
 
-    Args: theme: if specified, return only datasets in the specified theme. To see all themes and get other
-    information run, run info()
-    refresh: if True, refresh the cache and fetch the links from the website
+    Args:
+        theme: if specified, return only datasets in the specified theme. run info() to get more information
+        refresh: if True, refresh the cache and fetch the links from the website
 
     Returns: list of dataset names
     """
@@ -109,13 +110,82 @@ def available_datasets(theme: str = None, refresh=True) -> list[str]:
 
 
 class UIS:
-    """Class for accessing data from the UIS database."""
+    """A class to access UIS data for a specific dataset.
+
+    This class will retrieve information and data from the UIS database for a specific dataset. The data will be cleaned
+    and processed to be retrievable in a structured and expected format as pandas dataframes. The data than be accessed
+    is country data, regional data, metadata, countries, regions, and variables. Additional information is also
+    accessible though class attributes and methods, such as dataset name, theme, latest update, and displaying the full
+    dataset documentation.
+
+    By default, the data is cached to prevent multiple requests to the UIS website. Additional instantiations of the
+    UIS class for the same dataset will use the cached data. Data can be refreshed by calling the refresh() method.
+    Outside the UIS class, caches can be cleared by calling the clear_all_caches() function.
+
+    # Usage:
+
+    To instantiate the class, provide the name of the dataset as a string. Available datasets can be found by calling
+    the available_datasets() function or by calling the info() function to display additional information about all
+    datasets.
+        >>> sdg = UIS('SDG Global and Thematic Indicators')
+
+    To display information about the dataset, call the info() method.
+        >>> sdg.info()
+
+    Information is also available through class attributes:
+        >>> sdg.name
+        >>> sdg.theme
+        >>> sdg.latest_update
+        >>> sdg.readme
+
+    You can display the readme documentation by calling the display_readme() method.
+        >>> sdg.display_readme()
+
+    Various methods exist to access the data in different formats:
+        To access the country:
+        >>> sdg.get_country_data()
+
+        By default, the `get_country_data()` method will return the country data as a pandas DataFrame with only the
+        necessary columns. To include metadata columns, set `include_metadata=True`. To filter the data by region, set
+        the region parameter to the region id. To get information about available regions, call the `get_regions()`
+        method.
+        >>> sdg.get_country_data(include_metadata=True, region='WB:World')
+
+        To access the regional data:
+        >>> sdg.get_region_data()
+        By default, the `get_region_data()` method will return the regional data as a pandas DataFrame with only the
+        necessary columns. To include metadata columns, set `include_metadata=True`.
+
+        To access the metadata:
+        >>> sdg.get_metadata()
+
+        To access the available countries, regions, and variables:
+        >>> sdg.get_countries()
+        >>> sdg.get_regions()
+        >>> sdg.get_variables()
+
+        To refresh the data, call the refresh() method.
+        >>> sdg.refresh()
+
+        # NOTE:
+        This package is designed to scrape data from the UIS Bulk Download page since no API is available. As a result
+        this approach may cause slow performance in areas of low speed internet connection for larger datasets.
+        Additionally unexpected errors may arise if the UIS website structure changes or the structure of the data files
+        changes. Please report any issues encountered on the package repository: https://github.com/lpicci96/unesco_reader
+    """
 
     def __init__(self, dataset_name: str):
         self._dataset_info = fetch_dataset_info(dataset_name)  # get dataset information
         self._data = fetch_data(self._dataset_info['href'])  # get the data
+        logger.info(f"Dataset loaded successfully.")
 
-    def refresh(self):
+    def __str__(self):
+        return f"UIS dataset: {self._dataset_info['name']}"
+
+    def __repr__(self):
+        return f"UIS dataset: {self._dataset_info['name']}"
+
+    def refresh(self) -> None:
         """Refresh the data by fetching the latest data from the UIS website."""
 
         self._dataset_info = fetch_dataset_info(self._dataset_info['name'], refresh=True)
@@ -149,9 +219,10 @@ class UIS:
     def get_country_data(self, include_metadata: bool = False, region: str | None = None) -> pd.DataFrame:
         """Return the data as a pandas DataFrame.
 
-            Args: include_metadata: if True, include metadata columns in the DataFrame region: the region id to
-            filter the data by. This will keep only countries in the specified region.If None (default),
-            all countries are returned. Run get_regions() to get information about available regions.
+            Args:
+                include_metadata: if True, include metadata columns in the DataFrame.
+                region: the region id to filter the data by. This will keep only countries in the specified region.
+                        If None (default), all countries are returned. Run get_regions() to get information about available regions.
 
             Returns:
                 country data as a pandas DataFrame
@@ -190,7 +261,6 @@ class UIS:
 
             Returns:
                 regional data as a pandas DataFrame
-
         """
 
         if self._data.region_data is None:
@@ -206,8 +276,7 @@ class UIS:
     def get_countries(self) -> pd.DataFrame:
         """Return the available countries and their information as a pandas DataFrame.
 
-        The returned dataframe will containe county IDs as ISO3 codes and country names.
-
+        The returned dataframe will contain county IDs as ISO3 codes and country names.
         """
 
         if self._data.country_concordance is None:
@@ -219,7 +288,7 @@ class UIS:
         """Return the available regions and their information as a pandas DataFrame.
 
         The returned dataframe will contain region IDs, country id and name that belong to the region,
-        the entity that groups countries (eg WB for World Bank regions), and the region name.
+        the entity that groups countries (e.g. WB for World Bank regions), and the region name.
         """
 
         if self._data.region_concordance is None:
