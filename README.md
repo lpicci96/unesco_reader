@@ -13,8 +13,8 @@ Pythonic access to UNESCO data
 data. UIS currently does not offer API access to its data. Users must download zipped files and extract the data.
 This process requires several manual steps explained in their [python tutorial](https://apiportal.uis.unesco.org/bdds-tutorial). This package simplifies the process by providing a simple
 interface to access, explore, and analyze the data, using pandas DataFrames. This package also
-allows users to view dataset documentation and other information such as the latest update date for, and all
-available datasets from UIS.
+allows users to view dataset documentation and other information such as the date of last update, as well as retrieve
+information about all available datasets from UIS.
 
 ### Note</b>: 
 UIS data is expected to be accessible through the DataCommons API in the future and should
@@ -144,7 +144,10 @@ sdg.refresh()
 ### Caching
 
 Caching is used to prevent unnecessary requests to the UIS website and enhance performance.
-To refresh data returned by functions, use the `refresh` parameter.
+To refresh data returned by functions, use the `refresh` parameter. Caching using the LRU 
+(Least Recently Used) algorithm approach and stores data in RAM. The cache is cleared when the
+program is terminated.
+
 ```python
 uis.info(refresh=True)
 uis.available_datasets(refresh=True)

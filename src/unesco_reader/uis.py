@@ -122,7 +122,9 @@ class UIS:
 
     This class will retrieve information and data from the UIS database for a specific dataset. The data will be cleaned
     and processed to be retrievable in a structured and expected format as pandas dataframes. The data than be accessed
-    is country data, regional data, metadata, countries, regions, and variables. Additional information is also
+    is country data, regional data, metadata, countries, regions, and variables. However, not all datasets may have all
+    types of data available. For example some datasets might not have regional data or metadata. In those cases
+    calling the respective methods will raise an error. Additional information is also
     accessible though class attributes and methods, such as dataset name, theme, latest update, and displaying the full
     dataset documentation.
 
