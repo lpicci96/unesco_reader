@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.0 - 2024-04-04
+- First stable release of the package
+- Added caching to the UIS class to speed up data retrieval
+- Changed user interface and backend following UIS website changes (changes are breaking)
+
 ## v0.3.1 - 2023-03-17
 - Fixed bug in data extraction to handle changes in UIS column naming
   conventions.
