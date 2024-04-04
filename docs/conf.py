@@ -6,9 +6,9 @@
 
 # -- Project information -----------------------------------------------------
 
-project = u"unesco_reader"
-copyright = u"2023, Luca Picci"
-author = u"Luca Picci"
+project = "unesco_reader"
+copyright = "2023, Luca Picci"
+author = "Luca Picci"
 
 # -- General configuration ---------------------------------------------------
 

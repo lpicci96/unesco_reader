@@ -14,7 +14,7 @@ shell_handler.setLevel(logging.INFO)
 # Format the outputs   "%(levelname)s (%(asctime)s): %(message)s"
 fmt_file = "%(levelname)s: %(message)s"
 
-#"%(levelname)s %(asctime)s [%(filename)s:%(funcName)s:%(lineno)d] %(message)s"
+# "%(levelname)s %(asctime)s [%(filename)s:%(funcName)s:%(lineno)d] %(message)s"
 fmt_shell = "%(levelname)s: %(message)s"
 
 shell_formatter = logging.Formatter(fmt_shell)  # Create formatters

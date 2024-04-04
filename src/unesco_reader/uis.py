@@ -21,7 +21,7 @@ from unesco_reader.config import logger
 def fetch_info(refresh: bool = False) -> list[dict]:
     """Fetch information about the datasets available in the UIS database."""
 
-    # Clear the cache if refresh is True or if caching is disabled
+    # Clear the cache if refresh is True
     if refresh:
         fetch_info.cache_clear()
 
@@ -34,18 +34,20 @@ def fetch_dataset_info(dataset_name: str, refresh: bool = False) -> dict:
     # get dataset information
     datasets = fetch_info(refresh)
     for dataset in datasets:
-        if dataset_name == dataset['name']:
+        if dataset_name == dataset["name"]:
             return dataset
     else:
-        raise ValueError(f"Dataset not found: {dataset_name}. \nPlease select from the following datasets:\n "
-                         f"{', '.join([name['name'] for name in datasets])}")
+        raise ValueError(
+            f"Dataset not found: {dataset_name}. \nPlease select from the following datasets:\n "
+            f"{', '.join([name['name'] for name in datasets])}"
+        )
 
 
 @lru_cache
 def fetch_data(href, refresh: bool = False) -> UISData:
     """Fetch data from a url"""
 
-    # Clear the cache if refresh is True or if caching is disabled
+    # Clear the cache if refresh is True
     if refresh:
         fetch_data.cache_clear()
 
@@ -80,8 +82,8 @@ def info(refresh: bool = False) -> None:
     """
 
     _info = fetch_info(refresh)
-    headers = [key for key in _info[0].keys() if key != 'href']
-    rows = [{k: v for k, v in item.items() if k != 'href'} for item in _info]
+    headers = [key for key in _info[0].keys() if key != "href"]
+    rows = [{k: v for k, v in item.items() if k != "href"} for item in _info]
     rows_list = [list(row.values()) for row in rows]
     print(tabulate(rows_list, headers=headers, tablefmt="simple"))
 
@@ -100,13 +102,19 @@ def available_datasets(theme: str = None, refresh=True) -> list[str]:
 
     if theme is not None:
         # check if theme is valid
-        if theme not in [dataset['theme'] for dataset in datasets]:
-            raise ValueError(f"Theme not found: {theme}. \nPlease select from the following themes:\n "
-                             f"{', '.join(theme_name for theme_name in list(set([dataset['theme'] for dataset in datasets])))}")
+        if theme not in [dataset["theme"] for dataset in datasets]:
+            raise ValueError(
+                f"Theme not found: {theme}. \nPlease select from the following themes:\n "
+                f"{', '.join(theme_name for theme_name in list(set([dataset['theme'] for dataset in datasets])))}"
+            )
 
-        return [dataset['name'] for dataset in fetch_info(refresh) if dataset['theme'] == theme]
+        return [
+            dataset["name"]
+            for dataset in fetch_info(refresh)
+            if dataset["theme"] == theme
+        ]
 
-    return [dataset['name'] for dataset in fetch_info(refresh)]
+    return [dataset["name"] for dataset in fetch_info(refresh)]
 
 
 class UIS:
@@ -176,7 +184,7 @@ class UIS:
 
     def __init__(self, dataset_name: str):
         self._dataset_info = fetch_dataset_info(dataset_name)  # get dataset information
-        self._data = fetch_data(self._dataset_info['href'])  # get the data
+        self._data = fetch_data(self._dataset_info["href"])  # get the data
         logger.info(f"Dataset loaded successfully.")
 
     def __str__(self):
@@ -188,15 +196,20 @@ class UIS:
     def refresh(self) -> None:
         """Refresh the data by fetching the latest data from the UIS website."""
 
-        self._dataset_info = fetch_dataset_info(self._dataset_info['name'], refresh=True)
-        self._data = fetch_data(self._dataset_info['href'], refresh=True)
+        self._dataset_info = fetch_dataset_info(
+            self._dataset_info["name"], refresh=True
+        )
+        self._data = fetch_data(self._dataset_info["href"], refresh=True)
         logger.info(f"Data refreshed successfully.")
 
     def info(self) -> None:
         """Display information about the dataset."""
 
-        _info = [['latest update' if key == 'latest_update' else key, value]
-                 for key, value in self._dataset_info.items() if key != 'href']
+        _info = [
+            ["latest update" if key == "latest_update" else key, value]
+            for key, value in self._dataset_info.items()
+            if key != "href"
+        ]
 
         # Use tabulate to format this list, specifying no headers and a plain format
         print(tabulate(_info, tablefmt="simple"))
@@ -204,44 +217,61 @@ class UIS:
     @property
     def name(self) -> str:
         """Return the name of the dataset."""
-        return self._dataset_info['name']
+        return self._dataset_info["name"]
 
     @property
     def theme(self) -> str:
         """Return the theme of the dataset."""
-        return self._dataset_info['theme']
+        return self._dataset_info["theme"]
 
     @property
     def latest_update(self) -> str:
         """Return the date of the last update of the dataset."""
-        return self._dataset_info['latest_update']
+        return self._dataset_info["latest_update"]
 
-    def get_country_data(self, include_metadata: bool = False, region: str | None = None) -> pd.DataFrame:
+    def get_country_data(
+        self, include_metadata: bool = False, region: str | None = None
+    ) -> pd.DataFrame:
         """Return the data as a pandas DataFrame.
 
-            Args:
-                include_metadata: if True, include metadata columns in the DataFrame.
-                region: the region id to filter the data by. This will keep only countries in the specified region.
-                        If None (default), all countries are returned. Run get_regions() to get information about available regions.
+        Args:
+            include_metadata: if True, include metadata columns in the DataFrame.
+            region: the region id to filter the data by. This will keep only countries in the specified region.
+                    If None (default), all countries are returned. Run get_regions() to get information about available regions.
 
-            Returns:
-                country data as a pandas DataFrame
+        Returns:
+            country data as a pandas DataFrame
         """
         df = self._data.country_data
 
         # remove metadata columns if include_metadata is False
         if not include_metadata:
-            df = df[['country_id', 'country_name', 'indicator_id', 'indicator_label', 'year', 'value']]
+            df = df[
+                [
+                    "country_id",
+                    "country_name",
+                    "indicator_id",
+                    "indicator_label",
+                    "year",
+                    "value",
+                ]
+            ]
 
         if region is not None:  # if a region is specified, try filter the data
-            if self._data.region_concordance is None:  # if regional data is not available, raise an error
+            if (
+                self._data.region_concordance is None
+            ):  # if regional data is not available, raise an error
                 raise ValueError("Regional data is not available for this dataset.")
 
-            if region not in self._data.region_concordance['region_id'].unique():  # if no region found, raise an error
+            if (
+                region not in self._data.region_concordance["region_id"].unique()
+            ):  # if no region found, raise an error
                 raise ValueError(f"Region ID not found: {region}")
 
-            countries_in_region = self._data.region_concordance.loc[self._data.region_concordance['region_id'] == region, 'country_id']
-            df = df[df['country_id'].isin(countries_in_region)]
+            countries_in_region = self._data.region_concordance.loc[
+                self._data.region_concordance["region_id"] == region, "country_id"
+            ]
+            df = df[df["country_id"].isin(countries_in_region)]
 
         return df.reset_index(drop=True)
 
@@ -256,11 +286,11 @@ class UIS:
     def get_region_data(self, include_metadata: bool = False) -> pd.DataFrame:
         """Return the regional data as a pandas DataFrame.
 
-            Args:
-                include_metadata: if True, include metadata columns in the DataFrame
+        Args:
+            include_metadata: if True, include metadata columns in the DataFrame
 
-            Returns:
-                regional data as a pandas DataFrame
+        Returns:
+            regional data as a pandas DataFrame
         """
 
         if self._data.region_data is None:
@@ -269,7 +299,7 @@ class UIS:
         df = self._data.region_data
 
         if not include_metadata:
-            df = df[['region_id','indicator_id', 'indicator_label', 'year', 'value']]
+            df = df[["region_id", "indicator_id", "indicator_label", "year", "value"]]
 
         return df
 
@@ -280,7 +310,9 @@ class UIS:
         """
 
         if self._data.country_concordance is None:
-            raise ValueError("Information about countries is not available for this dataset.")
+            raise ValueError(
+                "Information about countries is not available for this dataset."
+            )
 
         return self._data.country_concordance
 
@@ -292,7 +324,9 @@ class UIS:
         """
 
         if self._data.region_concordance is None:
-            raise ValueError("Information about regions is not available for this dataset.")
+            raise ValueError(
+                "Information about regions is not available for this dataset."
+            )
 
         return self._data.region_concordance
 
@@ -303,7 +337,9 @@ class UIS:
         """
 
         if self._data.variable_concordance is None:
-            raise ValueError("Information about variables is not available for this dataset.")
+            raise ValueError(
+                "Information about variables is not available for this dataset."
+            )
 
         return self._data.variable_concordance
 

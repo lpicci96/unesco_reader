@@ -70,18 +70,22 @@ def test_remove_en_suffix():
 def test_squash_duplicates():
     """"""
 
-    df = pd.DataFrame({
-        'country': ['AFG', 'AFG', 'AFG', 'IND'],
-        'type': ['source', 'source', 'value type', 'source'],
-        'metadata': ['UIS', 'WB', 'estimate', 'UIS']
-    })
-    result_df = formatting.squash_duplicates(df, ['country', 'type'], 'metadata')
+    df = pd.DataFrame(
+        {
+            "country": ["AFG", "AFG", "AFG", "IND"],
+            "type": ["source", "source", "value type", "source"],
+            "metadata": ["UIS", "WB", "estimate", "UIS"],
+        }
+    )
+    result_df = formatting.squash_duplicates(df, ["country", "type"], "metadata")
 
-    expected_df = pd.DataFrame({
-        'country': ['AFG', 'IND', 'AFG'],
-        'type': ['value type', 'source', 'source'],
-        'metadata': ['estimate', 'UIS', 'UIS / WB']
-    })
+    expected_df = pd.DataFrame(
+        {
+            "country": ["AFG", "IND", "AFG"],
+            "type": ["value type", "source", "source"],
+            "metadata": ["estimate", "UIS", "UIS / WB"],
+        }
+    )
 
     pd.testing.assert_frame_equal(result_df, expected_df)
 
@@ -93,32 +97,68 @@ class TestUISData:
     def uis_data(self):
         # Simulate a zip file in memory
         in_memory_zip = io.BytesIO()
-        with zipfile.ZipFile(in_memory_zip, 'w') as zf:
-            zf.writestr(f'{TEST_DATASET_CODE}_COUNTRY.csv', 'country_id,country_name\n1,Test Country')
-            zf.writestr(f'{TEST_DATASET_CODE}_README_SOME_RELEASE.md', '#This is a test README file.')
-            zf.writestr(f'{TEST_DATASET_CODE}_REGION.csv', 'region_id,country_id,country_name_en\nWB:Test Region (code: 1),1,Test Country')
-            zf.writestr(f'{TEST_DATASET_CODE}_DATA_NATIONAL.csv', 'indicator_id,country_id,year,value,magnitude,qualifier\nind1,1,2020,10,,')
-            zf.writestr(f'{TEST_DATASET_CODE}_DATA_REGIONAL.csv', 'indicator_id,region_id,year,value,magnitude,qualifier\nind1,WB:Test Region (code: 1),2020,10,,')
-            zf.writestr(f'{TEST_DATASET_CODE}_LABEL.csv', 'indicator_id,indicator_label_en\nind1,Test Indicator')
-            zf.writestr(f'{TEST_DATASET_CODE}_METADATA.csv', 'indicator_id,country_id,year,type,metadata\nind1,1,2020,Source,UIS\nind1,1,2020,Source,WB\nind1,1,2020,value type,estimate\nind1,2,2020,Source,UIS')
+        with zipfile.ZipFile(in_memory_zip, "w") as zf:
+            zf.writestr(
+                f"{TEST_DATASET_CODE}_COUNTRY.csv",
+                "country_id,country_name\n1,Test Country",
+            )
+            zf.writestr(
+                f"{TEST_DATASET_CODE}_README_SOME_RELEASE.md",
+                "#This is a test README file.",
+            )
+            zf.writestr(
+                f"{TEST_DATASET_CODE}_REGION.csv",
+                "region_id,country_id,country_name_en\nWB:Test Region (code: 1),1,Test Country",
+            )
+            zf.writestr(
+                f"{TEST_DATASET_CODE}_DATA_NATIONAL.csv",
+                "indicator_id,country_id,year,value,magnitude,qualifier\nind1,1,2020,10,,",
+            )
+            zf.writestr(
+                f"{TEST_DATASET_CODE}_DATA_REGIONAL.csv",
+                "indicator_id,region_id,year,value,magnitude,qualifier\nind1,WB:Test Region (code: 1),2020,10,,",
+            )
+            zf.writestr(
+                f"{TEST_DATASET_CODE}_LABEL.csv",
+                "indicator_id,indicator_label_en\nind1,Test Indicator",
+            )
+            zf.writestr(
+                f"{TEST_DATASET_CODE}_METADATA.csv",
+                "indicator_id,country_id,year,type,metadata\nind1,1,2020,Source,UIS\nind1,1,2020,Source,WB\nind1,1,2020,value type,estimate\nind1,2,2020,Source,UIS",
+            )
 
         in_memory_zip.seek(0)  # Reset file pointer to the beginning
-        folder = zipfile.ZipFile(in_memory_zip, 'r')
+        folder = zipfile.ZipFile(in_memory_zip, "r")
         return formatting.UISData(folder)
 
     @pytest.fixture
     def uis_data_no_region(self):
         # Simulate a zip file in memory
         in_memory_zip = io.BytesIO()
-        with zipfile.ZipFile(in_memory_zip, 'w') as zf:
-            zf.writestr(f'{TEST_DATASET_CODE}_COUNTRY.csv', 'COUNTRY_ID,country_name\n1,Test Country')
-            zf.writestr(f'{TEST_DATASET_CODE}_README_SOME_RELEASE.md', '#This is a test README file.')
-            zf.writestr(f'{TEST_DATASET_CODE}_DATA_NATIONAL.csv', 'INDICATOR_ID,country_id,year,value,magnitude,qualifier\nind1,1,2020,10,,')
-            zf.writestr(f'{TEST_DATASET_CODE}_LABEL.csv', 'INDICATOR_ID,INDICATOR_LABEL_EN\nind1,Test Indicator')
-            zf.writestr(f'{TEST_DATASET_CODE}_METADATA.csv', 'INDICATOR_ID,country_id,year,type,metadata\nind1,1,2020,Source,This is test metadata')
+        with zipfile.ZipFile(in_memory_zip, "w") as zf:
+            zf.writestr(
+                f"{TEST_DATASET_CODE}_COUNTRY.csv",
+                "COUNTRY_ID,country_name\n1,Test Country",
+            )
+            zf.writestr(
+                f"{TEST_DATASET_CODE}_README_SOME_RELEASE.md",
+                "#This is a test README file.",
+            )
+            zf.writestr(
+                f"{TEST_DATASET_CODE}_DATA_NATIONAL.csv",
+                "INDICATOR_ID,country_id,year,value,magnitude,qualifier\nind1,1,2020,10,,",
+            )
+            zf.writestr(
+                f"{TEST_DATASET_CODE}_LABEL.csv",
+                "INDICATOR_ID,INDICATOR_LABEL_EN\nind1,Test Indicator",
+            )
+            zf.writestr(
+                f"{TEST_DATASET_CODE}_METADATA.csv",
+                "INDICATOR_ID,country_id,year,type,metadata\nind1,1,2020,Source,This is test metadata",
+            )
 
         in_memory_zip.seek(0)  # Reset file pointer to the beginning
-        folder = zipfile.ZipFile(in_memory_zip, 'r')
+        folder = zipfile.ZipFile(in_memory_zip, "r")
         return formatting.UISData(folder)
 
     @pytest.fixture
@@ -126,11 +166,11 @@ class TestUISData:
         """Simulate a situation where all expected files are missing in the zip file"""
 
         in_memory_zip = io.BytesIO()
-        with zipfile.ZipFile(in_memory_zip, 'w') as zf:
-            zf.writestr(f'{TEST_DATASET_CODE}_UNEXPECTED.txt', 'Unexpected file')
+        with zipfile.ZipFile(in_memory_zip, "w") as zf:
+            zf.writestr(f"{TEST_DATASET_CODE}_UNEXPECTED.txt", "Unexpected file")
 
         in_memory_zip.seek(0)  # Reset file pointer to the beginning
-        folder = zipfile.ZipFile(in_memory_zip, 'r')
+        folder = zipfile.ZipFile(in_memory_zip, "r")
         return folder
 
     @pytest.fixture
@@ -140,11 +180,14 @@ class TestUISData:
         """
 
         in_memory_zip = io.BytesIO()
-        with zipfile.ZipFile(in_memory_zip, 'w') as zf:
-            zf.writestr(f'{TEST_DATASET_CODE}_README_SOME_RELEASE.md', '#This is a test README file.')
+        with zipfile.ZipFile(in_memory_zip, "w") as zf:
+            zf.writestr(
+                f"{TEST_DATASET_CODE}_README_SOME_RELEASE.md",
+                "#This is a test README file.",
+            )
 
         in_memory_zip.seek(0)  # Reset file pointer to the beginning
-        folder = zipfile.ZipFile(in_memory_zip, 'r')
+        folder = zipfile.ZipFile(in_memory_zip, "r")
         return formatting.UISData(folder)
 
     @pytest.fixture
@@ -154,12 +197,15 @@ class TestUISData:
         """
 
         in_memory_zip = io.BytesIO()
-        with zipfile.ZipFile(in_memory_zip, 'w') as zf:
-            zf.writestr(f'{TEST_DATASET_CODE}_COUNTRY.csv', 'COUNTRY_ID,country_name\n1,Test Country')
+        with zipfile.ZipFile(in_memory_zip, "w") as zf:
+            zf.writestr(
+                f"{TEST_DATASET_CODE}_COUNTRY.csv",
+                "COUNTRY_ID,country_name\n1,Test Country",
+            )
 
         in_memory_zip.seek(0)
         in_memory_zip.seek(0)  # Reset file pointer to the beginning
-        folder = zipfile.ZipFile(in_memory_zip, 'r')
+        folder = zipfile.ZipFile(in_memory_zip, "r")
         return formatting.UISData(folder)
 
     @pytest.fixture
@@ -169,18 +215,20 @@ class TestUISData:
         """
         # Simulate a zip file in memory
         in_memory_zip = io.BytesIO()
-        with zipfile.ZipFile(in_memory_zip, 'w') as zf:
-            zf.writestr(f'{TEST_DATASET_CODE}_UNEXPECTED.txt', 'Unexpected file')
-            zf.writestr(f'INVALIDCODE_Other_file.txt', 'File with invalid code')
+        with zipfile.ZipFile(in_memory_zip, "w") as zf:
+            zf.writestr(f"{TEST_DATASET_CODE}_UNEXPECTED.txt", "Unexpected file")
+            zf.writestr(f"INVALIDCODE_Other_file.txt", "File with invalid code")
 
         in_memory_zip.seek(0)  # Reset file pointer to the beginning
-        folder = zipfile.ZipFile(in_memory_zip, 'r')
+        folder = zipfile.ZipFile(in_memory_zip, "r")
         return folder
 
     def test_add_variable_names(self, uis_data):
         """Test add_variable_names"""
 
-        df = pd.DataFrame({"indicator_id": ["ind1"], "indicator_label": ["Test Indicator"]})
+        df = pd.DataFrame(
+            {"indicator_id": ["ind1"], "indicator_label": ["Test Indicator"]}
+        )
         test_df = pd.DataFrame({"indicator_id": ["ind1"]})
         uis_data.add_variable_names(test_df)
         pd.testing.assert_frame_equal(test_df, df)
@@ -207,14 +255,15 @@ class TestUISData:
 
     def test_get_file_names(self, uis_data):
         """Test get_file_names when all files are present"""
-        expected_files = {'COUNTRY_CONCORDANCE': f'{TEST_DATASET_CODE}_COUNTRY.csv',
-                          'REGION_CONCORDANCE': f'{TEST_DATASET_CODE}_REGION.csv',
-                          'COUNTRY_DATA': f'{TEST_DATASET_CODE}_DATA_NATIONAL.csv',
-                          'REGION_DATA': f'{TEST_DATASET_CODE}_DATA_REGIONAL.csv',
-                          'VARIABLE_CONCORDANCE': f'{TEST_DATASET_CODE}_LABEL.csv',
-                          'METADATA': f'{TEST_DATASET_CODE}_METADATA.csv',
-                          'README': f'{TEST_DATASET_CODE}_README_SOME_RELEASE.md'
-                          }
+        expected_files = {
+            "COUNTRY_CONCORDANCE": f"{TEST_DATASET_CODE}_COUNTRY.csv",
+            "REGION_CONCORDANCE": f"{TEST_DATASET_CODE}_REGION.csv",
+            "COUNTRY_DATA": f"{TEST_DATASET_CODE}_DATA_NATIONAL.csv",
+            "REGION_DATA": f"{TEST_DATASET_CODE}_DATA_REGIONAL.csv",
+            "VARIABLE_CONCORDANCE": f"{TEST_DATASET_CODE}_LABEL.csv",
+            "METADATA": f"{TEST_DATASET_CODE}_METADATA.csv",
+            "README": f"{TEST_DATASET_CODE}_README_SOME_RELEASE.md",
+        }
         assert uis_data.get_file_names() == expected_files
 
     def test_get_file_names_missing_files(self, uis_data_missing_files):
@@ -226,18 +275,19 @@ class TestUISData:
     def test_get_file_names_no_region(self, uis_data_no_region):
         """Test get_file_names when the regional data is not present"""
 
-        expected_files = {'COUNTRY_CONCORDANCE': f'{TEST_DATASET_CODE}_COUNTRY.csv',
-                          'COUNTRY_DATA': f'{TEST_DATASET_CODE}_DATA_NATIONAL.csv',
-                          'VARIABLE_CONCORDANCE': f'{TEST_DATASET_CODE}_LABEL.csv',
-                          'METADATA': f'{TEST_DATASET_CODE}_METADATA.csv',
-                          'README': f'{TEST_DATASET_CODE}_README_SOME_RELEASE.md'
-                          }
+        expected_files = {
+            "COUNTRY_CONCORDANCE": f"{TEST_DATASET_CODE}_COUNTRY.csv",
+            "COUNTRY_DATA": f"{TEST_DATASET_CODE}_DATA_NATIONAL.csv",
+            "VARIABLE_CONCORDANCE": f"{TEST_DATASET_CODE}_LABEL.csv",
+            "METADATA": f"{TEST_DATASET_CODE}_METADATA.csv",
+            "README": f"{TEST_DATASET_CODE}_README_SOME_RELEASE.md",
+        }
         assert uis_data_no_region.get_file_names() == expected_files
 
     def test_readme(self, uis_data):
         """Test the readme property when the file is present"""
 
-        expected_readme = '#This is a test README file.'
+        expected_readme = "#This is a test README file."
         assert uis_data.readme == expected_readme
 
     def test_readme_missing_file(self, uis_data_missing_only_country_data_present):
@@ -247,50 +297,73 @@ class TestUISData:
     def test_country_concordance(self, uis_data):
         """Test the country_concordance property when the file is present"""
 
-        expected_df = pd.DataFrame({"country_id": [1],
-                                    "country_name": ["Test Country"]})
+        expected_df = pd.DataFrame(
+            {"country_id": [1], "country_name": ["Test Country"]}
+        )
         assert uis_data.country_concordance.equals(expected_df)
 
-    def test_country_concordance_missing_file(self, uis_data_missing_only_readme_present):
+    def test_country_concordance_missing_file(
+        self, uis_data_missing_only_readme_present
+    ):
         """Test the country_concordance property when the file is missing"""
         assert uis_data_missing_only_readme_present.country_concordance is None
 
     def test_region_concordance(self, uis_data):
         """Test the region_concordance property when the file is present"""
 
-        expected_df = pd.DataFrame({'region_id': ['WB:Test Region (code: 1)'],
-                                    'country_id': [1],
-                                    'country_name': ['Test Country']})
-        expected_df[['grouping_entity', 'region_name']] = expected_df['region_id'].str.split(': ', n=1, expand=True)
+        expected_df = pd.DataFrame(
+            {
+                "region_id": ["WB:Test Region (code: 1)"],
+                "country_id": [1],
+                "country_name": ["Test Country"],
+            }
+        )
+        expected_df[["grouping_entity", "region_name"]] = expected_df[
+            "region_id"
+        ].str.split(": ", n=1, expand=True)
 
-        pd.testing.assert_frame_equal(uis_data.region_concordance, expected_df, check_dtype=False)
+        pd.testing.assert_frame_equal(
+            uis_data.region_concordance, expected_df, check_dtype=False
+        )
 
-    def test_region_concordance_missing_file(self, uis_data_missing_only_readme_present):
+    def test_region_concordance_missing_file(
+        self, uis_data_missing_only_readme_present
+    ):
         """Test the region_concordance property when the file is missing"""
         assert uis_data_missing_only_readme_present.region_concordance is None
 
     def test_variable_concordance(self, uis_data):
         """Test the variable_concordance property when the file is present"""
 
-        expected_df = pd.DataFrame({"indicator_id": ["ind1"],
-                                    "indicator_label": ["Test Indicator"]})
+        expected_df = pd.DataFrame(
+            {"indicator_id": ["ind1"], "indicator_label": ["Test Indicator"]}
+        )
         assert uis_data.variable_concordance.equals(expected_df)
 
-    def test_variable_concordance_missing_file(self, uis_data_missing_only_readme_present):
+    def test_variable_concordance_missing_file(
+        self, uis_data_missing_only_readme_present
+    ):
         """Test the variable_concordance property when the file is missing"""
         assert uis_data_missing_only_readme_present.variable_concordance is None
 
     def test_metadata(self, uis_data):
         """Test the metadata property when the file is present"""
 
-        expected_df = pd.DataFrame({"indicator_id": ["ind1", "ind1", 'ind1'],
-                                    "country_id": [1, 2, 1],
-                                    "year": [2020, 2020, 2020],
-                                    "type": ["value type", "Source", "Source"],
-                                    "metadata": ['estimate', 'UIS', 'UIS / WB'],
-                                    "indicator_label": ["Test Indicator", "Test Indicator", "Test Indicator"],
-                                    "country_name": ["Test Country", np.nan, "Test Country"]
-                                    })
+        expected_df = pd.DataFrame(
+            {
+                "indicator_id": ["ind1", "ind1", "ind1"],
+                "country_id": [1, 2, 1],
+                "year": [2020, 2020, 2020],
+                "type": ["value type", "Source", "Source"],
+                "metadata": ["estimate", "UIS", "UIS / WB"],
+                "indicator_label": [
+                    "Test Indicator",
+                    "Test Indicator",
+                    "Test Indicator",
+                ],
+                "country_name": ["Test Country", np.nan, "Test Country"],
+            }
+        )
         assert uis_data.metadata.equals(expected_df)
 
     def test_metadata_missing_file(self, uis_data_missing_only_readme_present):
@@ -300,17 +373,20 @@ class TestUISData:
     def test_country_data(self, uis_data):
         """Test the country_data property when the file is present"""
 
-        expected_df = pd.DataFrame({"indicator_id": ["ind1"],
-                                    "country_id": [1],
-                                    "year": [2020],
-                                    "value": [10],
-                                    "magnitude": [np.nan],
-                                    "qualifier": [np.nan],
-                                    "indicator_label": ["Test Indicator"],
-                                    "country_name": ["Test Country"],
-                                    "Source": ["UIS / WB"],
-                                    "value type": ["estimate"]
-                                    })
+        expected_df = pd.DataFrame(
+            {
+                "indicator_id": ["ind1"],
+                "country_id": [1],
+                "year": [2020],
+                "value": [10],
+                "magnitude": [np.nan],
+                "qualifier": [np.nan],
+                "indicator_label": ["Test Indicator"],
+                "country_name": ["Test Country"],
+                "Source": ["UIS / WB"],
+                "value type": ["estimate"],
+            }
+        )
         pd.testing.assert_frame_equal(uis_data.country_data, expected_df)
 
     def test_country_data_missing_file(self, uis_data_missing_only_readme_present):
@@ -320,34 +396,19 @@ class TestUISData:
     def test_region_data(self, uis_data):
         """Test the region_data property when the file is present"""
 
-        expected_df = pd.DataFrame({"indicator_id": ["ind1"],
-                                    "region_id": ["WB:Test Region (code: 1)"],
-                                    "year": [2020],
-                                    "value": [10],
-                                    "magnitude": [np.nan],
-                                    "qualifier": [np.nan],
-                                    "indicator_label": ["Test Indicator"]
-                                    })
+        expected_df = pd.DataFrame(
+            {
+                "indicator_id": ["ind1"],
+                "region_id": ["WB:Test Region (code: 1)"],
+                "year": [2020],
+                "value": [10],
+                "magnitude": [np.nan],
+                "qualifier": [np.nan],
+                "indicator_label": ["Test Indicator"],
+            }
+        )
         pd.testing.assert_frame_equal(uis_data.region_data, expected_df)
 
     def test_region_data_missing_file(self, uis_data_missing_only_readme_present):
         """Test the region_data property when the file is missing"""
         assert uis_data_missing_only_readme_present.region_data is None
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

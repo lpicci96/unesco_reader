@@ -31,6 +31,7 @@ def test_make_request():
 
 class TestUISInfoScraper:
     """Tests for the UISInfoScraper class."""
+
     def test_get_soup(self):
         """Test get_soup"""
 
@@ -51,13 +52,20 @@ class TestUISInfoScraper:
         """Test parse_link_section"""
 
         # test data link exists
-        link_section = BeautifulSoup('<li><a href="test.zip">Test Data - last update: January 2022</a></li>', 'html.parser')
+        link_section = BeautifulSoup(
+            '<li><a href="test.zip">Test Data - last update: January 2022</a></li>',
+            "html.parser",
+        )
         result = read.UISInfoScraper.parse_link_section(link_section)
-        expected = {'name': 'Test Data', 'latest_update': 'January 2022', 'href': 'test.zip'}
+        expected = {
+            "name": "Test Data",
+            "latest_update": "January 2022",
+            "href": "test.zip",
+        }
         assert result == expected
 
         # test no link exists
-        link_section = BeautifulSoup('<li>No link here</li>', 'html.parser')
+        link_section = BeautifulSoup("<li>No link here</li>", "html.parser")
         result = read.UISInfoScraper.parse_link_section(link_section)
         assert result is None
 
@@ -67,54 +75,64 @@ class TestUISInfoScraper:
         # test with date in (last update: <date>) format
         link_text = "Test Data (last update: January 2024)"
         result = read.UISInfoScraper.parse_link_text(link_text)
-        expected = ('Test Data', 'January 2024')
+        expected = ("Test Data", "January 2024")
         assert result == expected
 
         # test with date in - <date> format
         link_text = "Test Data - February 2024"
         result = read.UISInfoScraper.parse_link_text(link_text)
-        expected = ('Test Data', 'February 2024')
+        expected = ("Test Data", "February 2024")
         assert result == expected
 
         # test with date in <date> format
         link_text = "Test Data March 2024"
         result = read.UISInfoScraper.parse_link_text(link_text)
-        expected = ('Test Data', 'March 2024')
+        expected = ("Test Data", "March 2024")
         assert result == expected
 
         # test with no date
         link_text = "Test Data"
         result = read.UISInfoScraper.parse_link_text(link_text)
-        expected = ('Test Data', None)
+        expected = ("Test Data", None)
         assert result == expected
 
         # test with "-" in name
         link_text = "Test - Data - April 2024"
         result = read.UISInfoScraper.parse_link_text(link_text)
-        expected = ('Test - Data', "April 2024")
+        expected = ("Test - Data", "April 2024")
         assert result == expected
 
         # test with "()" in name
         link_text = "Test (Data) (last update: May 2024)"
         result = read.UISInfoScraper.parse_link_text(link_text)
-        expected = ('Test (Data)', "May 2024")
+        expected = ("Test (Data)", "May 2024")
         assert result == expected
 
     def test_get_links(self):
         """Test get_links"""
-        with patch.object(read.UISInfoScraper, 'get_soup') as mock_get_soup:#, \
-             #patch.object(read.LinkScraper.get_links, 'cache_clear') as mock_cache_clear:
+        with patch.object(read.UISInfoScraper, "get_soup") as mock_get_soup:  # , \
+            # patch.object(read.LinkScraper.get_links, 'cache_clear') as mock_cache_clear:
 
             mock_get_soup.return_value = BeautifulSoup(
-                ('<section> <h2>Education</h2><ul><li><strong>Test Data - last update: January 2022</strong><a '
-                 'href="test.zip"><img></a></li></ul></section>'),
-                'html.parser')
+                (
+                    "<section> <h2>Education</h2><ul><li><strong>Test Data - last update: January 2022</strong><a "
+                    'href="test.zip"><img></a></li></ul></section>'
+                ),
+                "html.parser",
+            )
 
             # Test with refresh=False (default)
             result = read.UISInfoScraper.get_links()
-            expected = [{'theme': 'Education', 'name': 'Test Data', 'latest_update': 'January 2022', 'href': 'test.zip'}]
+            expected = [
+                {
+                    "theme": "Education",
+                    "name": "Test Data",
+                    "latest_update": "January 2022",
+                    "href": "test.zip",
+                }
+            ]
             assert result == expected
-            #mock_cache_clear.assert_not_called()
+            # mock_cache_clear.assert_not_called()
 
             # result = read.LinkScraper.get_links(refresh=True)
             # assert result == expected
@@ -126,8 +144,8 @@ def test_get_zipfile():
 
     # Create a valid zip file in memory
     zip_buffer = io.BytesIO()
-    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-        zip_file.writestr('test.txt', 'This is a test file')
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        zip_file.writestr("test.txt", "This is a test file")
     zip_content = zip_buffer.getvalue()
 
     # test successful request
@@ -151,7 +169,7 @@ def test_read_csv(tmp_path):
     """Test the read_csv function."""
 
     # Create a DataFrame
-    df = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+    df = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
 
     # Create a temporary CSV file
     csv_path = tmp_path / "test.csv"
@@ -159,18 +177,18 @@ def test_read_csv(tmp_path):
 
     # Create a temporary zip file and add the CSV file to it
     zip_path = tmp_path / "test.zip"
-    with zipfile.ZipFile(zip_path, 'w') as zip_file:
+    with zipfile.ZipFile(zip_path, "w") as zip_file:
         zip_file.write(csv_path, arcname=os.path.basename(csv_path))
 
     # Use the read_csv function to read the CSV file from the zip file
-    with zipfile.ZipFile(zip_path, 'r') as zip_file:
+    with zipfile.ZipFile(zip_path, "r") as zip_file:
         result = read.read_csv(zip_file, "test.csv")
 
     # Check that the result is a DataFrame with the correct data
     pd.testing.assert_frame_equal(result, df)
 
     # test file not found
-    with zipfile.ZipFile(zip_path, 'r') as zip_file:
+    with zipfile.ZipFile(zip_path, "r") as zip_file:
         with pytest.raises(FileNotFoundError, match="Could not find file: invalid.csv"):
             read.read_csv(zip_file, "invalid.csv")
 
@@ -183,23 +201,22 @@ def test_read_md(tmp_path):
 
     # Create a temporary markdown file
     md_path = tmp_path / "test.md"
-    with open(md_path, 'w') as f:
+    with open(md_path, "w") as f:
         f.write(md_content)
 
     # Create a temporary zip file and add the markdown file to it
     zip_path = tmp_path / "test.zip"
-    with zipfile.ZipFile(zip_path, 'w') as zip_file:
+    with zipfile.ZipFile(zip_path, "w") as zip_file:
         zip_file.write(md_path, arcname=os.path.basename(md_path))
 
     # Use the read_md function to read the markdown file from the zip file
-    with zipfile.ZipFile(zip_path, 'r') as zip_file:
+    with zipfile.ZipFile(zip_path, "r") as zip_file:
         result = read.read_md(zip_file, "test.md")
 
     # Check that the result is a string with the correct content
     assert result == md_content
 
     # test file not found
-    with zipfile.ZipFile(zip_path, 'r') as zip_file:
+    with zipfile.ZipFile(zip_path, "r") as zip_file:
         with pytest.raises(FileNotFoundError, match="Could not find file: invalid.md"):
             read.read_md(zip_file, "invalid.md")
-

@@ -113,12 +113,12 @@ To access country data:
 sdg.get_country_data()
 ```
 This will return a pandas DataFrame with the country data, in a structured and expected format.
-By default the dataframe will not contain metadata. To include metadata in the output, set the `metadata` parameter to `True`.
+By default the dataframe will not contain metadata. To include metadata in the output, set the `include_metadata` parameter to `True`.
 Countries may also be filtered for a specific region by specifying the region's ID in the `region` parameter.
 To see available regions use the `get_regions` method.
 
 ```python
-sdg.get_country_data(metadata=True, region='WB:World')
+sdg.get_country_data(include_metadata=True, region='WB: World')
 ```
 
 To access regional data:
@@ -126,18 +126,19 @@ To access regional data:
 sdg.get_region_data()
 ```
 This will return a pandas DataFrame with the regional data, in a structured and expected format.
-By default the dataframe will not contain metadata. To include metadata in the output, set the `metadata` parameter to `True`.
+By default the dataframe will not contain metadata. To include metadata in the output, set the `include_metadata` parameter to `True`.
 
 Metadata, available countries, available regions, and variables are also accessible through class objects.
 ```python
 sdg.get_metadata()
 sdg.get_countries()
 sdg.get_regions()
+sdg.get_variables()
 ```
 
-To refresh the data and extract the latest data from the UIS website, use the `refresh_data` method.
+To refresh the data and extract the latest data from the UIS website, use the `refresh` method.
 ```python
-sdg.refresh_data()
+sdg.refresh()
 ```
 
 ### Caching
@@ -146,13 +147,13 @@ Caching is used to prevent unnecessary requests to the UIS website and enhance p
 To refresh data returned by functions, use the `refresh` parameter.
 ```python
 uis.info(refresh=True)
-uis.info(refresh=True)
+uis.available_datasets(refresh=True)
 ```
 `refresh=True` will clear the cache and force extraction of the data and information from the UIS website.
 
-For the `UIS` class, the `refresh_data` method will clear the cache and extract the latest data from the UIS website.
+For the `UIS` class, the `refresh` method will clear the cache and extract the latest data from the UIS website.
 ```python
-sdg.refresh_data()
+sdg.refresh()
 ```
 
 To clear all cached data, use the `clear_all_caches` method.

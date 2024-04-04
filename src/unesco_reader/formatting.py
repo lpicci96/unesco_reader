@@ -42,16 +42,17 @@ def remove_en_suffix(df, inplace=True) -> pd.DataFrame | None:
     """
 
     if inplace:
-        df.rename(columns=lambda x: x[:-3] if x.endswith('_en') else x, inplace=True)
-        df.rename(columns=lambda x: x[:-3] if x.endswith('_EN') else x, inplace=True)
+        df.rename(columns=lambda x: x[:-3] if x.endswith("_en") else x, inplace=True)
+        df.rename(columns=lambda x: x[:-3] if x.endswith("_EN") else x, inplace=True)
     else:
-        return (df
-                .rename(columns=lambda x: x[:-3] if x.endswith('_en') else x)
-                .rename(columns=lambda x: x[:-3] if x.endswith('_EN') else x)
-                )
+        return df.rename(columns=lambda x: x[:-3] if x.endswith("_en") else x).rename(
+            columns=lambda x: x[:-3] if x.endswith("_EN") else x
+        )
 
 
-def squash_duplicates(df: pd.DataFrame, index_cols: list[str], squashed_col: str) -> pd.DataFrame:
+def squash_duplicates(
+    df: pd.DataFrame, index_cols: list[str], squashed_col: str
+) -> pd.DataFrame:
     """Squash duplicates in a DataFrame separating values by '/' in the squashed column.
 
     To optimize efficiency, the squashing operation is only performed on the duplicated rows. The squashed rows are
@@ -74,10 +75,11 @@ def squash_duplicates(df: pd.DataFrame, index_cols: list[str], squashed_col: str
         return df
 
     # squashed duplicates
-    squashed_df = (df[duplicates]
-                   .groupby(index_cols, as_index=False)
-                   .agg({squashed_col: " / ".join})
-                   )
+    squashed_df = (
+        df[duplicates]
+        .groupby(index_cols, as_index=False)
+        .agg({squashed_col: " / ".join})
+    )
 
     # Remove duplicates from the original DataFrame and append the squashed duplicates
     unique_df = df.drop(df[duplicates].index)
@@ -134,8 +136,12 @@ class UISData:
     def add_variable_names(self, df: pd.DataFrame) -> None:
         """Add variable names to a dataframe in place using the variable concordance file"""
         if self.variable_concordance is not None:
-            mapper = self.variable_concordance.set_index('indicator_id').loc[:, 'indicator_label'].to_dict()
-            df['indicator_label'] = df['indicator_id'].map(mapper)
+            mapper = (
+                self.variable_concordance.set_index("indicator_id")
+                .loc[:, "indicator_label"]
+                .to_dict()
+            )
+            df["indicator_label"] = df["indicator_id"].map(mapper)
 
         else:
             logger.debug("No variable concordance file found")
@@ -143,8 +149,12 @@ class UISData:
     def add_country_names(self, df: pd.DataFrame) -> None:
         """Add country names to a dataframe using the country concordance file"""
         if self.country_concordance is not None:
-            mapper = self.country_concordance.set_index('country_id').loc[:, 'country_name'].to_dict()
-            df['country_name'] = df['country_id'].map(mapper)
+            mapper = (
+                self.country_concordance.set_index("country_id")
+                .loc[:, "country_name"]
+                .to_dict()
+            )
+            df["country_name"] = df["country_id"].map(mapper)
         else:
             logger.debug("No country concordance file found")
 
@@ -164,14 +174,15 @@ class UISData:
         """Get a dictionary of file names in the folder which match to expected names"""
 
         files = {}
-        d = {'COUNTRY_CONCORDANCE': 'COUNTRY.csv',
-             'REGION_CONCORDANCE': 'REGION.csv',
-             'COUNTRY_DATA': 'DATA_NATIONAL.csv',
-             'REGION_DATA': 'DATA_REGIONAL.csv',
-             'VARIABLE_CONCORDANCE': 'LABEL.csv',
-             'METADATA': 'METADATA.csv',
-             'README': 'README'
-             }
+        d = {
+            "COUNTRY_CONCORDANCE": "COUNTRY.csv",
+            "REGION_CONCORDANCE": "REGION.csv",
+            "COUNTRY_DATA": "DATA_NATIONAL.csv",
+            "REGION_DATA": "DATA_REGIONAL.csv",
+            "VARIABLE_CONCORDANCE": "LABEL.csv",
+            "METADATA": "METADATA.csv",
+            "README": "README",
+        }
 
         for k, v in d.items():
             for file_name in self.folder.namelist():
@@ -186,16 +197,16 @@ class UISData:
 
     def get_readme(self) -> str | None:
         """Read the readme file"""
-        if self.file_names.get('README'):
-            return read.read_md(self.folder, self.file_names['README'])
+        if self.file_names.get("README"):
+            return read.read_md(self.folder, self.file_names["README"])
 
         logger.debug("No readme file found")
         return None
 
     def get_country_concordance(self) -> pd.DataFrame | None:
         """Read the country concordance file"""
-        if self.file_names.get('COUNTRY_CONCORDANCE'):
-            df = read.read_csv(self.folder, self.file_names['COUNTRY_CONCORDANCE'])
+        if self.file_names.get("COUNTRY_CONCORDANCE"):
+            df = read.read_csv(self.folder, self.file_names["COUNTRY_CONCORDANCE"])
             self._format_col_names(df)
             return df
 
@@ -204,11 +215,13 @@ class UISData:
 
     def get_region_concordance(self) -> pd.DataFrame | None:
         """Read the region concordance file"""
-        if self.file_names.get('REGION_CONCORDANCE'):
-            df = read.read_csv(self.folder, self.file_names['REGION_CONCORDANCE'])
+        if self.file_names.get("REGION_CONCORDANCE"):
+            df = read.read_csv(self.folder, self.file_names["REGION_CONCORDANCE"])
             self._format_col_names(df)
             # split the REGION_ID into grouping_entity and region_name
-            df[['grouping_entity', 'region_name']] = df['region_id'].str.split(': ', n=1, expand=True)
+            df[["grouping_entity", "region_name"]] = df["region_id"].str.split(
+                ": ", n=1, expand=True
+            )
             return df
 
         logger.debug("No region concordance file found")
@@ -216,8 +229,8 @@ class UISData:
 
     def get_variable_concordance(self) -> pd.DataFrame | None:
         """Read the variable concordance file"""
-        if self.file_names.get('VARIABLE_CONCORDANCE'):
-            df = read.read_csv(self.folder, self.file_names['VARIABLE_CONCORDANCE'])
+        if self.file_names.get("VARIABLE_CONCORDANCE"):
+            df = read.read_csv(self.folder, self.file_names["VARIABLE_CONCORDANCE"])
             self._format_col_names(df)
             return df
 
@@ -226,10 +239,12 @@ class UISData:
 
     def get_metadata(self) -> pd.DataFrame | None:
         """Read the metadata file"""
-        if self.file_names.get('METADATA'):
-            df = read.read_csv(self.folder, self.file_names['METADATA'])
+        if self.file_names.get("METADATA"):
+            df = read.read_csv(self.folder, self.file_names["METADATA"])
             self._format_col_names(df)
-            df = squash_duplicates(df, ['indicator_id', 'country_id', 'year', 'type'], 'metadata')
+            df = squash_duplicates(
+                df, ["indicator_id", "country_id", "year", "type"], "metadata"
+            )
             self.add_variable_names(df)  # add variable names
             self.add_country_names(df)
             return df
@@ -239,19 +254,22 @@ class UISData:
 
     def get_country_data(self) -> pd.DataFrame | None:
         """Read the country data file"""
-        if self.file_names.get('COUNTRY_DATA'):
-            df = read.read_csv(self.folder, self.file_names['COUNTRY_DATA'])
+        if self.file_names.get("COUNTRY_DATA"):
+            df = read.read_csv(self.folder, self.file_names["COUNTRY_DATA"])
             self._format_col_names(df)
             self.add_variable_names(df)  # add variable names
             self.add_country_names(df)  # add country names
 
             # add metadata
             if self.metadata is not None:
-                meta_df = (self.metadata.pivot(index=['indicator_id', 'country_id', 'year'], columns='type',
-                                               values='metadata')
-                           .reset_index()
-                           )
-                df = df.merge(meta_df, how='left', on=['indicator_id', 'country_id', 'year'])
+                meta_df = self.metadata.pivot(
+                    index=["indicator_id", "country_id", "year"],
+                    columns="type",
+                    values="metadata",
+                ).reset_index()
+                df = df.merge(
+                    meta_df, how="left", on=["indicator_id", "country_id", "year"]
+                )
 
             return df
 
@@ -260,8 +278,8 @@ class UISData:
 
     def get_region_data(self) -> pd.DataFrame | None:
         """Read the region data file"""
-        if self.file_names.get('REGION_DATA'):
-            df = read.read_csv(self.folder, self.file_names['REGION_DATA'])
+        if self.file_names.get("REGION_DATA"):
+            df = read.read_csv(self.folder, self.file_names["REGION_DATA"])
             self._format_col_names(df)
             self.add_variable_names(df)  # add variable names
 
