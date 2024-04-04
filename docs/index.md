@@ -6,7 +6,6 @@
 :hidden:
 
 Tutorial.ipynb
-Other functionality.ipynb
 changelog.md
 contributing.md
 conduct.md
