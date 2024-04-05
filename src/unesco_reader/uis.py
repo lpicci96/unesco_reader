@@ -34,7 +34,7 @@ def fetch_dataset_info(dataset_name: str, refresh: bool = False) -> dict:
     # get dataset information
     datasets = fetch_info(refresh)
     for dataset in datasets:
-        if dataset_name == dataset["name"]:
+        if dataset_name.lower().strip() == dataset["name"].lower().strip():
             return dataset
     else:
         raise ValueError(
@@ -102,7 +102,7 @@ def available_datasets(theme: str = None, refresh=True) -> list[str]:
 
     if theme is not None:
         # check if theme is valid
-        if theme not in [dataset["theme"] for dataset in datasets]:
+        if theme.lower().strip() not in [dataset["theme"].lower().strip() for dataset in datasets]:
             raise ValueError(
                 f"Theme not found: {theme}. \nPlease select from the following themes:\n "
                 f"{', '.join(theme_name for theme_name in list(set([dataset['theme'] for dataset in datasets])))}"
@@ -111,7 +111,7 @@ def available_datasets(theme: str = None, refresh=True) -> list[str]:
         return [
             dataset["name"]
             for dataset in fetch_info(refresh)
-            if dataset["theme"] == theme
+            if dataset["theme"].lower().strip() == theme.lower().strip()
         ]
 
     return [dataset["name"] for dataset in fetch_info(refresh)]

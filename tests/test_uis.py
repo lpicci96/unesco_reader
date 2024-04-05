@@ -156,6 +156,15 @@ def test_fetch_dataset_info():
         ):
             uis.fetch_dataset_info("invalid dataset name")
 
+        # test with mixed cases and white spaces
+        result = uis.fetch_dataset_info(" Dataset_1 ")
+        assert result == {
+            "theme": "Education",
+            "name": "dataset_1",
+            "latest_update": "January 2022",
+            "href": "test.zip",
+        }
+
 
 def test_clear_all_caches():
     """Test the clear_all_caches function."""
@@ -240,6 +249,10 @@ def test_available_datasets():
         # test error when theme is not found
         with pytest.raises(ValueError, match="^Theme not found: invalid theme."):
             uis.available_datasets(theme="invalid theme")
+
+        # test mixed cases and white spaces
+        result = uis.available_datasets(theme=" EDUCATION ")
+        assert result == ["A Data", "B Data"]
 
 
 class TestUIS:
