@@ -16,12 +16,10 @@ class NoDataError(Exception):
 
 
 # Configure Logging
-
 logger = logging.getLogger(__name__)
-
 shell_handler = logging.StreamHandler()  # Create terminal handler
 logger.setLevel(logging.INFO)  # Set levels for the logger, shell and file
-shell_handler.setLevel(logging.INFO)
+shell_handler.setLevel(logging.INFO)  # Set levels for the logger, shell and file
 
 # Format the outputs   "%(levelname)s (%(asctime)s): %(message)s"
 fmt_file = "%(levelname)s: %(message)s"

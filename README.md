@@ -9,20 +9,20 @@
 
 Pythonic access to UNESCO data
 
-`unesco_reader` is a Python package providing a simple interface to access UNESCO Institute of Statistics (UIS)
+`unesco_reader` is a Python package that provides a simple interface to access UNESCO Institute of Statistics (UIS)
 data. UIS currently does not offer API access to its data. Users must download zipped files and extract the data.
 This process requires several manual steps explained in their [python tutorial](https://apiportal.uis.unesco.org/bdds-tutorial). This package simplifies the process by providing a simple
-interface to access, explore, and analyze the data, using pandas DataFrames. This package also
+interface to access, explore, and analyze the data, already structured and formatted through pandas DataFrames. This package also
 allows users to view dataset documentation and other information such as the date of last update, as well as retrieve
 information about all available datasets from UIS.
 
 ### Note</b>: 
-UIS data is expected to be accessible through the DataCommons API in the future and should
+UIS data is expected to be accessible through the [DataCommons](https://datacommons.org/) API in the future and should
 be the preferred method to access the data. Future versions of this package may include support for the API,
 or may be deprecated and remain as a legacy package.
 
 This package is designed to scrape data from the UIS website. As a result of this approach
-the package may be subject to breakage if the website structure or data file formats change. 
+the package may be subject to breakage if the website structure or data file formats change without notice. 
 Please report any unexpected errors or issues you encounter. All feedback, suggestions, and contributions are welcome!
 
 ## Installation
@@ -57,7 +57,9 @@ Research and Development (R&D) – Other Policy Relevant Indicators  February 20
 Retrieve a list of all available datasets from UIS.
 ```python
 uis.available_datasets()
+```
 
+```
 >>> ['SDG Global and Thematic Indicators',
      'Other Policy Relevant Indicators (OPRI)',
      'Research and Development (R&D) SDG 9.5',
@@ -76,7 +78,9 @@ On instantiation, the data will be extracted from the UIS website, or if it has 
 extracted, it will be read from the cache (more on caching below)
 
 ```python
-sdg = uis.UIS("SDG Global and Thematic Indicators")
+from unesco_reader import UIS
+
+sdg = UIS("SDG Global and Thematic Indicators")
 ```
 
 Basic information about the dataset can be accessed using the `info` method.
@@ -96,10 +100,10 @@ theme          Education
 
 Information is also accessible through the attributes of the object.
 ```python
-sdg.name
-sdg.latest_update
-sdg.theme
-sdg.readme
+name = sdg.name
+update = sdg.latest_update
+theme = sdg.theme
+documentation = sdg.readme
 ```
 
 The `readme` attribute contains the dataset documentation. To display the documentation, use the `display_readme` method.
@@ -110,7 +114,7 @@ sdg.display_readme()
 Various methods exist to access the data.
 To access country data:
 ```python
-sdg.get_country_data()
+df = sdg.get_country_data()
 ```
 This will return a pandas DataFrame with the country data, in a structured and expected format.
 By default the dataframe will not contain metadata. To include metadata in the output, set the `include_metadata` parameter to `True`.
@@ -118,22 +122,23 @@ Countries may also be filtered for a specific region by specifying the region's 
 To see available regions use the `get_regions` method.
 
 ```python
-sdg.get_country_data(include_metadata=True, region='WB: World')
+df = sdg.get_country_data(include_metadata=True, region='WB: World')
 ```
 
 To access regional data:
 ```python
-sdg.get_region_data()
+df = sdg.get_region_data()
 ```
-This will return a pandas DataFrame with the regional data, in a structured and expected format.
+This will return a pandas DataFrame with the regional data, in a structured and expected format. Note that not all datasets contain regional data.
+If the dataset does not contain regional data, an error will be raised. This is the same for any other data that is not available for the particular dataset.
 By default the dataframe will not contain metadata. To include metadata in the output, set the `include_metadata` parameter to `True`.
 
 Metadata, available countries, available regions, and variables are also accessible through class objects.
 ```python
-sdg.get_metadata()
-sdg.get_countries()
-sdg.get_regions()
-sdg.get_variables()
+metadata_df = sdg.get_metadata()
+countries_df = sdg.get_countries()
+regions_df = sdg.get_regions()
+variables_df = sdg.get_variables()
 ```
 
 To refresh the data and extract the latest data from the UIS website, use the `refresh` method.

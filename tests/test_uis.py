@@ -1,4 +1,4 @@
-"""Tests for ui module"""
+"""Tests for uis module"""
 
 import pytest
 import pandas as pd
