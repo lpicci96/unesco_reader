@@ -13,6 +13,20 @@ from unesco_reader import read
 from unesco_reader.config import logger
 
 
+def order_columns(df: pd.DataFrame, priority_cols: list[str]) -> None | pd.DataFrame:
+    """Order columns in a DataFrame based on priority columns
+
+    Args:
+        df: dataframe to reorder
+        priority_cols: list of priority columns in the desired order
+
+    Returns:
+        pd.DataFrame: dataframe with columns in the desired order
+    """
+
+    return df[priority_cols + [col for col in df.columns if col not in priority_cols]]
+
+
 def cols_to_lower(df: pd.DataFrame, inplace: bool = True) -> pd.DataFrame | None:
     """Convert column names to lowercase
 
@@ -247,6 +261,11 @@ class UISData:
             )
             self.add_variable_names(df)  # add variable names
             self.add_country_names(df)
+
+            # order columns
+            order = ["country_id", "country_name", "indicator_id", "indicator_label", "year"]
+            df = order_columns(df, order)
+
             return df
 
         logger.debug("No metadata file found")
@@ -271,6 +290,17 @@ class UISData:
                     meta_df, how="left", on=["indicator_id", "country_id", "year"]
                 )
 
+            # order columns
+            order = [
+                "country_id",
+                "country_name",
+                "indicator_id",
+                "indicator_label",
+                "year",
+                "value",
+            ]
+            df = order_columns(df, order)
+
             return df
 
         logger.debug("No country data file found")
@@ -282,6 +312,10 @@ class UISData:
             df = read.read_csv(self.folder, self.file_names["REGION_DATA"])
             self._format_col_names(df)
             self.add_variable_names(df)  # add variable names
+
+            # order columns
+            order = ["region_id", "indicator_id", "indicator_label", "year", "value"]
+            df = order_columns(df, order)
 
             return df
         return None

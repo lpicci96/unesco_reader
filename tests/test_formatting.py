@@ -12,6 +12,30 @@ from unesco_reader import formatting
 TEST_DATASET_CODE = "SDG"
 
 
+def test_order_columns():
+    """Test for order_columns"""
+
+    # Test with columns in order
+    test_df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+    test_df = formatting.order_columns(test_df, ["a", "b"])
+    assert list(test_df.columns) == ["a", "b"]
+
+    # Test with columns in reverse order
+    test_df = pd.DataFrame({"b": [4, 5, 6], "a": [1, 2, 3]})
+    test_df = formatting.order_columns(test_df, ["a", "b"])
+    assert list(test_df.columns) == ["a", "b"]
+
+    # Test with columns in mixed order
+    test_df = pd.DataFrame({"b": [4, 5, 6], "a": [1, 2, 3]})
+    test_df = formatting.order_columns(test_df, ["b", "a"])
+    assert list(test_df.columns) == ["b", "a"]
+
+    # test with more columns in dataframe
+    test_df = pd.DataFrame({"b": [4, 5, 6], "c": [1, 2, 3], "a": [7, 8, 9]})
+    test_df = formatting.order_columns(test_df, ["a", "b"])
+    assert list(test_df.columns) == ["a", "b", "c"]
+
+
 def test_cols_to_lower():
     """Test cols_to_lower"""
 
@@ -351,17 +375,17 @@ class TestUISData:
 
         expected_df = pd.DataFrame(
             {
-                "indicator_id": ["ind1", "ind1", "ind1"],
                 "country_id": [1, 2, 1],
-                "year": [2020, 2020, 2020],
-                "type": ["value type", "Source", "Source"],
-                "metadata": ["estimate", "UIS", "UIS / WB"],
+                "country_name": ["Test Country", np.nan, "Test Country"],
+                "indicator_id": ["ind1", "ind1", "ind1"],
                 "indicator_label": [
                     "Test Indicator",
                     "Test Indicator",
                     "Test Indicator",
                 ],
-                "country_name": ["Test Country", np.nan, "Test Country"],
+                "year": [2020, 2020, 2020],
+                "type": ["value type", "Source", "Source"],
+                "metadata": ["estimate", "UIS", "UIS / WB"],
             }
         )
         assert uis_data.metadata.equals(expected_df)
@@ -375,14 +399,14 @@ class TestUISData:
 
         expected_df = pd.DataFrame(
             {
-                "indicator_id": ["ind1"],
                 "country_id": [1],
+                "country_name": ["Test Country"],
+                "indicator_id": ["ind1"],
+                "indicator_label": ["Test Indicator"],
                 "year": [2020],
                 "value": [10],
                 "magnitude": [np.nan],
                 "qualifier": [np.nan],
-                "indicator_label": ["Test Indicator"],
-                "country_name": ["Test Country"],
                 "Source": ["UIS / WB"],
                 "value type": ["estimate"],
             }
@@ -398,13 +422,13 @@ class TestUISData:
 
         expected_df = pd.DataFrame(
             {
-                "indicator_id": ["ind1"],
                 "region_id": ["WB:Test Region (code: 1)"],
+                "indicator_id": ["ind1"],
+                "indicator_label": ["Test Indicator"],
                 "year": [2020],
                 "value": [10],
                 "magnitude": [np.nan],
                 "qualifier": [np.nan],
-                "indicator_label": ["Test Indicator"],
             }
         )
         pd.testing.assert_frame_equal(uis_data.region_data, expected_df)
