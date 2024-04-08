@@ -18,11 +18,14 @@ def order_columns(df: pd.DataFrame, priority_cols: list[str]) -> None | pd.DataF
 
     Args:
         df: dataframe to reorder
-        priority_cols: list of priority columns in the desired order
+        priority_cols: list of priority columns in the desired order. If a column is not in the dataframe, it is removed
 
     Returns:
         pd.DataFrame: dataframe with columns in the desired order
     """
+
+    # if a column in priority_cols is not in the dataframe, remove it from the list
+    priority_cols = [col for col in priority_cols if col in df.columns]
 
     return df[priority_cols + [col for col in df.columns if col not in priority_cols]]
 

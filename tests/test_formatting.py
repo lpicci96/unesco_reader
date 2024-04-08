@@ -35,6 +35,11 @@ def test_order_columns():
     test_df = formatting.order_columns(test_df, ["a", "b"])
     assert list(test_df.columns) == ["a", "b", "c"]
 
+    # test with more columns in order
+    test_df = pd.DataFrame({"b": [4, 5, 6], "c": [1, 2, 3], "a": [7, 8, 9]})
+    test_df = formatting.order_columns(test_df, ["a", "b", "c", "d"])
+    assert list(test_df.columns) == ["a", "b", "c"]
+
 
 def test_cols_to_lower():
     """Test cols_to_lower"""
