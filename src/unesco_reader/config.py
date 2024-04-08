@@ -10,8 +10,10 @@ import logging
 
 # Custom Exceptions
 
+
 class NoDataError(Exception):
     """This is a custom exception that is raised when no UIS data exists"""
+
     pass
 
 

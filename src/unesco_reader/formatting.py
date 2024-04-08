@@ -266,7 +266,13 @@ class UISData:
             self.add_country_names(df)
 
             # order columns
-            order = ["country_id", "country_name", "indicator_id", "indicator_label", "year"]
+            order = [
+                "country_id",
+                "country_name",
+                "indicator_id",
+                "indicator_label",
+                "year",
+            ]
             df = order_columns(df, order)
 
             return df

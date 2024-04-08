@@ -556,7 +556,7 @@ class TestUIS:
         # test when country concordance is not available
         mock_uis_data.country_concordance = None
         with pytest.raises(
-                NoDataError,
+            NoDataError,
             match="Information about countries is not available for this dataset.",
         ):
             obj.get_countries()
@@ -590,7 +590,7 @@ class TestUIS:
         # test when region concordance is not available
         mock_uis_data.region_concordance = None
         with pytest.raises(
-                NoDataError,
+            NoDataError,
             match="Information about regions is not available for this dataset.",
         ):
             obj.get_regions()
@@ -624,7 +624,7 @@ class TestUIS:
         # test when variables are not available
         mock_uis_data.variable_concordance = None
         with pytest.raises(
-                NoDataError,
+            NoDataError,
             match="Information about variables is not available for this dataset.",
         ):
             obj.get_variables()
@@ -656,7 +656,7 @@ class TestUIS:
         # Test when the readme file is not available
         mock_uis_data.readme = None
         with pytest.raises(
-                NoDataError, match="Readme file is not available for this dataset."
+            NoDataError, match="Readme file is not available for this dataset."
         ):
             _ = obj.readme
 

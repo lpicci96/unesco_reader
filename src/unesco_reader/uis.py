@@ -102,7 +102,9 @@ def available_datasets(theme: str = None, refresh=True) -> list[str]:
 
     if theme is not None:
         # check if theme is valid
-        if theme.lower().strip() not in [dataset["theme"].lower().strip() for dataset in datasets]:
+        if theme.lower().strip() not in [
+            dataset["theme"].lower().strip() for dataset in datasets
+        ]:
             raise ValueError(
                 f"Theme not found: {theme}. \nPlease select from the following themes:\n "
                 f"{', '.join(theme_name for theme_name in list(set([dataset['theme'] for dataset in datasets])))}"
