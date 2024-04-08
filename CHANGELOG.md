@@ -1,7 +1,8 @@
 # Changelog
 
 ## v2.0.0 - 2024-04-08
-- remove support for python < 3.10
+- Add support for python 3.12
+- Remove support for python < 3.10
 
 ## v1.0.0 - 2024-04-04
 - First stable release of the package
