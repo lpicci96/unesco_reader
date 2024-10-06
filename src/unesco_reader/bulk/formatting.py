@@ -9,7 +9,7 @@ The data is processed at the time of instantiation and stored in class attribute
 from zipfile import ZipFile
 import pandas as pd
 
-from unesco_reader import read
+from unesco_reader.bulk import read
 from unesco_reader.config import logger
 
 

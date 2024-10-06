@@ -6,8 +6,7 @@ import zipfile
 import pytest
 import io
 
-from unesco_reader import formatting
-
+from unesco_reader.bulk import formatting
 
 TEST_DATASET_CODE = "SDG"
 

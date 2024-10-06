@@ -6,9 +6,8 @@ from unittest.mock import patch, MagicMock
 from zipfile import ZipFile
 import io
 
-
-from unesco_reader import uis
-from unesco_reader.formatting import UISData
+from unesco_reader.bulk import uis
+from unesco_reader.bulk.formatting import UISData
 from unesco_reader.config import NoDataError
 
 

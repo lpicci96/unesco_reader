@@ -9,8 +9,8 @@ associated with the datasets. Functionality also exists to clear the cache and r
 
 """
 
-from unesco_reader.formatting import UISData
-from unesco_reader.read import UISInfoScraper, get_zipfile
+from unesco_reader.bulk.formatting import UISData
+from unesco_reader.bulk.read import UISInfoScraper, get_zipfile
 from tabulate import tabulate
 import pandas as pd
 from functools import lru_cache

@@ -1,6 +1,6 @@
 """Tests for the read module."""
 
-from unesco_reader import read
+from unesco_reader.bulk import read
 import pytest
 import requests
 from unittest.mock import patch
