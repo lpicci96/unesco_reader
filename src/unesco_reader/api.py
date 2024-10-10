@@ -1,12 +1,91 @@
 """Wrapper for the UNESCO API
 
 This module wraps the API endpoints that exist in the UIS API.
+For more information about the API visit: https://api.uis.unesco.org/api/public/documentation/
 """
 
 import requests
 
 
-BASE_URL: str = "https://api.uis.unesco.org"
+API_URL: str = "https://api.uis.unesco.org"
+
+
+def _get(endpoint: str, params: dict | None = None) -> dict:
+    """ Make a request to an API endpoint and return the response object
+
+    Args:
+        endpoint: The endpoint to make the request to
+        params: Parameters to pass to the endpoint
+
+    Returns:
+        The response object as a dictionary
+    """
+
+    headers = {
+        "Accept-Encoding": "gzip",
+        "Accept": "application/json"
+    }
+
+    try:
+        response = requests.get(f"{API_URL}{endpoint}", headers=headers, params=params, timeout=10)
+        response.raise_for_status()  # Raises an error for HTTP codes 4xx/5xx
+        return response.json()
+
+    except requests.exceptions.Timeout as e:
+        raise TimeoutError(f"Request timed out. Error: {str(e)}")
+    except requests.exceptions.HTTPError as e:
+        raise RuntimeError(f"HTTP error occurred: {str(e)}")
+    except requests.exceptions.RequestException as e:
+        raise ConnectionError(f"Could not connect to API. Error: {str(e)}")
+
+
+def _convert_bool_to_string(value: bool | None) -> str | None:
+    """Convert a boolean to a string. If the value is None, return None"""
+
+    if value is None:
+        return None
+    return "true" if value else "false"
+
+
+def _build_querystring(**kwargs) -> dict:
+    """Build a querystring from a dictionary of parameters
+
+    Builds a querystring for the following parameters:
+    - indicator
+    - geoUnit
+    - start
+    - end
+    - indicatorMetadata
+    - footnotes
+    - geoUnitType
+    - version
+    - disaggregations
+    - glossaryTerms
+
+    Args:
+        params: The parameters to build the querystring from
+
+    Returns:
+        A querystring
+    """
+
+    querystring = {
+        "indicator": [kwargs.get('indicator')] if isinstance(kwargs.get('indicator'), str) else kwargs.get('indicator'),
+        "geoUnit": [kwargs.get('geo_unit')] if isinstance(kwargs.get('geo_unit'), str) else kwargs.get('geo_unit'),
+        "start": kwargs.get('start'),
+        "end": kwargs.get('end'),
+        "indicatorMetadata": _convert_bool_to_string(kwargs.get('indicator_metadata')),
+        "footnotes": _convert_bool_to_string(kwargs.get('footnotes')),
+        "geoUnitType": kwargs.get('geo_unit_type'),
+        "version": kwargs.get('version'),
+        "disaggregations": _convert_bool_to_string(kwargs.get('disaggregations')),
+        "glossaryTerms": _convert_bool_to_string(kwargs.get('glossary_terms')),
+    }
+
+    # Remove any key-value pairs where the value is None
+    querystring = {k: v for k, v in querystring.items() if v is not None}
+
+    return querystring
 
 
 def get_data(indicator: str | list[str] = None,
@@ -25,8 +104,8 @@ def get_data(indicator: str | list[str] = None,
     For more information about this endpoint visit: https://api.uis.unesco.org/api/public/documentation/operations/getIndicatorData
 
     Args:
-        indicator: Ids of the requested indicators. Returns all available indicators if not provided.TODO: add information about getting available indicators
-        geo_unit: Ids of the requested geographies (countries or regions). Returns all available geographies if not provided. TODO: add information about getting available geo units
+        indicator: Ids of the requested indicators. Returns all available indicators if not provided.
+        geo_unit: Ids of the requested geographies (countries or regions). Returns all available geographies if not provided.
         start: The start year to request data for. Includes the year itself. Default is the earliest available year
         end: The end year to request data for. Includes the year itself. Default is the latest available year
         indicator_metadata: Whether to include indicator metadata in the response. Default is False
@@ -40,45 +119,14 @@ def get_data(indicator: str | list[str] = None,
         A dictionary with the response data
     """
 
-    end_point: str = f"{BASE_URL}/api/public/data/indicators"
+    end_point: str = "/api/public/data/indicators"
 
     if indicator is None and geo_unit is None:
-        raise ValueError("At least an indicator or a geo_unit must be provided")
+        raise ValueError("At least one indicator or one geo_unit must be provided")
 
-    querystring = {}
-    if indicator:
-        if isinstance(indicator, str):
-            indicator = [indicator]
-        querystring["indicator"] = indicator
-    if geo_unit:
-        if isinstance(geo_unit, str):
-            geo_unit = [geo_unit]
-        querystring["geoUnit"] = geo_unit
-    if start:
-        querystring["start"] = start
-    if end:
-        querystring["end"] = end
-    if indicator_metadata:
-        querystring["indicatorMetadata"] = "true"
-    else:
-        querystring["indicatorMetadata"] = "false"
-    if footnotes:
-        querystring["footnotes"] = "true"
-    else:
-        querystring["footnotes"] = "false"
-    if geo_unit_type:
-        querystring["geoUnitType"] = geo_unit_type
-    if version:
-        querystring["version"] = version
-
-    headers = {
-        "Accept-Encoding": "gzip",
-        "Accept": "application/json"
-    }
-
-    response = requests.get(end_point, headers=headers, params=querystring)
-
-    return response.json()
+    querystring = _build_querystring(**locals())
+    response = _get(end_point, querystring)
+    return response
 
 
 def get_geo_units(version: str = None) -> dict:
@@ -88,19 +136,11 @@ def get_geo_units(version: str = None) -> dict:
         version: The api version to read the data from. If not provided, defaults to the current default latest version.
     """
 
-    end_point: str = f"{BASE_URL}/api/public/definitions/geounits"
+    end_point: str = f"/api/public/definitions/geounits"
 
-    headers = {
-        "Accept-Encoding": "gzip",
-        "Accept": "application/json"
-    }
-
-    querystring = {}
-    if version:
-        querystring["version"] = version
-
-    response = requests.get(end_point, headers=headers, params=querystring)
-    return response.json()
+    querystring = _build_querystring(**locals())
+    response = _get(end_point, querystring)
+    return response
 
 
 def get_indicators(disaggregations: bool = False, glossary_terms: bool = False, version: str = None) -> dict:
@@ -112,57 +152,31 @@ def get_indicators(disaggregations: bool = False, glossary_terms: bool = False, 
         version: The version to list the indicators definitions for. If not provided, the current default version is used.
     """
 
-    end_point: str = f"{BASE_URL}/api/public/definitions/indicators"
+    end_point: str = "/api/public/definitions/indicators"
 
-    headers = {
-        "Accept-Encoding": "gzip",
-        "Accept": "application/json"
-    }
-
-    querystring = {}
-    if disaggregations:
-        querystring["disaggregations"] = "true"
-    else:
-        querystring["disaggregations"] = "false"
-    if glossary_terms:
-        querystring["glossaryTerms"] = "true"
-    else:
-        querystring["glossaryTerms"] = "false"
-    if version:
-        querystring["version"] = version
-
-    response = requests.get(end_point, headers=headers, params=querystring)
-    return response.json()
+    querystring = _build_querystring(**locals())
+    response = _get(end_point, querystring)
+    return response
 
 
 def get_versions() -> dict:
     """Get all published data versions
     """
 
-    end_point: str = f"{BASE_URL}/api/public/versions"
+    end_point: str = "/api/public/versions"
 
-    headers = {
-        "Accept-Encoding": "gzip",
-        "Accept": "application/json"
-    }
-
-    response = requests.get(end_point, headers=headers)
-    return response.json()
+    response = _get(end_point)
+    return response
 
 
 def get_default_version() -> dict:
     """Get the current default data version
     """
 
-    end_point: str = f"{BASE_URL}/api/public/versions/default"
+    end_point: str = "/api/public/versions/default"
 
-    headers = {
-        "Accept-Encoding": "gzip",
-        "Accept": "application/json"
-    }
-
-    response = requests.get(end_point, headers=headers)
-    return response.json()
+    response = _get(end_point)
+    return response
 
 
 
