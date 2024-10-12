@@ -58,18 +58,22 @@ def get_data(indicator: str | list[str] = None,
                             version=version)
 
     data = response['records']
+
+    # if no data is found, raise an error
     if len(data) == 0:
         raise ValueError("No data found for the given parameters")
 
     if footnotes:
         data = _normalize_footnotes(data)
 
+    # if raw data is requested, return the data in original format
     if raw:
         return data
+
     return pd.DataFrame(data)
 
 
-def get_metadata():
+def indicator_metadata(indicator: str):
     pass
 
 

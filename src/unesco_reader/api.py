@@ -28,6 +28,13 @@ def _get(endpoint: str, params: dict | None = None) -> dict:
 
     try:
         response = requests.get(f"{API_URL}{endpoint}", headers=headers, params=params, timeout=10)
+
+        # check if 400 error raised meaning too many records requested
+        if response.status_code == 400:
+            raise ValueError("Too many records requested. Please reduce the number of records request by "
+                             "splitting the request into multiple smaller requests"
+                             " or consider using the bulk API")
+
         response.raise_for_status()  # Raises an error for HTTP codes 4xx/5xx
         return response.json()
 
@@ -82,8 +89,8 @@ def _build_querystring(**kwargs) -> dict:
         "glossaryTerms": _convert_bool_to_string(kwargs.get('glossary_terms')),
     }
 
-    # Remove any key-value pairs where the value is None
-    querystring = {k: v for k, v in querystring.items() if v is not None}
+    # Remove any key-value pairs where the value is None and sort the dictionary to ensure use of caching
+    querystring = {k: v for k, v in sorted(querystring.items()) if v is not None}
 
     return querystring
 
