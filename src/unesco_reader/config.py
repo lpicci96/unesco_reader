@@ -6,6 +6,7 @@ the custom exceptions used in the package.
 """
 
 import logging
+from typing import Literal
 
 
 # Custom Exceptions
@@ -32,3 +33,8 @@ fmt_shell = "%(levelname)s: %(message)s"
 shell_formatter = logging.Formatter(fmt_shell)  # Create formatters
 shell_handler.setFormatter(shell_formatter)  # Add formatters to handlers
 logger.addHandler(shell_handler)  # Add handlers to the logger
+
+
+# TYPES
+
+GEO_UNIT_TYPE = Literal["NATIONAL", "REGIONAL"]

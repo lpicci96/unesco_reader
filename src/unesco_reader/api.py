@@ -6,11 +6,13 @@ For more information about the API visit: https://api.uis.unesco.org/api/public/
 
 import requests
 
+from unesco_reader.config import GEO_UNIT_TYPE, logger
+
 
 API_URL: str = "https://api.uis.unesco.org"
 
 
-def _get(endpoint: str, params: dict | None = None) -> dict:
+def _get(endpoint: str, params: dict | None = None) -> dict | list:
     """ Make a request to an API endpoint and return the response object
 
     Args:
@@ -28,13 +30,6 @@ def _get(endpoint: str, params: dict | None = None) -> dict:
 
     try:
         response = requests.get(f"{API_URL}{endpoint}", headers=headers, params=params, timeout=10)
-
-        # check if 400 error raised meaning too many records requested
-        if response.status_code == 400:
-            raise ValueError("Too many records requested. Please reduce the number of records request by "
-                             "splitting the request into multiple smaller requests"
-                             " or consider using the bulk API")
-
         response.raise_for_status()  # Raises an error for HTTP codes 4xx/5xx
         return response.json()
 
@@ -95,14 +90,14 @@ def _build_querystring(**kwargs) -> dict:
     return querystring
 
 
-def get_data(indicator: str | list[str] = None,
-             geo_unit: str | list[str] = None,
-             start: int = None,
-             end: int = None,
+def get_data(indicator: str | list[str] | None = None,
+             geo_unit: str | list[str] | None = None,
+             start: int | None = None,
+             end: int | None = None,
              indicator_metadata: bool = False,
              footnotes: bool = False,
-             geo_unit_type: str = None, #TODO create a type for this
-             version: str = None,
+             geo_unit_type: GEO_UNIT_TYPE | None = None,
+             version: str | None = None,
              ) -> dict:
     """Function to get indicator data. Wrapper for the indicator data endpoint
 
@@ -111,16 +106,15 @@ def get_data(indicator: str | list[str] = None,
     For more information about this endpoint visit: https://api.uis.unesco.org/api/public/documentation/operations/getIndicatorData
 
     Args:
-        indicator: Ids of the requested indicators. Returns all available indicators if not provided.
-        geo_unit: Ids of the requested geographies (countries or regions). Returns all available geographies if not provided.
-        start: The start year to request data for. Includes the year itself. Default is the earliest available year
+        indicator: IDs of the requested indicators. Returns all available indicators if not provided.
+        geo_unit: IDs of the requested geographies (countries or regions). Returns all available geographies if not provided.
+        start: The start year to request data for. Includes the year itself. Default is the earliest available year.
         end: The end year to request data for. Includes the year itself. Default is the latest available year
-        indicator_metadata: Whether to include indicator metadata in the response. Default is False
-        footnotes: Whether to include footnotes (per data point) in the response. Default is False
+        indicator_metadata: Include indicator metadata in the response. Default is False
+        footnotes: Include footnotes (per data point) in the response. Default is False
         geo_unit_type: The type of geography to request data for. Allowed values are NATIONAL and REGIONAL
                        If a geo_unit is provided, this parameter is ignored. Default is both national and regional data
-                       Available values: NATIONAL, REGIONAL
-        version: The api version to read the data from. If not provided, defaults to the current default latest version.
+        version: The API data version to request. If not provided, defaults to the current default version.
 
     Returns:
         A dictionary with the response data
@@ -128,19 +122,33 @@ def get_data(indicator: str | list[str] = None,
 
     end_point: str = "/api/public/data/indicators"
 
+    # if indicator is None and geo_unit is None, raise an error
     if indicator is None and geo_unit is None:
         raise ValueError("At least one indicator or one geo_unit must be provided")
+
+    # if geo_unit and geo_unit_type is specified, log a message
+    if geo_unit and geo_unit_type:
+        logger.warning("Both geo_unit and geo_unit_type are specified. geo_unit_type will be ignored")
+
+    # handle cases where start is greater than end
+    if start and end and start > end:
+        raise ValueError("Start year cannot be greater than end year")
 
     querystring = _build_querystring(**locals())
     response = _get(end_point, querystring)
     return response
 
 
-def get_geo_units(version: str = None) -> dict:
-    """Function to get available geographies.
+def get_geo_units(version: str | None = None) -> list[dict]:
+    """Get geo units
+
+    Get all available geo units for a given API data version (or the current default version if no explicit version is provided).
 
     Args:
-        version: The api version to read the data from. If not provided, defaults to the current default latest version.
+        version: The API data version to query. If not provided, defaults to the current default version.
+
+    Returns:
+        A list of dictionaries with geo units
     """
 
     end_point: str = f"/api/public/definitions/geounits"
@@ -150,13 +158,19 @@ def get_geo_units(version: str = None) -> dict:
     return response
 
 
-def get_indicators(disaggregations: bool = False, glossary_terms: bool = False, version: str = None) -> dict:
-    """Function to get available indicators.
+def get_indicators(disaggregations: bool = False, glossary_terms: bool = False, version: str | None = None) -> list[dict]:
+    """Get available indicators
+
+    Get all available indicators, optionally with glossary terms and disaggregations, for the given API data version
+    (or the current default version if no explicit version is provided).
 
     Args:
-        disaggregations: Whether to include disaggregations in the response. Default is False
-        glossary_terms: Whether to include glossary terms in the response. Default is False
-        version: The version to list the indicators definitions for. If not provided, the current default version is used.
+        disaggregations: Include disaggregations in the response. Default is False
+        glossary_terms: Include glossary terms in the response. Default is False
+        version: The API data version to query. If not provided, the current default version is used.
+
+    Returns:
+        A list of dictionaries with the available indicators
     """
 
     end_point: str = "/api/public/definitions/indicators"
@@ -166,8 +180,11 @@ def get_indicators(disaggregations: bool = False, glossary_terms: bool = False, 
     return response
 
 
-def get_versions() -> dict:
+def get_versions() -> list[dict]:
     """Get all published data versions
+
+    Returns:
+        A list of dictionaries with the different data versions and their metadata
     """
 
     end_point: str = "/api/public/versions"
@@ -178,6 +195,9 @@ def get_versions() -> dict:
 
 def get_default_version() -> dict:
     """Get the current default data version
+
+    Returns:
+        A dictionary with the default data version and its metadata
     """
 
     end_point: str = "/api/public/versions/default"
