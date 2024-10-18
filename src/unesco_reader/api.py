@@ -101,7 +101,7 @@ def get_data(indicator: str | list[str] = None,
              end: int = None,
              indicator_metadata: bool = False,
              footnotes: bool = False,
-             geo_unit_type: str = None,
+             geo_unit_type: str = None, #TODO create a type for this
              version: str = None,
              ) -> dict:
     """Function to get indicator data. Wrapper for the indicator data endpoint
