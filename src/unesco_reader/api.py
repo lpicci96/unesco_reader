@@ -2,6 +2,14 @@
 
 This module wraps the API endpoints that exist in the UIS API.
 For more information about the API visit: https://api.uis.unesco.org/api/public/documentation/
+
+Endpoints:
+
+- get_data: Get indicator data
+- get_geo_units: Get available geo units
+- get_indicators: Get available indicators
+- get_versions: Get all published data versions
+- get_default_version: Get the current default data version
 """
 
 import requests
@@ -12,7 +20,7 @@ from unesco_reader.config import GEO_UNIT_TYPE, logger
 API_URL: str = "https://api.uis.unesco.org"
 
 
-def _get(endpoint: str, params: dict | None = None) -> dict | list:
+def _make_request(endpoint: str, params: dict | None = None) -> dict | list:
     """ Make a request to an API endpoint and return the response object
 
     Args:
@@ -28,8 +36,11 @@ def _get(endpoint: str, params: dict | None = None) -> dict | list:
         "Accept": "application/json"
     }
 
+    if params is not None:
+        params = {k: v for k, v in sorted(params.items()) if v is not None}
+
     try:
-        response = requests.get(f"{API_URL}{endpoint}", headers=headers, params=params, timeout=10)
+        response = requests.get(f"{API_URL}{endpoint}", headers=headers, params=params, timeout=30)
         response.raise_for_status()  # Raises an error for HTTP codes 4xx/5xx
         return response.json()
 
@@ -44,50 +55,7 @@ def _get(endpoint: str, params: dict | None = None) -> dict | list:
 def _convert_bool_to_string(value: bool | None) -> str | None:
     """Convert a boolean to a string. If the value is None, return None"""
 
-    if value is None:
-        return None
-    return "true" if value else "false"
-
-
-def _build_querystring(**kwargs) -> dict:
-    """Build a querystring from a dictionary of parameters
-
-    Builds a querystring for the following parameters:
-    - indicator
-    - geoUnit
-    - start
-    - end
-    - indicatorMetadata
-    - footnotes
-    - geoUnitType
-    - version
-    - disaggregations
-    - glossaryTerms
-
-    Args:
-        params: The parameters to build the querystring from
-
-    Returns:
-        A querystring
-    """
-
-    querystring = {
-        "indicator": [kwargs.get('indicator')] if isinstance(kwargs.get('indicator'), str) else kwargs.get('indicator'),
-        "geoUnit": [kwargs.get('geo_unit')] if isinstance(kwargs.get('geo_unit'), str) else kwargs.get('geo_unit'),
-        "start": kwargs.get('start'),
-        "end": kwargs.get('end'),
-        "indicatorMetadata": _convert_bool_to_string(kwargs.get('indicator_metadata')),
-        "footnotes": _convert_bool_to_string(kwargs.get('footnotes')),
-        "geoUnitType": kwargs.get('geo_unit_type'),
-        "version": kwargs.get('version'),
-        "disaggregations": _convert_bool_to_string(kwargs.get('disaggregations')),
-        "glossaryTerms": _convert_bool_to_string(kwargs.get('glossary_terms')),
-    }
-
-    # Remove any key-value pairs where the value is None and sort the dictionary to ensure use of caching
-    querystring = {k: v for k, v in sorted(querystring.items()) if v is not None}
-
-    return querystring
+    return None if value is None else "true" if value else "false"
 
 
 def get_data(indicator: str | list[str] | None = None,
@@ -132,11 +100,21 @@ def get_data(indicator: str | list[str] | None = None,
 
     # handle cases where start is greater than end
     if start and end and start > end:
+        logger.warning(f"Start year {start} is greater than end year {end}")
         raise ValueError("Start year cannot be greater than end year")
 
-    querystring = _build_querystring(**locals())
-    response = _get(end_point, querystring)
-    return response
+    params = {
+        "indicator": [indicator] if isinstance(indicator, str) else indicator,
+        "geoUnit": [geo_unit] if isinstance(geo_unit, str) else geo_unit,
+        "start": start,
+        "end": end,
+        "indicatorMetadata": _convert_bool_to_string(indicator_metadata),
+        "footnotes": _convert_bool_to_string(footnotes),
+        "geoUnitType": geo_unit_type,
+        "version": version
+    }
+
+    return _make_request(end_point, params)
 
 
 def get_geo_units(version: str | None = None) -> list[dict]:
@@ -153,9 +131,11 @@ def get_geo_units(version: str | None = None) -> list[dict]:
 
     end_point: str = f"/api/public/definitions/geounits"
 
-    querystring = _build_querystring(**locals())
-    response = _get(end_point, querystring)
-    return response
+    params = {
+        "version": version
+    }
+
+    return _make_request(end_point, params)
 
 
 def get_indicators(disaggregations: bool = False, glossary_terms: bool = False, version: str | None = None) -> list[dict]:
@@ -175,9 +155,13 @@ def get_indicators(disaggregations: bool = False, glossary_terms: bool = False, 
 
     end_point: str = "/api/public/definitions/indicators"
 
-    querystring = _build_querystring(**locals())
-    response = _get(end_point, querystring)
-    return response
+    params = {
+        "disaggregations": _convert_bool_to_string(disaggregations),
+        "glossaryTerms": _convert_bool_to_string(glossary_terms),
+        "version": version
+    }
+
+    return _make_request(end_point, params)
 
 
 def get_versions() -> list[dict]:
@@ -189,8 +173,7 @@ def get_versions() -> list[dict]:
 
     end_point: str = "/api/public/versions"
 
-    response = _get(end_point)
-    return response
+    return _make_request(end_point)
 
 
 def get_default_version() -> dict:
@@ -202,8 +185,7 @@ def get_default_version() -> dict:
 
     end_point: str = "/api/public/versions/default"
 
-    response = _get(end_point)
-    return response
+    return _make_request(end_point)
 
 
 
