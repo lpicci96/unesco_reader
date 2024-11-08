@@ -294,7 +294,7 @@ def get_metadata(indicator: str | list[str] | None = None,
 
 
 
-def available_indicators(theme: str | list[str] | None = None, min_year: int | None = None, geo_unit_type: GEO_UNIT_TYPE | Literal['ALL'] = "ALL",*, raw: bool=False, version: str | None = None) -> pd.DataFrame | list[dict]:
+def available_indicators(theme: str | list[str] | None = None, min_year: int | None = None, geo_unit_type: GEO_UNIT_TYPE | Literal['ALL'] | None = None,*, raw: bool=False, version: str | None = None) -> pd.DataFrame | list[dict]:
     """Get available indicators
 
     This functions returns the available indicators from the UIS API with some basic information, including theme,
@@ -303,7 +303,7 @@ def available_indicators(theme: str | list[str] | None = None, min_year: int | N
     Args:
         theme: Filter indicators for specific themes. Can be a single theme or a list of themes. Default returns all themes.
         min_year: The earliest year for which the indicator data must be available. Includes the year itself. Default is None, which returns all available data.
-        geo_unit_type: The type of geography for which data is available. Default is "ALL" which gets all available types. Allowed values are ["NATIONAL", "REGIONAL", "ALL"].
+        geo_unit_type: The type of geography for which data is available. Default is None which does not filter and gets any available type. Allowed values are "NATIONAL" (country-level data), "REGIONAL" (regional-level data), "ALL" (both national and regional data), or None for all types.
         raw: If True, returns the data as a list of dictionaries in the original format from the API. Default is False.
         version: The data version to use. Default uses the latest default version.
 
@@ -325,14 +325,15 @@ def available_indicators(theme: str | list[str] | None = None, min_year: int | N
         indicators = [record for record in indicators if record['dataAvailability']['timeLine']['min'] <= min_year]
 
     # Filter based on geo_unit_type
-    if geo_unit_type == "ALL":
-            # Filter records with both 'REGIONAL' and 'NATIONAL'
-        indicators = [record for record in indicators if "REGIONAL" in record['dataAvailability']['geoUnits']['types'] and "NATIONAL" in record['dataAvailability']['geoUnits']['types']]
-    elif geo_unit_type in ["REGIONAL", "NATIONAL"]:
-            # Filter records with either 'REGIONAL' or 'NATIONAL'
-        indicators = [record for record in indicators if geo_unit_type in record['dataAvailability']['geoUnits']['types']]
-    else:
-        raise ValueError("geo_unit_type must be 'NATIONAL', 'REGIONAL', or 'ALL'")
+    if geo_unit_type:
+        if geo_unit_type == "ALL":
+                # Filter records with both 'REGIONAL' and 'NATIONAL'
+            indicators = [record for record in indicators if "REGIONAL" in record['dataAvailability']['geoUnits']['types'] and "NATIONAL" in record['dataAvailability']['geoUnits']['types']]
+        elif geo_unit_type in ["REGIONAL", "NATIONAL"]:
+                # Filter records with either 'REGIONAL' or 'NATIONAL'
+            indicators = [record for record in indicators if geo_unit_type in record['dataAvailability']['geoUnits']['types']]
+        else:
+            raise ValueError("geo_unit_type must be 'NATIONAL', 'REGIONAL', or 'ALL'")
 
     # If no data is found, raise an error
     if len(indicators) == 0:
@@ -367,7 +368,7 @@ def available_indicators(theme: str | list[str] | None = None, min_year: int | N
                              })
             )
 
-def available_geo_units(geo_unit_type = None, raw: bool = False, version: str | None = None) -> pd.DataFrame | list[dict]:
+def available_geo_units(geo_unit_type: GEO_UNIT_TYPE | None = None, raw: bool = False, version: str | None = None) -> pd.DataFrame | list[dict]:
     """ """
 
     geo_units = api.get_geo_units(version=version)

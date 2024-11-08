@@ -3,6 +3,8 @@ from importlib.metadata import version
 from unesco_reader import bulk
 from unesco_reader import api
 
-from unesco_reader.frame import get_data, available_indicators, available_geo_units, get_metadata, available_themes
+# TODO: bring custom exceptions to the top level if a user needs to catch them
+
+from unesco_reader.frame import get_data, get_metadata, available_indicators
 
 __version__ = version("unesco_reader")
