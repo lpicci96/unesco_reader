@@ -366,6 +366,7 @@ def available_indicators(theme: str | list[str] | None = None, min_year: int | N
                              "lastDataUpdate": "last_data_update",
                              "lastDataUpdateDescription": "last_data_update_description",
                              })
+            .assign(last_data_update = lambda d: pd.to_datetime(d.last_data_update))
             )
 
 def available_geo_units(geo_unit_type: GEO_UNIT_TYPE | None = None,
