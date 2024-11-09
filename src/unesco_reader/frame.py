@@ -368,12 +368,30 @@ def available_indicators(theme: str | list[str] | None = None, min_year: int | N
                              })
             )
 
-def available_geo_units(geo_unit_type: GEO_UNIT_TYPE | None = None, raw: bool = False, version: str | None = None) -> pd.DataFrame | list[dict]:
-    """ """
+def available_geo_units(geo_unit_type: GEO_UNIT_TYPE | None = None,
+                        *,
+                        raw: bool = False, version: str | None = None) -> pd.DataFrame | list[dict]:
+    """Get available geo units
+
+    Get all available geo units for a given API data version (or the current default version if no explicit version is provided), along with some basic information like the region group and type of geography.
+
+    Args:
+        geo_unit_type: The type of geography to request data for. Allowed values are NATIONAL and REGIONAL. Default is None which returns all available types.
+        raw: If True, returns the data as a list of dictionaries in the original format from the API. Default is False.
+        version: The data version to use. Default uses the latest default version.
+
+    Returns:
+        A pandas DataFrame with the available geo units or a list of dictionaries if raw=True.
+
+    """
 
     geo_units = api.get_geo_units(version=version)
 
     if geo_unit_type:
+        # if geo_unit_type is not either 'NATIONAL' or 'REGIONAL', raise an error
+        if geo_unit_type not in ["NATIONAL", "REGIONAL"]:
+            raise ValueError("geo_unit_type must be 'NATIONAL' or 'REGIONAL'")
+        # filter the geo_units based on the geo_unit_type
         geo_units = [record for record in geo_units if geo_unit_type in record['type']]
 
     if raw:
@@ -384,20 +402,52 @@ def available_geo_units(geo_unit_type: GEO_UNIT_TYPE | None = None, raw: bool = 
                                                    "regionGroup": "region_group",
                                                    "type": "geo_unit_type",})
 
-def available_themes(raw: bool = False) -> pd.DataFrame | dict:
-    """get the available themes for the latest data version or a specific version"""
+def available_themes(*, raw: bool = False) -> pd.DataFrame | dict:
+    """Get the available themes and basic information including latest update and description
+
+    Args:
+        raw: If True, returns the data as a dictionary in the original format from the API. Default is False.
+    """
 
     themes = api.get_default_version()['themeDataStatus']
 
     if raw:
         return themes
 
-    return pd.DataFrame(themes).rename(columns={"lastUpdate": "last_update",})
+    return (pd.DataFrame(themes)
+            .rename(columns={"lastUpdate": "last_update"})
+            .assign(last_update = lambda d: pd.to_datetime(d.last_update))
+            )
 
 
 def default_version() -> str:
     """Get the default data version"""
 
     return api.get_default_version()['version']
+
+
+def available_versions(*, raw: bool=False) -> pd.DataFrame | list[dict]:
+    """Get available data versions and basic information including publication date and description
+
+    Args:
+        raw: If True, returns the data as a list of dictionaries in the original format from the API. Default is False.
+
+    Returns:
+        A pandas DataFrame with the available versions or a list of dictionaries if raw=True.
+    """
+
+    versions = api.get_versions()
+
+    # remove theme details
+    for version in versions:
+        version.pop('themeDataStatus')
+
+    if raw:
+        return versions
+
+    return (pd.DataFrame(versions)
+            .rename(columns={"publicationDate": "publication_date"})
+            .assign(publication_date = lambda d: pd.to_datetime(d.publication_date))
+            )
 
 
