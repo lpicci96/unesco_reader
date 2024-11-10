@@ -14,7 +14,8 @@ from unesco_reader.bulk.read import UISInfoScraper, get_zipfile
 from tabulate import tabulate
 import pandas as pd
 from functools import lru_cache
-from unesco_reader.config import logger, NoDataError
+from unesco_reader.config import logger
+from unesco_reader.exceptions import NoDataError
 
 
 @lru_cache

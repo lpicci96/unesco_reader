@@ -10,30 +10,80 @@ Endpoints:
 - get_indicators: Get available indicators
 - get_versions: Get all published data versions
 - get_default_version: Get the current default data version
+
+
+
+Dev:
+TODO: add caching for repeated API calls - _check_valid_version and other function
 """
 
 import requests
 
-from unesco_reader.config import GEO_UNIT_TYPE, logger, TooManyRecordsError
+from unesco_reader.config import GEO_UNIT_TYPE, logger
+from unesco_reader.exceptions import TooManyRecordsError
 
 
 API_URL: str = "https://api.uis.unesco.org"
 
+
+def _check_valid_version(version: str | None) -> None:
+    """Check if the version is valid. If the version is not None, it must be a string and must be a valid version in the API
+
+    Args:
+        version: The version to check
+
+    Raises:
+        ValueError: If the version is not valid
+    """
+
+    if version is not None and not isinstance(version, str):
+        raise ValueError("Data version must be a string")
+
+    # check that the version is a valid version in the api
+    if version is not None:
+        versions = get_versions()
+        if version not in [v["version"] for v in versions]:
+            raise ValueError(f"Invalid data version: {version}")
+
+
+def _check_valid_geo_unit_type(geo_unit_type: GEO_UNIT_TYPE | None) -> None:
+    """Check if the geo_unit_type is valid. Allowed values are NATIONAL and REGIONAL, or None
+
+    Args:
+        geo_unit_type: The geo unit type to check
+
+    Raises:
+        ValueError: If the geo_unit_type is not valid
+    """
+
+    if geo_unit_type is not None and geo_unit_type not in ["NATIONAL", "REGIONAL"]:
+        raise ValueError("geo_unit_type must be either NATIONAL or REGIONAL")
+
 def _check_for_too_many_records(response: requests.Response) -> None:
     """Check if too many records have been requested.
 
-    A maximum of 100 000 records can be returned in a single query. If more records are requested, an error is raised.
-    This function handles the error response from the API.
+    If too many records have been requested or the URI is too long, raise an error. A maximum of 100 000 records can be returned in a single query. If more records are requested, an error is raised.
+    If this error occurs, the response is 400 and the message is {"message":"Too much data requested (224879 records), please reduce the amount of records queried to less than 100000 by using the available filter options.","error":"Bad Request","statusCode":400}
 
-    if this error occurs, the response is 400 and the message is {"message":"Too much data requested (224879 records), please reduce the amount of records queried to less than 100000 by using the available filter options.","error":"Bad Request","statusCode":400}
+    If the URI is too long, it means too many parameters have been passed to the API and an error is raised.
+
+    Args:
+        response: The response object from the API
+
+    Raises:
+        TooManyRecordsError: If too many records have been requested
+        TooManyRecordsError: If the URI is too long
     """
 
+    # if too many records are requested raise an error with the error message from the API
     if response.status_code == 400:
         error_message = response.json().get("message")
         if "Too much data requested" in error_message:
             raise TooManyRecordsError(error_message)
 
-
+    # if URI Too Long raise a custom error rather than the default one from requests, indicating that too many parameters have been passed to the API
+    if response.status_code == 414:
+        raise TooManyRecordsError("Too many parameters passed to the API. Please reduce the amount of parameters passed to the API")
 
 
 def _make_request(endpoint: str, params: dict | None = None) -> dict | list:
@@ -54,6 +104,10 @@ def _make_request(endpoint: str, params: dict | None = None) -> dict | list:
 
     if params is not None:
         params = {k: v for k, v in sorted(params.items()) if v is not None}
+
+        # check if the version is valid
+        if "version" in params:
+            _check_valid_version(params["version"])
 
     try:
         response = requests.get(f"{API_URL}{endpoint}", headers=headers, params=params, timeout=30)
@@ -111,9 +165,12 @@ def get_data(indicator: str | list[str] | None = None,
     if indicator is None and geo_unit is None:
         raise ValueError("At least one indicator or one geo_unit must be provided")
 
+
     # if geo_unit and geo_unit_type is specified, log a message
     if geo_unit and geo_unit_type:
         logger.warning("Both geo_unit and geo_unit_type are specified. geo_unit_type will be ignored")
+
+    _check_valid_geo_unit_type(geo_unit_type) # check if the geo_unit_type is valid
 
     # handle cases where start is greater than end
     if start and end and start > end:

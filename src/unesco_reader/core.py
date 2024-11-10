@@ -1,16 +1,12 @@
 """Pandas support for UNESCO data.
-
-
-TODO: implement basic multithreading for faster data retrieval
-
-
 """
 
 import pandas as pd
 from typing import Literal
 
 from unesco_reader import api
-from unesco_reader.config import NoDataError, logger, GEO_UNIT_TYPE
+from unesco_reader.config import logger, GEO_UNIT_TYPE
+from unesco_reader.exceptions import TooManyRecordsError, NoDataError
 
 
 def _log_hints(response: dict) -> None:
@@ -216,13 +212,16 @@ def get_data(indicator: str | list[str] | None = None,
         geo_unit = _convert_geo_units_to_code(geo_unit)
 
     # get the data from the API. If both indicator and geo_unit are None, the api module will raise an error
-    response = api.get_data(indicator=indicator,
-                            geo_unit=geo_unit,
-                            start=start,
-                            end=end,
-                            footnotes=footnotes,
-                            geo_unit_type=geo_unit_type,
-                            version=version)
+    try:
+        response = api.get_data(indicator=indicator,
+                                geo_unit=geo_unit,
+                                start=start,
+                                end=end,
+                                footnotes=footnotes,
+                                geo_unit_type=geo_unit_type,
+                                version=version)
+    except TooManyRecordsError:
+        raise TooManyRecordsError("Too much data requested. Please make multiple requests with fewer parameters. A maximum of 1000 records can be requested at a time.")
 
 
     # log hints if any
@@ -333,7 +332,7 @@ def available_indicators(theme: str | list[str] | None = None, min_year: int | N
                 # Filter records with either 'REGIONAL' or 'NATIONAL'
             indicators = [record for record in indicators if geo_unit_type in record['dataAvailability']['geoUnits']['types']]
         else:
-            raise ValueError("geo_unit_type must be 'NATIONAL', 'REGIONAL', or 'ALL'")
+            raise ValueError("geo_unit_type must be NATIONAL, REGIONAL, ALL, or None for any type. By default if the geo_unit_type is not specified or is None, it returns any available type.")
 
     # If no data is found, raise an error
     if len(indicators) == 0:
@@ -387,11 +386,9 @@ def available_geo_units(geo_unit_type: GEO_UNIT_TYPE | None = None,
     """
 
     geo_units = api.get_geo_units(version=version)
+    api._check_valid_geo_unit_type(geo_unit_type) # check if the geo_unit_type is valid
 
     if geo_unit_type:
-        # if geo_unit_type is not either 'NATIONAL' or 'REGIONAL', raise an error
-        if geo_unit_type not in ["NATIONAL", "REGIONAL"]:
-            raise ValueError("geo_unit_type must be 'NATIONAL' or 'REGIONAL'")
         # filter the geo_units based on the geo_unit_type
         geo_units = [record for record in geo_units if geo_unit_type in record['type']]
 

@@ -9,20 +9,6 @@ import logging
 from typing import Literal
 
 
-# Custom Exceptions
-
-
-class NoDataError(Exception):
-    """This is a custom exception that is raised when no UIS data exists"""
-
-    pass
-
-class TooManyRecordsError(Exception):
-    """This is a custom exception that is raised when too many records are requested"""
-
-    pass
-
-
 # Configure Logging
 logger = logging.getLogger(__name__)
 shell_handler = logging.StreamHandler()  # Create terminal handler
@@ -40,6 +26,5 @@ shell_handler.setFormatter(shell_formatter)  # Add formatters to handlers
 logger.addHandler(shell_handler)  # Add handlers to the logger
 
 
-# TYPES
-
+# Custom TYPES
 GEO_UNIT_TYPE = Literal["NATIONAL", "REGIONAL"]
