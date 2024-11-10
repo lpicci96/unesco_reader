@@ -17,6 +17,11 @@ class NoDataError(Exception):
 
     pass
 
+class TooManyRecordsError(Exception):
+    """This is a custom exception that is raised when too many records are requested"""
+
+    pass
+
 
 # Configure Logging
 logger = logging.getLogger(__name__)

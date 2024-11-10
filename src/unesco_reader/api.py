@@ -14,10 +14,26 @@ Endpoints:
 
 import requests
 
-from unesco_reader.config import GEO_UNIT_TYPE, logger
+from unesco_reader.config import GEO_UNIT_TYPE, logger, TooManyRecordsError
 
 
 API_URL: str = "https://api.uis.unesco.org"
+
+def _check_for_too_many_records(response: requests.Response) -> None:
+    """Check if too many records have been requested.
+
+    A maximum of 100 000 records can be returned in a single query. If more records are requested, an error is raised.
+    This function handles the error response from the API.
+
+    if this error occurs, the response is 400 and the message is {"message":"Too much data requested (224879 records), please reduce the amount of records queried to less than 100000 by using the available filter options.","error":"Bad Request","statusCode":400}
+    """
+
+    if response.status_code == 400:
+        error_message = response.json().get("message")
+        if "Too much data requested" in error_message:
+            raise TooManyRecordsError(error_message)
+
+
 
 
 def _make_request(endpoint: str, params: dict | None = None) -> dict | list:
@@ -41,6 +57,7 @@ def _make_request(endpoint: str, params: dict | None = None) -> dict | list:
 
     try:
         response = requests.get(f"{API_URL}{endpoint}", headers=headers, params=params, timeout=30)
+        _check_for_too_many_records(response) # check if too many records have been requested
         response.raise_for_status()  # Raises an error for HTTP codes 4xx/5xx
         return response.json()
 
