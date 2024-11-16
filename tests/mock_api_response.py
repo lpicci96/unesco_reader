@@ -12,7 +12,7 @@ mock_data_no_hints_no_metadata = {
     "indicatorMetadata": []
 }
 
-mock_data_no_hints_with_metadata = {
+mock_data_no_hints_metadata = {
     "hints": [],
     "records": [
         {"indicatorId": "CR.1", "geoUnit": "ZWE", "year": 2010, "value": 88.2, "magnitude": None, "qualifier": None},
@@ -50,3 +50,96 @@ mock_data_hints_no_metadata = {
     ],
     "indicatorMetadata": []
 }
+
+
+mock_no_data_hints = {"hints": [{
+            "code": "UIS::HINT::001",
+            "message": "The indicator could not be found, invalid"
+        }],
+    "records": [],
+    "indicatorMetadata": []
+}
+
+mock_list_versions = [
+    {
+        "version": "20241030-9d4d089e",
+        "publicationDate": "2024-10-30T17:28:00.868Z",
+        "description": "Drop data for CIV on MYS for 1988 and 1998 and update some other education datapoints",
+        "themeDataStatus": [
+            {
+                "theme": "EDUCATION",
+                "lastUpdate": "2024-10-29",
+                "description": "September 2024 Data Release"
+            },
+            {
+                "theme": "SCIENCE_TECHNOLOGY_INNOVATION",
+                "lastUpdate": "2024-02-24",
+                "description": "February 2024 Data Release"
+            },
+            {
+                "theme": "CULTURE",
+                "lastUpdate": "2023-11-25",
+                "description": "November 2023 Data Release"
+            },
+            {
+                "theme": "DEMOGRAPHIC_SOCIOECONOMIC",
+                "lastUpdate": "2024-10-29",
+                "description": "September 2024 Data Release"
+            }
+        ]
+    },
+    {
+        "version": "20240913-b8ca1963",
+        "publicationDate": "2024-09-15T14:44:07.750Z",
+        "description": "Glossary Update",
+        "themeDataStatus": [
+            {
+                "theme": "EDUCATION",
+                "lastUpdate": "2024-09-05",
+                "description": "September 2024 Data Release"
+            },
+            {
+                "theme": "SCIENCE_TECHNOLOGY_INNOVATION",
+                "lastUpdate": "2024-02-28",
+                "description": "February 2024 Data Release"
+            },
+            {
+                "theme": "CULTURE",
+                "lastUpdate": "2023-11-25",
+                "description": "November 2023 Data Release"
+            },
+            {
+                "theme": "DEMOGRAPHIC_SOCIOECONOMIC",
+                "lastUpdate": "2024-09-05",
+                "description": "September 2024 Data Release"
+            }
+        ]
+    },
+    {
+        "version": "20240910-b5ad4d82",
+        "publicationDate": "2024-09-11T06:15:13.018Z",
+        "description": "September 2024 Data Release (first data publication via API)",
+        "themeDataStatus": [
+            {
+                "theme": "EDUCATION",
+                "lastUpdate": "2024-09-05",
+                "description": "September 2024 Data Release"
+            },
+            {
+                "theme": "SCIENCE_TECHNOLOGY_INNOVATION",
+                "lastUpdate": "2024-02-28",
+                "description": "February 2024 Data Release"
+            },
+            {
+                "theme": "CULTURE",
+                "lastUpdate": "2023-11-25",
+                "description": "November 2023 Data Release"
+            },
+            {
+                "theme": "DEMOGRAPHIC_SOCIOECONOMIC",
+                "lastUpdate": "2024-09-05",
+                "description": "September 2024 Data Release"
+            }
+        ]
+    }
+]

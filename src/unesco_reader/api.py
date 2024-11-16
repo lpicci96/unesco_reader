@@ -24,6 +24,7 @@ from unesco_reader.exceptions import TooManyRecordsError
 
 
 API_URL: str = "https://api.uis.unesco.org"
+TIMEOUT: int = 30
 
 
 def _check_valid_version(version: str | None) -> None:
@@ -45,19 +46,6 @@ def _check_valid_version(version: str | None) -> None:
         if version not in [v["version"] for v in versions]:
             raise ValueError(f"Invalid data version: {version}")
 
-
-def _check_valid_geo_unit_type(geo_unit_type: GEO_UNIT_TYPE | None) -> None:
-    """Check if the geo_unit_type is valid. Allowed values are NATIONAL and REGIONAL, or None
-
-    Args:
-        geo_unit_type: The geo unit type to check
-
-    Raises:
-        ValueError: If the geo_unit_type is not valid
-    """
-
-    if geo_unit_type is not None and geo_unit_type not in ["NATIONAL", "REGIONAL"]:
-        raise ValueError("geo_unit_type must be either NATIONAL or REGIONAL")
 
 def _check_for_too_many_records(response: requests.Response) -> None:
     """Check if too many records have been requested.
@@ -110,7 +98,7 @@ def _make_request(endpoint: str, params: dict | None = None) -> dict | list:
             _check_valid_version(params["version"])
 
     try:
-        response = requests.get(f"{API_URL}{endpoint}", headers=headers, params=params, timeout=30)
+        response = requests.get(f"{API_URL}{endpoint}", headers=headers, params=params, timeout=TIMEOUT)
         _check_for_too_many_records(response) # check if too many records have been requested
         response.raise_for_status()  # Raises an error for HTTP codes 4xx/5xx
         return response.json()
@@ -166,16 +154,18 @@ def get_data(indicator: str | list[str] | None = None,
         raise ValueError("At least one indicator or one geo_unit must be provided")
 
 
-    # if geo_unit and geo_unit_type is specified, log a message
+    # if geo_unit and geo_unit_type is specified, log a message and ignore geo_unit_type
     if geo_unit and geo_unit_type:
         logger.warning("Both geo_unit and geo_unit_type are specified. geo_unit_type will be ignored")
+        geo_unit_type = None # set to None to ignore it to avoid unexpected results from API call and to avoid unnecessary API calls
 
-    _check_valid_geo_unit_type(geo_unit_type) # check if the geo_unit_type is valid
+    # check if the geo_unit_type is valid
+    if geo_unit_type is not None and geo_unit_type not in ["NATIONAL", "REGIONAL"]:
+        raise ValueError("geo_unit_type must be either NATIONAL or REGIONAL")
 
     # handle cases where start is greater than end
     if start and end and start > end:
-        logger.warning(f"Start year {start} is greater than end year {end}")
-        raise ValueError("Start year cannot be greater than end year")
+        raise ValueError(f"Start year ({start}) cannot be greater than end year ({end})")
 
     params = {
         "indicator": [indicator] if isinstance(indicator, str) else indicator,
@@ -260,6 +250,7 @@ def get_default_version() -> dict:
     end_point: str = "/api/public/versions/default"
 
     return _make_request(end_point)
+
 
 
 

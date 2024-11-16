@@ -24,6 +24,42 @@ def _log_hints(response: dict) -> None:
             logger.warning(hint['message'])
 
 
+
+def _convert_codes(indicators: str | list[str], code_lookup, name_to_code) -> str | list[str]:
+    """Convert names to their respective codes
+
+    This function is used to convert geo units or indicators from names to their respective codes.
+    If the name is already a code, it is left as is.
+
+    Args:
+        indicators: The indicator name or list of indicator names to convert to codes
+        code_lookup: A set of all available codes
+        name_to_code: A dictionary mapping indicator names to codes
+
+    Returns:
+        The code or list of codes
+    """
+
+    # Ensure indicators is a list for uniform processing and keep track if it was a single value (str)
+    is_single = isinstance(indicators, str)
+    indicators = [indicators] if is_single else indicators
+
+    converted_indicators = [] # Initialize an empty list to store the converted indicators
+    for indicator in indicators:
+        # Check if the indicator is already a code
+        if indicator in code_lookup:
+            converted_indicators.append(indicator)
+        # Check if the indicator is a name and convert to code
+        elif indicator in name_to_code:
+            converted_indicators.append(name_to_code[indicator])
+        # else return the original indicator as a fallback
+        else:
+            converted_indicators.append(indicator)  # Append the original indicator as a fallback
+
+    # Return a string if a single indicator was provided, otherwise return a list
+    return converted_indicators[0] if is_single else converted_indicators
+
+
 def _convert_indicator_codes_to_code(indicators: str | list[str]) -> str | list[str]:
     """Convert indicators to their respective codes
 
@@ -44,24 +80,7 @@ def _convert_indicator_codes_to_code(indicators: str | list[str]) -> str | list[
     code_lookup = {unit['indicatorCode'] for unit in indicator_data}
     name_to_code = {unit['name']: unit['indicatorCode'] for unit in indicator_data}
 
-    # Ensure indicators is a list for uniform processing
-    is_single = isinstance(indicators, str)
-    indicators = [indicators] if is_single else indicators
-
-    converted_indicators = []
-    for indicator in indicators:
-        # Check if the indicator is already a code
-        if indicator in code_lookup:
-            converted_indicators.append(indicator)
-        # Check if the indicator is a name and convert to code
-        elif indicator in name_to_code:
-            converted_indicators.append(name_to_code[indicator])
-        # else return the original indicator as a fallback
-        else:
-            converted_indicators.append(indicator)  # Append the original indicator as a fallback
-
-    # Return a string if a single indicator was provided, otherwise return a list
-    return converted_indicators[0] if is_single else converted_indicators
+    return _convert_codes(indicators, code_lookup, name_to_code)
 
 
 def _convert_geo_units_to_code(geo_units: str | list[str]) -> str | list[str]:
@@ -80,24 +99,7 @@ def _convert_geo_units_to_code(geo_units: str | list[str]) -> str | list[str]:
     code_lookup = {unit['id'] for unit in geo_units_data}
     name_to_code = {unit['name']: unit['id'] for unit in geo_units_data}
 
-    # Ensure geo_units is a list for uniform processing, and keep track if it was a single value
-    is_single = isinstance(geo_units, str)
-    geo_units = [geo_units] if is_single else geo_units
-
-    # loop over the geo_units and convert them to codes
-    converted_geo_units = []
-    for geo_unit in geo_units:
-        # Check if the geo_unit is already a code
-        if geo_unit in code_lookup:
-            converted_geo_units.append(geo_unit)
-        # Check if the geo_unit is a name and convert to code
-        elif geo_unit in name_to_code:
-            converted_geo_units.append(name_to_code[geo_unit])
-        # else return the original geo_unit as a fallback
-        else:
-            converted_geo_units.append(geo_unit)
-
-    return converted_geo_units[0] if is_single else converted_geo_units
+    return _convert_codes(geo_units, code_lookup, name_to_code)
 
 
 def _normalize_footnotes(data: list[dict]) -> list[dict]:
@@ -249,7 +251,7 @@ def get_data(indicator: str | list[str] | None = None,
 
     return (pd.DataFrame(data)
             .rename(columns={'indicatorId': 'indicator_code',
-                             "geoUnit": "geo_unit",
+                             "geoUnit": "geo_unit_code",
                              "name": "indicator_name",
                              "geoUnitName": "geo_unit_name",
                                 "regionGroup": "region_group",
@@ -275,32 +277,83 @@ def get_metadata(indicator: str | list[str] | None = None,
         A list of dictionaries with the metadata for the indicators
     """
 
-    # Convert the indicators to their respective codes
-    if indicator:
-        indicator = _convert_indicator_codes_to_code(indicator)
+    if isinstance(indicator, str):
+        indicator = [indicator]
 
-    indicators = api.get_indicators(disaggregations=disaggregations, glossary_terms=glossary_terms, version=version)
+    # Convert the indicators to their respective codes
+    response = api.get_indicators(disaggregations=disaggregations, glossary_terms=glossary_terms, version=version)
+
 
     # Filter the indicators based on the given indicator codes
     if indicator:
-        indicators = [record for record in indicators if record['indicatorCode'] in indicator]
+        indicator = _convert_indicator_codes_to_code(indicator)
+        response = [record for record in response if record['indicatorCode'] in indicator]
 
         # check if no data is found
-        if len(indicators) == 0:
+        if len(response) == 0:
             raise NoDataError("No indicator metadata found for the given indicators")
 
-    return indicators
+        # log message if indicators are not found, specifying which indicators were not found
+        if len(indicator) != len(response):
+
+            # get the set of indicators not found
+            not_found = set(indicator) - {record['indicatorCode'] for record in response}
+
+            logger.warning(f"Metadata not found for the following indicators: {list(not_found)}")
+
+    return response
 
 
+def _indicators_df(indicators: list[dict]) -> pd.DataFrame:
+    """Return available indicators as a DataFrame. This function flattens the data for easy DataFrame conversion then returns the DataFrame.
 
-def available_indicators(theme: str | list[str] | None = None, min_year: int | None = None, geo_unit_type: GEO_UNIT_TYPE | Literal['ALL'] | None = None,*, raw: bool=False, version: str | None = None) -> pd.DataFrame | list[dict]:
+    Args:
+        indicators: The list of indicators to convert to a DataFrame
+
+    Returns:
+        A pandas DataFrame with the available indicators
+    """
+
+    # Flatten the data for DataFrame return
+    for record in indicators:
+        record['min_year'] = record['dataAvailability']['timeLine']['min']
+        record['max_year'] = record['dataAvailability']['timeLine']['max']
+        record['total_records'] = record['dataAvailability']['totalRecordCount']
+        geo_units = record['dataAvailability']['geoUnits']['types']
+
+        # Handle geo_unit_type based on the conditions
+        if "REGIONAL" in geo_units and "NATIONAL" in geo_units:
+            record['geo_unit_type'] = "ALL"
+        else:
+            record['geo_unit_type'] = geo_units[0] if geo_units else None
+
+        # Remove the 'dataAvailability' key since it's been flattened
+        record.pop('dataAvailability')
+
+    # Convert to pandas DataFrame and return
+    return (pd.DataFrame(indicators)
+            .rename(columns={'indicatorCode': 'indicator_code',
+                             "name": "indicator_name",
+                             "lastDataUpdate": "last_update",
+                             "lastDataUpdateDescription": "last_update_description",
+                             })
+            .assign(last_data_update = lambda d: pd.to_datetime(d.last_update))
+            )
+
+
+def available_indicators(theme: str | list[str] | None = None,
+                         min_year: int | None = None,
+                         geo_unit_type: GEO_UNIT_TYPE | Literal['ALL'] | None = None,
+                         *,
+                         raw: bool=False,
+                         version: str | None = None) -> pd.DataFrame | list[dict]:
     """Get available indicators
 
     This functions returns the available indicators from the UIS API with some basic information, including theme,
     time range, last data update, and total records. The data is filtered based on the given parameters.
 
     Args:
-        theme: Filter indicators for specific themes. Can be a single theme or a list of themes. Default returns all themes.
+        theme: Filter indicators for specific themes. Can be a single theme or a list of themes. Default returns all themes. Use the `available_themes` function to see all available themes.
         min_year: The earliest year for which the indicator data must be available. Includes the year itself. Default is None, which returns all available data.
         geo_unit_type: The type of geography for which data is available. Default is None which does not filter and gets any available type. Allowed values are "NATIONAL" (country-level data), "REGIONAL" (regional-level data), "ALL" (both national and regional data), or None for all types.
         raw: If True, returns the data as a list of dictionaries in the original format from the API. Default is False.
@@ -310,6 +363,7 @@ def available_indicators(theme: str | list[str] | None = None, min_year: int | N
         A pandas DataFrame with the available indicators or a list of dictionaries if raw=True.
     """
 
+    # Get the indicators from the API
     indicators = api.get_indicators(version=version)
 
     if isinstance(theme, str):
@@ -318,6 +372,11 @@ def available_indicators(theme: str | list[str] | None = None, min_year: int | N
     # filtered based on theme
     if theme:
         indicators = [record for record in indicators if record['theme'] in theme]
+
+        # if some themes are not found log a message with the themes not found
+        if len(theme) != len({record['theme'] for record in indicators}) and len(indicators) > 0:
+            not_found = set(theme) - {record['theme'] for record in indicators}
+            logger.warning(f"Indicators not found for the following themes: {list(not_found)}")
 
     # Filter based on min_year
     if min_year:
@@ -342,35 +401,13 @@ def available_indicators(theme: str | list[str] | None = None, min_year: int | N
     if raw:
         return indicators
 
-    # Flatten the data for DataFrame return
-    for record in indicators:
-        record['min_year'] = record['dataAvailability']['timeLine']['min']
-        record['max_year'] = record['dataAvailability']['timeLine']['max']
-        record['total_records'] = record['dataAvailability']['totalRecordCount']
-        geo_units = record['dataAvailability']['geoUnits']['types']
-
-        # Handle geo_unit_type based on the conditions
-        if "REGIONAL" in geo_units and "NATIONAL" in geo_units:
-            record['geo_unit_type'] = "ALL"
-        else:
-            record['geo_unit_type'] = geo_units[0] if geo_units else None
-
-        # Remove the 'dataAvailability' key since it's been flattened
-        record.pop('dataAvailability')
-
     # Convert to pandas DataFrame and return
-    return (pd.DataFrame(indicators)
-            .rename(columns={'indicatorCode': 'indicator_code',
-                             "name": "indicator_name",
-                             "lastDataUpdate": "last_data_update",
-                             "lastDataUpdateDescription": "last_data_update_description",
-                             })
-            .assign(last_data_update = lambda d: pd.to_datetime(d.last_data_update))
-            )
+    return _indicators_df(indicators)
 
 def available_geo_units(geo_unit_type: GEO_UNIT_TYPE | None = None,
                         *,
-                        raw: bool = False, version: str | None = None) -> pd.DataFrame | list[dict]:
+                        raw: bool = False,
+                        version: str | None = None) -> pd.DataFrame | list[dict]:
     """Get available geo units
 
     Get all available geo units for a given API data version (or the current default version if no explicit version is provided), along with some basic information like the region group and type of geography.
@@ -386,10 +423,11 @@ def available_geo_units(geo_unit_type: GEO_UNIT_TYPE | None = None,
     """
 
     geo_units = api.get_geo_units(version=version)
-    api._check_valid_geo_unit_type(geo_unit_type) # check if the geo_unit_type is valid
 
     if geo_unit_type:
         # filter the geo_units based on the geo_unit_type
+        if geo_unit_type not in ["NATIONAL", "REGIONAL"]:
+            raise ValueError("geo_unit_type must be either NATIONAL or REGIONAL")
         geo_units = [record for record in geo_units if geo_unit_type in record['type']]
 
     if raw:
