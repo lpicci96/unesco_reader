@@ -25,7 +25,7 @@ def _log_hints(response: dict) -> None:
 
 
 
-def _convert_codes(indicators: str | list[str], code_lookup, name_to_code) -> str | list[str]:
+def _convert_codes(indicators: str | list[str], mapper: dict) -> str | list[str]:
     """Convert names to their respective codes
 
     This function is used to convert geo units or indicators from names to their respective codes.
@@ -33,8 +33,7 @@ def _convert_codes(indicators: str | list[str], code_lookup, name_to_code) -> st
 
     Args:
         indicators: The indicator name or list of indicator names to convert to codes
-        code_lookup: A set of all available codes
-        name_to_code: A dictionary mapping indicator names to codes
+        mapper: The dictionary mapping names to codes
 
     Returns:
         The code or list of codes
@@ -47,11 +46,11 @@ def _convert_codes(indicators: str | list[str], code_lookup, name_to_code) -> st
     converted_indicators = [] # Initialize an empty list to store the converted indicators
     for indicator in indicators:
         # Check if the indicator is already a code
-        if indicator in code_lookup:
+        if indicator in mapper.values():
             converted_indicators.append(indicator)
         # Check if the indicator is a name and convert to code
-        elif indicator in name_to_code:
-            converted_indicators.append(name_to_code[indicator])
+        elif indicator in mapper.keys():
+            converted_indicators.append(mapper[indicator])
         # else return the original indicator as a fallback
         else:
             converted_indicators.append(indicator)  # Append the original indicator as a fallback
@@ -75,12 +74,9 @@ def _convert_indicator_codes_to_code(indicators: str | list[str]) -> str | list[
 
     # Fetch the indicator data from the API only once
     indicator_data = api.get_indicators()
+    mapper = {unit['name']: unit['indicatorCode'] for unit in indicator_data} # Create a dictionary mapping names to codes
 
-    # Create lookup dictionaries for quick access by code or name
-    code_lookup = {unit['indicatorCode'] for unit in indicator_data}
-    name_to_code = {unit['name']: unit['indicatorCode'] for unit in indicator_data}
-
-    return _convert_codes(indicators, code_lookup, name_to_code)
+    return _convert_codes(indicators, mapper)
 
 
 def _convert_geo_units_to_code(geo_units: str | list[str]) -> str | list[str]:
@@ -94,12 +90,9 @@ def _convert_geo_units_to_code(geo_units: str | list[str]) -> str | list[str]:
     """
 
     geo_units_data = api.get_geo_units() # Fetch the geo unit data
+    mapper = {unit['name']: unit['id'] for unit in geo_units_data} # Create a dictionary mapping names to codes
 
-    # Create lookup dictionaries for quick access by code or name
-    code_lookup = {unit['id'] for unit in geo_units_data}
-    name_to_code = {unit['name']: unit['id'] for unit in geo_units_data}
-
-    return _convert_codes(geo_units, code_lookup, name_to_code)
+    return _convert_codes(geo_units, mapper)
 
 
 def _normalize_footnotes(data: list[dict]) -> list[dict]:

@@ -39,7 +39,6 @@ mock_data_no_hints_metadata = {
     ]
 }
 
-
 mock_data_hints_no_metadata = {
     "hints": [{"code": "UIS::HINT::001","message": "The indicator could not be found, invalid"}],
     "records": [
@@ -59,6 +58,81 @@ mock_no_data_hints = {"hints": [{
     "records": [],
     "indicatorMetadata": []
 }
+
+mock_no_data_multiple_hints = {"hints": [{
+    "code": "UIS::HINT::001",
+    "message": "The indicator could not be found, invalid 1"
+},
+    {
+        "code": "UIS::HINT::002",
+        "message": "The indicator could not be found, invalid 2"
+    }
+],
+    "records": [],
+    "indicatorMetadata": []
+}
+
+
+mock_data_footnotes = [{'indicatorId': 'CR.1',
+                        'geoUnit': 'AFG',
+                        'year': 2011,
+                        'value': 1,
+                        'magnitude': None,
+                        'qualifier': None,
+                        'footnotes': [{'type': 'Source',
+                                       'subtype': 'Data sources',
+                                       'value': 'some footnote'}]
+                        },
+                        {'indicatorId': 'CR.1',
+                        'geoUnit': 'AFG',
+                        'year': 2015,
+                        'value': 2,
+                        'magnitude': None,
+                        'qualifier': None,
+                        'footnotes': []
+                         },
+                       {'indicatorId': 'CR.1',
+                        'geoUnit': 'AFG',
+                        'year': 2022,
+                        'value': 3,
+                        'magnitude': None,
+                        'qualifier': None,
+                        'footnotes': [{'type': 'Source',
+                                       'subtype': 'Data sources',
+                                       'value': "footnote 1"},
+                                      {'type': 'Category',
+                                       'subtype': 'Subcategory',
+                                       'value': "footnote 2"}
+                                      ]
+                        }
+                       ]
+
+
+
+
+mock_indicators_no_agg_no_glossary = [{'indicatorCode': '10',
+                                       'name': 'Official entrance age to early childhood educational development (years)',
+                                          'theme': 'EDUCATION',
+                                          'lastDataUpdate': '2024-10-29',
+                                          'lastDataUpdateDescription': 'September 2024 Data Release',
+                                          'dataAvailability': {'totalRecordCount': 4675,
+                                                               'timeLine': {'min': 1970, 'max': 2023},
+                                                               'geoUnits': {'types': ['NATIONAL']}}},
+                                         {'indicatorCode': '10403',
+                                          'name': 'Start month of the academic school year (tertiary education)',
+                                          'theme': 'DEMOGRAPHICS',
+                                          'lastDataUpdate': '2010-10-29',
+                                          'lastDataUpdateDescription': 'September 2024 Data Release',
+                                          'dataAvailability': {'totalRecordCount': 5192,
+                                                               'timeLine': {'min': 1991, 'max': 2023},
+                                                               'geoUnits': {'types': ['NATIONAL', 'REGIONAL']}}}
+                                      ]
+
+mock_geo_units =  [{'id': 'ABW', 'name': 'Aruba', 'type': 'NATIONAL'},
+                   {'id': 'AFG', 'name': 'Afghanistan', 'type': 'NATIONAL'},
+                   {'id': 'ALECSO: Mashriq countries', 'name': 'Mashriq countries','type': 'REGIONAL'}
+                   ]
+
 
 mock_list_versions = [
     {
