@@ -130,7 +130,11 @@ mock_indicators_no_agg_no_glossary = [{'indicatorCode': '10',
 
 mock_geo_units =  [{'id': 'ABW', 'name': 'Aruba', 'type': 'NATIONAL'},
                    {'id': 'AFG', 'name': 'Afghanistan', 'type': 'NATIONAL'},
-                   {'id': 'ALECSO: Mashriq countries', 'name': 'Mashriq countries','type': 'REGIONAL'}
+                   # {'id': 'ALECSO: Mashriq countries', 'name': 'Mashriq countries','type': 'REGIONAL'},
+                   {'id': 'UNESCO: SIDS',
+                    'name': 'SIDS',
+                    'type': 'REGIONAL',
+                    'regionGroup': 'UNESCO'}
                    ]
 
 
@@ -217,3 +221,20 @@ mock_list_versions = [
         ]
     }
 ]
+
+
+mock_default_version = {'version': '20241030-9d4d089e',
+                        'publicationDate': '2024-10-30T17:28:00.868Z',
+                        'description': 'Drop data for CIV on MYS for 1988 and 1998 and update some other education datapoints',
+                        'themeDataStatus': [{'theme': 'EDUCATION',
+                                             'lastUpdate': '2024-10-29',
+                                             'description': 'September 2024 Data Release'},
+                                            {'theme': 'SCIENCE_TECHNOLOGY_INNOVATION',
+                                             'lastUpdate': '2024-02-24',
+                                             'description': 'February 2024 Data Release'},
+                                            {'theme': 'CULTURE',
+                                             'lastUpdate': '2023-11-25',
+                                             'description': 'November 2023 Data Release'},
+                                            {'theme': 'DEMOGRAPHIC_SOCIOECONOMIC',
+                                             'lastUpdate': '2024-10-29',
+                                             'description': 'September 2024 Data Release'}]}

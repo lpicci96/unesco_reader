@@ -10,7 +10,9 @@ from mock_api_response import (mock_data_no_hints_no_metadata,
                                mock_no_data_multiple_hints,
                                mock_indicators_no_agg_no_glossary,
                                mock_geo_units,
-                               mock_data_footnotes
+                               mock_data_footnotes,
+                               mock_default_version,
+                               mock_list_versions
                                )
 from unesco_reader.exceptions import NoDataError
 
@@ -832,4 +834,180 @@ def test_available_indicators_theme_warning_logged(caplog):
             # Assert the result contains only the valid metadata
             assert len(result) == 1
             assert result['theme'].unique() == 'EDUCATION'
+
+
+def test_available_geo_units_success():
+    """Test that available_geo_units returns a correctly processed DataFrame."""
+    # Mock the API call
+    with patch("unesco_reader.api.get_geo_units", return_value=mock_geo_units) as mock_api_call:
+
+        # Call available_geo_units
+        result = core.available_geo_units()
+
+        # Assert the API call was made
+        mock_api_call.assert_called_once_with(version=None)
+
+        # Assert the result is a DataFrame
+        assert isinstance(result, pd.DataFrame)
+
+        # Assert the DataFrame columns
+        expected_columns = {'geo_unit_code', 'geo_unit_name', 'geo_unit_type', 'region_group'}
+        assert set(result.columns).issuperset(expected_columns)
+
+
+def test_available_geo_units_raw_success():
+    """Test that available_geo_units returns a correctly processed list when raw is requested."""
+    # Mock the API call
+    with patch("unesco_reader.api.get_geo_units", return_value=mock_geo_units) as mock_api_call:
+
+        # Call available_geo_units
+        result = core.available_geo_units(raw=True)
+
+        # Assert the API call was made
+        mock_api_call.assert_called_once_with(version=None)
+
+        # Assert the result is a DataFrame
+        assert isinstance(result, list)
+
+
+def test_available_geo_units_filter():
+    """Test that available_geo_units returns a correctly processed list when raw is requested."""
+    # Mock the API call
+    with patch("unesco_reader.api.get_geo_units", return_value=mock_geo_units) as mock_api_call:
+
+        # Call available_geo_units
+        result = core.available_geo_units(geo_unit_type="REGIONAL")
+
+        # Assert the API call was made
+        mock_api_call.assert_called_once_with(version=None)
+
+        assert len(result) == 1
+        assert result['geo_unit_type'].unique() == 'REGIONAL'
+
+
+def test_available_geo_units_filter_raw():
+    """Test that available_geo_units returns a correctly processed list when raw is requested."""
+    # Mock the API call
+    with patch("unesco_reader.api.get_geo_units", return_value=mock_geo_units) as mock_api_call:
+
+        # Call available_geo_units
+        result = core.available_geo_units(geo_unit_type="REGIONAL", raw=True)
+
+        # Assert the API call was made
+        mock_api_call.assert_called_once_with(version=None)
+
+        assert len(result) == 1
+
+
+def test_available_themes_success():
+    """Test that available_themes returns a correctly processed DataFrame."""
+    # Mock the API call
+    with patch("unesco_reader.api.get_default_version", return_value=mock_default_version) as mock_api_call:
+
+        # Call available_themes
+        result = core.available_themes()
+
+        # Assert the API call was made
+        mock_api_call.assert_called_once_with()
+
+        # Assert the result is a DataFrame
+        assert isinstance(result, pd.DataFrame)
+
+        # Assert the DataFrame columns
+        expected_columns = {'theme', 'last_update', 'description'}
+        assert set(result.columns).issuperset(expected_columns)
+
+
+def test_available_themes_success_raw():
+    """Test that available_themes returns a correctly processed list of dicts."""
+    # Mock the API call
+    with patch("unesco_reader.api.get_default_version", return_value=mock_default_version) as mock_api_call:
+
+        # Call available_themes
+        result = core.available_themes(raw=True)
+
+        # Assert the result is a DataFrame
+        assert isinstance(result, list)
+        assert len(result) == 4
+
+
+def test_default_version():
+    """Test that default version."""
+    # Mock the API call
+    with patch("unesco_reader.api.get_default_version", return_value=mock_default_version) as mock_api_call:
+
+        # Call available_themes
+        result = core.default_version()
+
+        # Assert the result is a DataFrame
+        assert isinstance(result, str)
+
+
+def test_available_versions_success():
+    """Test that available_versions returns a correctly processed DataFrame."""
+    # Mock the API call
+    with patch("unesco_reader.api.get_versions", return_value=mock_list_versions) as mock_api_call:
+
+        # Call available_versions
+        result = core.available_versions()
+
+        # Assert the API call was made
+        mock_api_call.assert_called_once_with()
+
+        # Assert the result is a DataFrame
+        assert isinstance(result, pd.DataFrame)
+
+        # Assert the DataFrame columns
+        expected_columns = {'version', 'publication_date', 'description'}
+        assert set(result.columns).issuperset(expected_columns)
+
+
+def test_available_versions_success_raw():
+    """Test that available_versions returns a correctly processed list when raw is passed"""
+
+    _mock_list_versions = [
+        {
+            "version": "20241030-9d4d089e",
+            "publicationDate": "2024-10-30T17:28:00.868Z",
+            "description": "Drop data for CIV on MYS for 1988 and 1998 and update some other education datapoints",
+            "themeDataStatus": [
+                {
+                    "theme": "EDUCATION",
+                    "lastUpdate": "2024-10-29",
+                    "description": "September 2024 Data Release"
+                },
+                {
+                    "theme": "SCIENCE_TECHNOLOGY_INNOVATION",
+                    "lastUpdate": "2024-02-24",
+                    "description": "February 2024 Data Release"
+                },
+                {
+                    "theme": "CULTURE",
+                    "lastUpdate": "2023-11-25",
+                    "description": "November 2023 Data Release"
+                },
+                {
+                    "theme": "DEMOGRAPHIC_SOCIOECONOMIC",
+                    "lastUpdate": "2024-10-29",
+                    "description": "September 2024 Data Release"
+                }
+            ]
+        }]
+    # Mock the API call
+    with patch("unesco_reader.api.get_versions", return_value=_mock_list_versions) as mock_api_call:
+
+        # Call available_versions
+        result = core.available_versions(raw=True)
+
+        # Assert the API call was made
+        mock_api_call.assert_called_once_with()
+
+        # Assert the result is a DataFrame
+        assert isinstance(result, list)
+        assert len(result) == 1
+
+
+
+
+
 
