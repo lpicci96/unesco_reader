@@ -5,17 +5,17 @@ from unittest.mock import Mock, patch
 import pandas as pd
 
 from unesco_reader import core
-from mock_api_response import (mock_data_no_hints_no_metadata,
-                               mock_no_data_hints,
-                               mock_no_data_multiple_hints,
-                               mock_indicators_no_agg_no_glossary,
-                               mock_geo_units,
-                               mock_data_footnotes,
-                               mock_default_version,
-                               mock_list_versions
-                               )
+from mock_api_response import (
+    mock_data_no_hints_no_metadata,
+    mock_no_data_hints,
+    mock_no_data_multiple_hints,
+    mock_indicators_no_agg_no_glossary,
+    mock_geo_units,
+    mock_data_footnotes,
+    mock_default_version,
+    mock_list_versions,
+)
 from unesco_reader.exceptions import NoDataError
-
 
 
 def test_log_hints_no_hints(caplog):
@@ -25,13 +25,17 @@ def test_log_hints_no_hints(caplog):
         core._log_hints(mock_data_no_hints_no_metadata)
         assert len(caplog.records) == 0  # No warnings logged
 
+
 def test_log_hints_single_hint(caplog):
     """Test that a single warning is logged when the response contains one hint."""
     # Use the mock response with a single hint
     with caplog.at_level("WARNING"):
         core._log_hints(mock_no_data_hints)
         assert len(caplog.records) == 1  # One warning logged
-        assert "The indicator could not be found, invalid" in caplog.text  # Verify the logged message
+        assert (
+            "The indicator could not be found, invalid" in caplog.text
+        )  # Verify the logged message
+
 
 def test_log_hints_multiple_hints(caplog):
     """Test that multiple warnings are logged when the response contains multiple hints."""
@@ -41,6 +45,7 @@ def test_log_hints_multiple_hints(caplog):
         assert len(caplog.records) == 2  # Two warnings logged
         assert "The indicator could not be found, invalid 1" in caplog.text
         assert "The indicator could not be found, invalid 2" in caplog.text
+
 
 def test_convert_codes_single_code():
     """Test that a valid code input remains unchanged."""
@@ -84,7 +89,10 @@ def test_convert_codes_mixed_types():
 def test_convert_indicator_codes_to_code_single_name():
     """Test that a single indicator name is correctly converted to its corresponding code."""
     # Mock the API response
-    with patch("unesco_reader.api.get_indicators", return_value=mock_indicators_no_agg_no_glossary):
+    with patch(
+        "unesco_reader.api.get_indicators",
+        return_value=mock_indicators_no_agg_no_glossary,
+    ):
         # Test input: a valid name
         result = core._convert_indicator_codes_to_code(
             "Official entrance age to early childhood educational development (years)"
@@ -97,7 +105,10 @@ def test_convert_indicator_codes_to_code_single_name():
 def test_convert_indicator_codes_to_code_single_code():
     """Test that a single indicator code remains unchanged."""
     # Mock the API response
-    with patch("unesco_reader.api.get_indicators", return_value=mock_indicators_no_agg_no_glossary):
+    with patch(
+        "unesco_reader.api.get_indicators",
+        return_value=mock_indicators_no_agg_no_glossary,
+    ):
         # Test input: a valid code
         result = core._convert_indicator_codes_to_code("10")
 
@@ -108,13 +119,18 @@ def test_convert_indicator_codes_to_code_single_code():
 def test_convert_indicator_codes_to_code_mixed_inputs():
     """Test that a list with valid codes and names converts names to codes and leaves codes unchanged."""
     # Mock the API response
-    with patch("unesco_reader.api.get_indicators", return_value=mock_indicators_no_agg_no_glossary):
+    with patch(
+        "unesco_reader.api.get_indicators",
+        return_value=mock_indicators_no_agg_no_glossary,
+    ):
         # Test input: a mix of valid codes, valid names, and an invalid input
-        result = core._convert_indicator_codes_to_code([
-            "10",
-            "Start month of the academic school year (tertiary education)",
-            "InvalidName"
-        ])
+        result = core._convert_indicator_codes_to_code(
+            [
+                "10",
+                "Start month of the academic school year (tertiary education)",
+                "InvalidName",
+            ]
+        )
 
         # Assert:
         # - "10" remains unchanged (valid code)
@@ -150,11 +166,9 @@ def test_convert_geo_units_to_code_mixed_inputs():
     # Mock the API response
     with patch("unesco_reader.api.get_geo_units", return_value=mock_geo_units):
         # Test input: a mix of valid codes, valid names, and an invalid input
-        result = core._convert_geo_units_to_code([
-            "ABW",
-            "Afghanistan",
-            "InvalidGeoUnit"
-        ])
+        result = core._convert_geo_units_to_code(
+            ["ABW", "Afghanistan", "InvalidGeoUnit"]
+        )
 
         # Assert:
         # - "ABW" remains unchanged (valid code)
@@ -172,13 +186,16 @@ def test_normalize_footnotes():
     result = core._normalize_footnotes(data)
 
     # Assert for the first record with a single footnote
-    assert result[0]['footnotes'] == "Source, Data sources: some footnote"
+    assert result[0]["footnotes"] == "Source, Data sources: some footnote"
 
     # Assert for the second record with no footnotes
-    assert result[1]['footnotes'] is None
+    assert result[1]["footnotes"] is None
 
     # Assert for the third record with multiple footnotes
-    assert result[2]['footnotes'] == "Source, Data sources: footnote 1 ; Category, Subcategory: footnote 2"
+    assert (
+        result[2]["footnotes"]
+        == "Source, Data sources: footnote 1 ; Category, Subcategory: footnote 2"
+    )
 
 
 def test_add_indicator_labels():
@@ -193,7 +210,11 @@ def test_add_indicator_labels():
     mock_data_with_indicators = [
         {"indicatorId": "CR.1", "geoUnit": "USA", "value": 95},
         {"indicatorId": "CR.2", "geoUnit": "CAN", "value": 85},
-        {"indicatorId": "CR.3", "geoUnit": "MEX", "value": 75},  # Not in mock_indicators
+        {
+            "indicatorId": "CR.3",
+            "geoUnit": "MEX",
+            "value": 75,
+        },  # Not in mock_indicators
     ]
 
     # test
@@ -218,7 +239,12 @@ def test_add_geo_unit_labels():
     _mock_geo_units = [
         {"id": "USA", "name": "United States", "type": "NATIONAL"},
         {"id": "CAN", "name": "Canada", "type": "NATIONAL"},
-        {"id": "REG1", "name": "Region 1", "type": "REGIONAL", "regionGroup": "Group A"},
+        {
+            "id": "REG1",
+            "name": "Region 1",
+            "type": "REGIONAL",
+            "regionGroup": "Group A",
+        },
     ]
 
     mock_data_with_geo_units = [
@@ -227,7 +253,6 @@ def test_add_geo_unit_labels():
         {"geoUnit": "REG1", "indicatorId": "CR.3", "value": 75},
         {"geoUnit": "MEX", "indicatorId": "CR.4", "value": 65},  # Not in mock_geo_units
     ]
-
 
     with patch("unesco_reader.api.get_geo_units", return_value=_mock_geo_units):
         # Apply the function
@@ -253,19 +278,21 @@ def test_add_geo_unit_labels():
 def test_get_data_basic_call():
     """Test that get_data returns a DataFrame for basic inputs."""
     # Mock the private functions and API call
-    with patch("unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1") as mock_convert_indicators, \
-            patch("unesco_reader.core._convert_geo_units_to_code", return_value="ZWE") as mock_convert_geo_units, \
-            patch("unesco_reader.api.get_data", return_value=mock_data_no_hints_no_metadata) as mock_api_call, \
-            patch("unesco_reader.core._add_indicator_labels") as mock_add_indicator_labels, \
-            patch("unesco_reader.core._add_geo_unit_labels") as mock_add_geo_unit_labels:
+    with patch(
+        "unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1"
+    ) as mock_convert_indicators, patch(
+        "unesco_reader.core._convert_geo_units_to_code", return_value="ZWE"
+    ) as mock_convert_geo_units, patch(
+        "unesco_reader.api.get_data", return_value=mock_data_no_hints_no_metadata
+    ) as mock_api_call, patch(
+        "unesco_reader.core._add_indicator_labels"
+    ) as mock_add_indicator_labels, patch(
+        "unesco_reader.core._add_geo_unit_labels"
+    ) as mock_add_geo_unit_labels:
 
         # Call get_data with minimal parameters
         result = core.get_data(
-            indicator="CR.1",
-            geo_unit="ZWE",
-            footnotes=False,
-            labels=False,
-            raw=False
+            indicator="CR.1", geo_unit="ZWE", footnotes=False, labels=False, raw=False
         )
 
         # Assert that API call was made with the correct parameters
@@ -276,7 +303,7 @@ def test_get_data_basic_call():
             end=None,
             footnotes=False,
             geo_unit_type=None,
-            version=None
+            version=None,
         )
 
         # Assert private functions were called
@@ -292,7 +319,12 @@ def test_get_data_basic_call():
 
         # Assert the DataFrame columns are as expected
         expected_columns = [
-            "indicator_code", "geo_unit_code", "year", "value", "magnitude", "qualifier"
+            "indicator_code",
+            "geo_unit_code",
+            "year",
+            "value",
+            "magnitude",
+            "qualifier",
         ]
         assert list(result.columns) == expected_columns
 
@@ -303,17 +335,17 @@ def test_get_data_raw_call():
     """Test that get_data returns raw API data when raw=True."""
     # Mock the private functions and API call
 
-    with patch("unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1") as mock_convert_indicators, \
-            patch("unesco_reader.core._convert_geo_units_to_code", return_value="ZWE") as mock_convert_geo_units, \
-            patch("unesco_reader.api.get_data", return_value=mock_data_no_hints_no_metadata) as mock_api_call:
+    with patch(
+        "unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1"
+    ) as mock_convert_indicators, patch(
+        "unesco_reader.core._convert_geo_units_to_code", return_value="ZWE"
+    ) as mock_convert_geo_units, patch(
+        "unesco_reader.api.get_data", return_value=mock_data_no_hints_no_metadata
+    ) as mock_api_call:
 
         # Call get_data with raw=True
         result = core.get_data(
-            indicator="CR.1",
-            geo_unit="ZWE",
-            footnotes=False,
-            labels=False,
-            raw=True
+            indicator="CR.1", geo_unit="ZWE", footnotes=False, labels=False, raw=True
         )
 
         # Assert that API call was made with the correct parameters
@@ -341,34 +373,67 @@ def test_get_data_with_labels():
     # Mock the private functions and API call
 
     mock_labels = [
-        {"indicatorId": "CR.1", "geoUnit": "ZWE", "year": 2010, "value": 88.2, "magnitude": None, "qualifier": None, 'name': 'Completion rate, primary education, both sexes (%)',
-         'geoUnitName': 'Zimbabwe',
-         'regionGroup': None},
-        {"indicatorId": "CR.1", "geoUnit": "ZWE", "year": 2012, "value": 83, "magnitude": None, "qualifier": None, 'name': 'Completion rate, primary education, both sexes (%)',
-         'geoUnitName': 'Zimbabwe',
-         'regionGroup': None},
-        {"indicatorId": "CR.1", "geoUnit": "ZWE", "year": 2014, "value": 86.77, "magnitude": None, "qualifier": None, 'name': 'Completion rate, primary education, both sexes (%)',
-         'geoUnitName': 'Zimbabwe',
-         'regionGroup': None},
-        {"indicatorId": "CR.1", "geoUnit": "ZWE", "year": 2015, "value": 88.07, "magnitude": None, "qualifier": None, 'name': 'Completion rate, primary education, both sexes (%)',
-         'geoUnitName': 'Zimbabwe',
-         'regionGroup': None},
+        {
+            "indicatorId": "CR.1",
+            "geoUnit": "ZWE",
+            "year": 2010,
+            "value": 88.2,
+            "magnitude": None,
+            "qualifier": None,
+            "name": "Completion rate, primary education, both sexes (%)",
+            "geoUnitName": "Zimbabwe",
+            "regionGroup": None,
+        },
+        {
+            "indicatorId": "CR.1",
+            "geoUnit": "ZWE",
+            "year": 2012,
+            "value": 83,
+            "magnitude": None,
+            "qualifier": None,
+            "name": "Completion rate, primary education, both sexes (%)",
+            "geoUnitName": "Zimbabwe",
+            "regionGroup": None,
+        },
+        {
+            "indicatorId": "CR.1",
+            "geoUnit": "ZWE",
+            "year": 2014,
+            "value": 86.77,
+            "magnitude": None,
+            "qualifier": None,
+            "name": "Completion rate, primary education, both sexes (%)",
+            "geoUnitName": "Zimbabwe",
+            "regionGroup": None,
+        },
+        {
+            "indicatorId": "CR.1",
+            "geoUnit": "ZWE",
+            "year": 2015,
+            "value": 88.07,
+            "magnitude": None,
+            "qualifier": None,
+            "name": "Completion rate, primary education, both sexes (%)",
+            "geoUnitName": "Zimbabwe",
+            "regionGroup": None,
+        },
     ]
 
-
-    with patch("unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1") as mock_convert_indicators, \
-            patch("unesco_reader.core._convert_geo_units_to_code", return_value="ZWE") as mock_convert_geo_units, \
-            patch("unesco_reader.api.get_data", return_value=mock_data_no_hints_no_metadata) as mock_api_call, \
-            patch("unesco_reader.core._add_indicator_labels", return_value=mock_labels) as mock_add_indicator_labels, \
-            patch("unesco_reader.core._add_geo_unit_labels", return_value=mock_labels) as mock_add_geo_unit_labels:
+    with patch(
+        "unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1"
+    ) as mock_convert_indicators, patch(
+        "unesco_reader.core._convert_geo_units_to_code", return_value="ZWE"
+    ) as mock_convert_geo_units, patch(
+        "unesco_reader.api.get_data", return_value=mock_data_no_hints_no_metadata
+    ) as mock_api_call, patch(
+        "unesco_reader.core._add_indicator_labels", return_value=mock_labels
+    ) as mock_add_indicator_labels, patch(
+        "unesco_reader.core._add_geo_unit_labels", return_value=mock_labels
+    ) as mock_add_geo_unit_labels:
 
         # Call get_data with labels=True
         result = core.get_data(
-            indicator="CR.1",
-            geo_unit="ZWE",
-            footnotes=False,
-            labels=True,
-            raw=False
+            indicator="CR.1", geo_unit="ZWE", footnotes=False, labels=True, raw=False
         )
 
         # Assert that API call was made with the correct parameters
@@ -379,14 +444,23 @@ def test_get_data_with_labels():
             end=None,
             footnotes=False,
             geo_unit_type=None,
-            version=None
+            version=None,
         )
 
         # Assert the result is a DataFrame
         assert isinstance(result, pd.DataFrame)
         # Assert the DataFrame columns are as expected
-        expected_columns = ['indicator_code', 'geo_unit_code', 'year', 'value', 'magnitude',
-                            'qualifier', 'indicator_name', 'geo_unit_name', 'region_group']
+        expected_columns = [
+            "indicator_code",
+            "geo_unit_code",
+            "year",
+            "value",
+            "magnitude",
+            "qualifier",
+            "indicator_name",
+            "geo_unit_name",
+            "region_group",
+        ]
         assert list(result.columns) == expected_columns
 
 
@@ -395,27 +469,53 @@ def test_get_data_with_footnotes():
     # Mock the private functions and API call
 
     mock_data_with_footnotes = [
-        {"indicatorId": "CR.1", "geoUnit": "AFG", "year": 2011, "value": 1, "magnitude": None, "qualifier": None,
-         "footnotes": [{'type': 'Source', 'subtype': 'Data sources', 'value': 'some footnote'}]},
-        {"indicatorId": "CR.1", "geoUnit": "AFG", "year": 2015, "value": 2, "magnitude": None, "qualifier": None,
-         "footnotes": []},
-        {"indicatorId": "CR.1", "geoUnit": "AFG", "year": 2022, "value": 3, "magnitude": None, "qualifier": None,
-         "footnotes": [{'type': 'Source', 'subtype': 'Data sources', 'value': 'footnote 1'},
-                       {'type': 'Category', 'subtype': 'Subcategory', 'value': 'footnote 2'}]},
+        {
+            "indicatorId": "CR.1",
+            "geoUnit": "AFG",
+            "year": 2011,
+            "value": 1,
+            "magnitude": None,
+            "qualifier": None,
+            "footnotes": [
+                {"type": "Source", "subtype": "Data sources", "value": "some footnote"}
+            ],
+        },
+        {
+            "indicatorId": "CR.1",
+            "geoUnit": "AFG",
+            "year": 2015,
+            "value": 2,
+            "magnitude": None,
+            "qualifier": None,
+            "footnotes": [],
+        },
+        {
+            "indicatorId": "CR.1",
+            "geoUnit": "AFG",
+            "year": 2022,
+            "value": 3,
+            "magnitude": None,
+            "qualifier": None,
+            "footnotes": [
+                {"type": "Source", "subtype": "Data sources", "value": "footnote 1"},
+                {"type": "Category", "subtype": "Subcategory", "value": "footnote 2"},
+            ],
+        },
     ]
 
-    with patch("unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1") as mock_convert_indicators, \
-            patch("unesco_reader.core._convert_geo_units_to_code", return_value="AFG") as mock_convert_geo_units, \
-            patch("unesco_reader.api.get_data", return_value=mock_data_no_hints_no_metadata) as mock_api_call, \
-            patch("unesco_reader.core._normalize_footnotes", return_value=mock_data_with_footnotes) as mock_normalize_footnotes:
+    with patch(
+        "unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1"
+    ) as mock_convert_indicators, patch(
+        "unesco_reader.core._convert_geo_units_to_code", return_value="AFG"
+    ) as mock_convert_geo_units, patch(
+        "unesco_reader.api.get_data", return_value=mock_data_no_hints_no_metadata
+    ) as mock_api_call, patch(
+        "unesco_reader.core._normalize_footnotes", return_value=mock_data_with_footnotes
+    ) as mock_normalize_footnotes:
 
         # Call get_data with footnotes=True
         result = core.get_data(
-            indicator="CR.1",
-            geo_unit="AFG",
-            footnotes=True,
-            labels=False,
-            raw=False
+            indicator="CR.1", geo_unit="AFG", footnotes=True, labels=False, raw=False
         )
 
         # Assert that API call was made with the correct parameters
@@ -426,7 +526,7 @@ def test_get_data_with_footnotes():
             end=None,
             footnotes=True,
             geo_unit_type=None,
-            version=None
+            version=None,
         )
 
         # Assert the result is a DataFrame
@@ -434,15 +534,18 @@ def test_get_data_with_footnotes():
         assert "footnotes" in result.columns
 
 
-
 def test_get_data_no_data_error():
     """Test that get_data raises NoDataError when no data is returned."""
     # Mock the API response with no records
     mock_no_data_response = {"hints": [], "records": [], "indicatorMetadata": []}
 
-    with patch("unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1") as mock_convert_indicators, \
-            patch("unesco_reader.core._convert_geo_units_to_code", return_value="ZWE") as mock_convert_geo_units, \
-            patch("unesco_reader.api.get_data", return_value=mock_no_data_response) as mock_api_call:
+    with patch(
+        "unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1"
+    ) as mock_convert_indicators, patch(
+        "unesco_reader.core._convert_geo_units_to_code", return_value="ZWE"
+    ) as mock_convert_geo_units, patch(
+        "unesco_reader.api.get_data", return_value=mock_no_data_response
+    ) as mock_api_call:
 
         # Call get_data and expect NoDataError
         with pytest.raises(NoDataError, match="No data found for the given parameters"):
@@ -451,24 +554,34 @@ def test_get_data_no_data_error():
                 geo_unit="ZWE",
                 footnotes=False,
                 labels=False,
-                raw=False
+                raw=False,
             )
 
 
 def test_get_metadata_single_indicator():
     """Test that get_metadata returns metadata for a single valid indicator."""
     # Mock the API response
-    with patch("unesco_reader.api.get_indicators", return_value=mock_indicators_no_agg_no_glossary) as mock_api_call, \
-            patch("unesco_reader.core._convert_indicator_codes_to_code", return_value=["10"]) as mock_convert_indicators:
+    with patch(
+        "unesco_reader.api.get_indicators",
+        return_value=mock_indicators_no_agg_no_glossary,
+    ) as mock_api_call, patch(
+        "unesco_reader.core._convert_indicator_codes_to_code", return_value=["10"]
+    ) as mock_convert_indicators:
 
         # Call get_metadata
-        result = core.get_metadata(indicator="Official entrance age to early childhood educational development (years)")
+        result = core.get_metadata(
+            indicator="Official entrance age to early childhood educational development (years)"
+        )
 
         # Assert that API call was made
-        mock_api_call.assert_called_once_with(disaggregations=False, glossary_terms=False, version=None)
+        mock_api_call.assert_called_once_with(
+            disaggregations=False, glossary_terms=False, version=None
+        )
 
         # Assert private function was called
-        mock_convert_indicators.assert_called_once_with(["Official entrance age to early childhood educational development (years)"])
+        mock_convert_indicators.assert_called_once_with(
+            ["Official entrance age to early childhood educational development (years)"]
+        )
 
         # Assert the result contains the correct metadata
         assert len(result) == 1
@@ -478,24 +591,40 @@ def test_get_metadata_single_indicator():
 def test_get_metadata_with_invalid_indicator(caplog):
     """Test that a warning is logged when some requested indicators are not found."""
     # Mock the API response
-    with patch("unesco_reader.api.get_indicators", return_value=mock_indicators_no_agg_no_glossary) as mock_api_call, \
-            patch("unesco_reader.core._convert_indicator_codes_to_code", return_value=["10", "InvalidCode"]) as mock_convert_indicators:
+    with patch(
+        "unesco_reader.api.get_indicators",
+        return_value=mock_indicators_no_agg_no_glossary,
+    ) as mock_api_call, patch(
+        "unesco_reader.core._convert_indicator_codes_to_code",
+        return_value=["10", "InvalidCode"],
+    ) as mock_convert_indicators:
 
         # Call get_metadata with one valid and one invalid indicator
         result = core.get_metadata(
-            indicator=["Official entrance age to early childhood educational development (years)", "InvalidIndicator"]
+            indicator=[
+                "Official entrance age to early childhood educational development (years)",
+                "InvalidIndicator",
+            ]
         )
 
         # Assert that API call was made
-        mock_api_call.assert_called_once_with(disaggregations=False, glossary_terms=False, version=None)
+        mock_api_call.assert_called_once_with(
+            disaggregations=False, glossary_terms=False, version=None
+        )
 
         # Assert private function was called
-        mock_convert_indicators.assert_called_once_with([
-            "Official entrance age to early childhood educational development (years)", "InvalidIndicator"
-        ])
+        mock_convert_indicators.assert_called_once_with(
+            [
+                "Official entrance age to early childhood educational development (years)",
+                "InvalidIndicator",
+            ]
+        )
 
         # Check that a warning is logged
-        assert "Metadata not found for the following indicators: ['InvalidCode']" in caplog.text
+        assert (
+            "Metadata not found for the following indicators: ['InvalidCode']"
+            in caplog.text
+        )
 
         # Assert the result contains only the valid metadata
         assert len(result) == 1
@@ -505,11 +634,17 @@ def test_get_metadata_with_invalid_indicator(caplog):
 def test_get_metadata_invalid_indicator():
     """Test that get_metadata raises NoDataError when an invalid indicator is requested."""
     # Mock the API response
-    with patch("unesco_reader.api.get_indicators", return_value=[]) as mock_api_call, \
-            patch("unesco_reader.core._convert_indicator_codes_to_code", return_value=["InvalidCode"]) as mock_convert_indicators:
+    with patch(
+        "unesco_reader.api.get_indicators", return_value=[]
+    ) as mock_api_call, patch(
+        "unesco_reader.core._convert_indicator_codes_to_code",
+        return_value=["InvalidCode"],
+    ) as mock_convert_indicators:
 
         # Call get_metadata and expect NoDataError
-        with pytest.raises(NoDataError, match="No indicator metadata found for the given indicators"):
+        with pytest.raises(
+            NoDataError, match="No indicator metadata found for the given indicators"
+        ):
             core.get_metadata(indicator="InvalidIndicator")
 
 
@@ -539,24 +674,36 @@ def test_available_indicators_success():
     """Test that available_indicators returns a correctly processed DataFrame."""
     # Mock the API call
 
-    _mock_indicators_no_agg_no_glossary = [{'indicatorCode': '10',
-                                           'name': 'Official entrance age to early childhood educational development (years)',
-                                           'theme': 'EDUCATION',
-                                           'lastDataUpdate': '2024-10-29',
-                                           'lastDataUpdateDescription': 'September 2024 Data Release',
-                                           'dataAvailability': {'totalRecordCount': 4675,
-                                                                'timeLine': {'min': 1970, 'max': 2023},
-                                                                'geoUnits': {'types': ['NATIONAL']}}},
-                                          {'indicatorCode': '10403',
-                                           'name': 'Start month of the academic school year (tertiary education)',
-                                           'theme': 'DEMOGRAPHICS',
-                                           'lastDataUpdate': '2010-10-29',
-                                           'lastDataUpdateDescription': 'September 2024 Data Release',
-                                           'dataAvailability': {'totalRecordCount': 5192,
-                                                                'timeLine': {'min': 1991, 'max': 2023},
-                                                                'geoUnits': {'types': ['NATIONAL', 'REGIONAL']}}}
-                                          ]
-    with patch("unesco_reader.api.get_indicators", return_value=_mock_indicators_no_agg_no_glossary) as mock_api_call:
+    _mock_indicators_no_agg_no_glossary = [
+        {
+            "indicatorCode": "10",
+            "name": "Official entrance age to early childhood educational development (years)",
+            "theme": "EDUCATION",
+            "lastDataUpdate": "2024-10-29",
+            "lastDataUpdateDescription": "September 2024 Data Release",
+            "dataAvailability": {
+                "totalRecordCount": 4675,
+                "timeLine": {"min": 1970, "max": 2023},
+                "geoUnits": {"types": ["NATIONAL"]},
+            },
+        },
+        {
+            "indicatorCode": "10403",
+            "name": "Start month of the academic school year (tertiary education)",
+            "theme": "DEMOGRAPHICS",
+            "lastDataUpdate": "2010-10-29",
+            "lastDataUpdateDescription": "September 2024 Data Release",
+            "dataAvailability": {
+                "totalRecordCount": 5192,
+                "timeLine": {"min": 1991, "max": 2023},
+                "geoUnits": {"types": ["NATIONAL", "REGIONAL"]},
+            },
+        },
+    ]
+    with patch(
+        "unesco_reader.api.get_indicators",
+        return_value=_mock_indicators_no_agg_no_glossary,
+    ) as mock_api_call:
 
         # Call available_indicators
         result = core.available_indicators()
@@ -583,24 +730,36 @@ def test_available_indicators_filter_theme():
     """Test that available_indicators returns a correctly processed DataFrame when filtering by theme."""
     # Mock the API call
 
-    _mock_indicators_no_agg_no_glossary = [{'indicatorCode': '10',
-                                            'name': 'Official entrance age to early childhood educational development (years)',
-                                            'theme': 'EDUCATION',
-                                            'lastDataUpdate': '2024-10-29',
-                                            'lastDataUpdateDescription': 'September 2024 Data Release',
-                                            'dataAvailability': {'totalRecordCount': 4675,
-                                                                 'timeLine': {'min': 1970, 'max': 2023},
-                                                                 'geoUnits': {'types': ['NATIONAL']}}},
-                                           {'indicatorCode': '10403',
-                                            'name': 'Start month of the academic school year (tertiary education)',
-                                            'theme': 'DEMOGRAPHICS',
-                                            'lastDataUpdate': '2010-10-29',
-                                            'lastDataUpdateDescription': 'September 2024 Data Release',
-                                            'dataAvailability': {'totalRecordCount': 5192,
-                                                                 'timeLine': {'min': 1991, 'max': 2023},
-                                                                 'geoUnits': {'types': ['NATIONAL', 'REGIONAL']}}}
-                                           ]
-    with patch("unesco_reader.api.get_indicators", return_value=_mock_indicators_no_agg_no_glossary) as mock_api_call:
+    _mock_indicators_no_agg_no_glossary = [
+        {
+            "indicatorCode": "10",
+            "name": "Official entrance age to early childhood educational development (years)",
+            "theme": "EDUCATION",
+            "lastDataUpdate": "2024-10-29",
+            "lastDataUpdateDescription": "September 2024 Data Release",
+            "dataAvailability": {
+                "totalRecordCount": 4675,
+                "timeLine": {"min": 1970, "max": 2023},
+                "geoUnits": {"types": ["NATIONAL"]},
+            },
+        },
+        {
+            "indicatorCode": "10403",
+            "name": "Start month of the academic school year (tertiary education)",
+            "theme": "DEMOGRAPHICS",
+            "lastDataUpdate": "2010-10-29",
+            "lastDataUpdateDescription": "September 2024 Data Release",
+            "dataAvailability": {
+                "totalRecordCount": 5192,
+                "timeLine": {"min": 1991, "max": 2023},
+                "geoUnits": {"types": ["NATIONAL", "REGIONAL"]},
+            },
+        },
+    ]
+    with patch(
+        "unesco_reader.api.get_indicators",
+        return_value=_mock_indicators_no_agg_no_glossary,
+    ) as mock_api_call:
 
         # Call available_indicators
         result = core.available_indicators(theme="EDUCATION")
@@ -609,31 +768,43 @@ def test_available_indicators_filter_theme():
         assert isinstance(result, pd.DataFrame)
 
         assert len(result) == 1
-        assert result['theme'].unique() == 'EDUCATION'
+        assert result["theme"].unique() == "EDUCATION"
 
 
 def test_available_indicators_filter_min_year():
     """Test that available_indicators returns a correctly processed DataFrame when filtering by min_year."""
     # Mock the API call
 
-    _mock_indicators_no_agg_no_glossary = [{'indicatorCode': '10',
-                                            'name': 'Official entrance age to early childhood educational development (years)',
-                                            'theme': 'EDUCATION',
-                                            'lastDataUpdate': '2024-10-29',
-                                            'lastDataUpdateDescription': 'September 2024 Data Release',
-                                            'dataAvailability': {'totalRecordCount': 4675,
-                                                                 'timeLine': {'min': 1970, 'max': 2023},
-                                                                 'geoUnits': {'types': ['NATIONAL']}}},
-                                           {'indicatorCode': '10403',
-                                            'name': 'Start month of the academic school year (tertiary education)',
-                                            'theme': 'DEMOGRAPHICS',
-                                            'lastDataUpdate': '2010-10-29',
-                                            'lastDataUpdateDescription': 'September 2024 Data Release',
-                                            'dataAvailability': {'totalRecordCount': 5192,
-                                                                 'timeLine': {'min': 1991, 'max': 2023},
-                                                                 'geoUnits': {'types': ['NATIONAL', 'REGIONAL']}}}
-                                           ]
-    with patch("unesco_reader.api.get_indicators", return_value=_mock_indicators_no_agg_no_glossary) as mock_api_call:
+    _mock_indicators_no_agg_no_glossary = [
+        {
+            "indicatorCode": "10",
+            "name": "Official entrance age to early childhood educational development (years)",
+            "theme": "EDUCATION",
+            "lastDataUpdate": "2024-10-29",
+            "lastDataUpdateDescription": "September 2024 Data Release",
+            "dataAvailability": {
+                "totalRecordCount": 4675,
+                "timeLine": {"min": 1970, "max": 2023},
+                "geoUnits": {"types": ["NATIONAL"]},
+            },
+        },
+        {
+            "indicatorCode": "10403",
+            "name": "Start month of the academic school year (tertiary education)",
+            "theme": "DEMOGRAPHICS",
+            "lastDataUpdate": "2010-10-29",
+            "lastDataUpdateDescription": "September 2024 Data Release",
+            "dataAvailability": {
+                "totalRecordCount": 5192,
+                "timeLine": {"min": 1991, "max": 2023},
+                "geoUnits": {"types": ["NATIONAL", "REGIONAL"]},
+            },
+        },
+    ]
+    with patch(
+        "unesco_reader.api.get_indicators",
+        return_value=_mock_indicators_no_agg_no_glossary,
+    ) as mock_api_call:
 
         # Call available_indicators
         result = core.available_indicators(min_year=1990)
@@ -642,30 +813,42 @@ def test_available_indicators_filter_min_year():
         assert isinstance(result, pd.DataFrame)
 
         assert len(result) == 1
-        assert result['min_year'].unique() == 1970
+        assert result["min_year"].unique() == 1970
 
 
 def test_available_indicators_filter_geo_unit_type_regional():
     """Test when filtering for specific geo unit - regional"""
 
-    _mock_indicators_no_agg_no_glossary = [{'indicatorCode': '10',
-                                            'name': 'Official entrance age to early childhood educational development (years)',
-                                            'theme': 'EDUCATION',
-                                            'lastDataUpdate': '2024-10-29',
-                                            'lastDataUpdateDescription': 'September 2024 Data Release',
-                                            'dataAvailability': {'totalRecordCount': 4675,
-                                                                 'timeLine': {'min': 1970, 'max': 2023},
-                                                                 'geoUnits': {'types': ['NATIONAL']}}},
-                                           {'indicatorCode': '10403',
-                                            'name': 'Start month of the academic school year (tertiary education)',
-                                            'theme': 'DEMOGRAPHICS',
-                                            'lastDataUpdate': '2010-10-29',
-                                            'lastDataUpdateDescription': 'September 2024 Data Release',
-                                            'dataAvailability': {'totalRecordCount': 5192,
-                                                                 'timeLine': {'min': 1991, 'max': 2023},
-                                                                 'geoUnits': {'types': ['NATIONAL', 'REGIONAL']}}}
-                                           ]
-    with patch("unesco_reader.api.get_indicators", return_value=_mock_indicators_no_agg_no_glossary) as mock_api_call:
+    _mock_indicators_no_agg_no_glossary = [
+        {
+            "indicatorCode": "10",
+            "name": "Official entrance age to early childhood educational development (years)",
+            "theme": "EDUCATION",
+            "lastDataUpdate": "2024-10-29",
+            "lastDataUpdateDescription": "September 2024 Data Release",
+            "dataAvailability": {
+                "totalRecordCount": 4675,
+                "timeLine": {"min": 1970, "max": 2023},
+                "geoUnits": {"types": ["NATIONAL"]},
+            },
+        },
+        {
+            "indicatorCode": "10403",
+            "name": "Start month of the academic school year (tertiary education)",
+            "theme": "DEMOGRAPHICS",
+            "lastDataUpdate": "2010-10-29",
+            "lastDataUpdateDescription": "September 2024 Data Release",
+            "dataAvailability": {
+                "totalRecordCount": 5192,
+                "timeLine": {"min": 1991, "max": 2023},
+                "geoUnits": {"types": ["NATIONAL", "REGIONAL"]},
+            },
+        },
+    ]
+    with patch(
+        "unesco_reader.api.get_indicators",
+        return_value=_mock_indicators_no_agg_no_glossary,
+    ) as mock_api_call:
 
         # Call available_indicators
         result = core.available_indicators(geo_unit_type="REGIONAL")
@@ -674,30 +857,43 @@ def test_available_indicators_filter_geo_unit_type_regional():
         assert isinstance(result, pd.DataFrame)
 
         assert len(result) == 1
-        assert result['indicator_code'].unique() == '10403'
-        assert result['geo_unit_type'].unique() == 'ALL'
+        assert result["indicator_code"].unique() == "10403"
+        assert result["geo_unit_type"].unique() == "ALL"
+
 
 def test_available_indicators_filter_geo_unit_type_national():
     """Test when filtering for specific geo unit - regional"""
 
-    _mock_indicators_no_agg_no_glossary = [{'indicatorCode': '10',
-                                            'name': 'Official entrance age to early childhood educational development (years)',
-                                            'theme': 'EDUCATION',
-                                            'lastDataUpdate': '2024-10-29',
-                                            'lastDataUpdateDescription': 'September 2024 Data Release',
-                                            'dataAvailability': {'totalRecordCount': 4675,
-                                                                 'timeLine': {'min': 1970, 'max': 2023},
-                                                                 'geoUnits': {'types': ['NATIONAL']}}},
-                                           {'indicatorCode': '10403',
-                                            'name': 'Start month of the academic school year (tertiary education)',
-                                            'theme': 'DEMOGRAPHICS',
-                                            'lastDataUpdate': '2010-10-29',
-                                            'lastDataUpdateDescription': 'September 2024 Data Release',
-                                            'dataAvailability': {'totalRecordCount': 5192,
-                                                                 'timeLine': {'min': 1991, 'max': 2023},
-                                                                 'geoUnits': {'types': ['NATIONAL', 'REGIONAL']}}}
-                                           ]
-    with patch("unesco_reader.api.get_indicators", return_value=_mock_indicators_no_agg_no_glossary) as mock_api_call:
+    _mock_indicators_no_agg_no_glossary = [
+        {
+            "indicatorCode": "10",
+            "name": "Official entrance age to early childhood educational development (years)",
+            "theme": "EDUCATION",
+            "lastDataUpdate": "2024-10-29",
+            "lastDataUpdateDescription": "September 2024 Data Release",
+            "dataAvailability": {
+                "totalRecordCount": 4675,
+                "timeLine": {"min": 1970, "max": 2023},
+                "geoUnits": {"types": ["NATIONAL"]},
+            },
+        },
+        {
+            "indicatorCode": "10403",
+            "name": "Start month of the academic school year (tertiary education)",
+            "theme": "DEMOGRAPHICS",
+            "lastDataUpdate": "2010-10-29",
+            "lastDataUpdateDescription": "September 2024 Data Release",
+            "dataAvailability": {
+                "totalRecordCount": 5192,
+                "timeLine": {"min": 1991, "max": 2023},
+                "geoUnits": {"types": ["NATIONAL", "REGIONAL"]},
+            },
+        },
+    ]
+    with patch(
+        "unesco_reader.api.get_indicators",
+        return_value=_mock_indicators_no_agg_no_glossary,
+    ) as mock_api_call:
 
         # Call available_indicators
         result = core.available_indicators(geo_unit_type="NATIONAL")
@@ -710,24 +906,36 @@ def test_available_indicators_filter_geo_unit_type_national():
 def test_available_indicators_filter_geo_unit_type_all():
     """Test when filtering for specific geo unit - regional"""
 
-    _mock_indicators_no_agg_no_glossary = [{'indicatorCode': '10',
-                                            'name': 'Official entrance age to early childhood educational development (years)',
-                                            'theme': 'EDUCATION',
-                                            'lastDataUpdate': '2024-10-29',
-                                            'lastDataUpdateDescription': 'September 2024 Data Release',
-                                            'dataAvailability': {'totalRecordCount': 4675,
-                                                                 'timeLine': {'min': 1970, 'max': 2023},
-                                                                 'geoUnits': {'types': ['NATIONAL']}}},
-                                           {'indicatorCode': '10403',
-                                            'name': 'Start month of the academic school year (tertiary education)',
-                                            'theme': 'DEMOGRAPHICS',
-                                            'lastDataUpdate': '2010-10-29',
-                                            'lastDataUpdateDescription': 'September 2024 Data Release',
-                                            'dataAvailability': {'totalRecordCount': 5192,
-                                                                 'timeLine': {'min': 1991, 'max': 2023},
-                                                                 'geoUnits': {'types': ['NATIONAL', 'REGIONAL']}}}
-                                           ]
-    with patch("unesco_reader.api.get_indicators", return_value=_mock_indicators_no_agg_no_glossary) as mock_api_call:
+    _mock_indicators_no_agg_no_glossary = [
+        {
+            "indicatorCode": "10",
+            "name": "Official entrance age to early childhood educational development (years)",
+            "theme": "EDUCATION",
+            "lastDataUpdate": "2024-10-29",
+            "lastDataUpdateDescription": "September 2024 Data Release",
+            "dataAvailability": {
+                "totalRecordCount": 4675,
+                "timeLine": {"min": 1970, "max": 2023},
+                "geoUnits": {"types": ["NATIONAL"]},
+            },
+        },
+        {
+            "indicatorCode": "10403",
+            "name": "Start month of the academic school year (tertiary education)",
+            "theme": "DEMOGRAPHICS",
+            "lastDataUpdate": "2010-10-29",
+            "lastDataUpdateDescription": "September 2024 Data Release",
+            "dataAvailability": {
+                "totalRecordCount": 5192,
+                "timeLine": {"min": 1991, "max": 2023},
+                "geoUnits": {"types": ["NATIONAL", "REGIONAL"]},
+            },
+        },
+    ]
+    with patch(
+        "unesco_reader.api.get_indicators",
+        return_value=_mock_indicators_no_agg_no_glossary,
+    ) as mock_api_call:
 
         # Call available_indicators
         result = core.available_indicators(geo_unit_type="ALL")
@@ -735,111 +943,160 @@ def test_available_indicators_filter_geo_unit_type_all():
         # Assert the result is a DataFrame
         assert isinstance(result, pd.DataFrame)
         assert len(result) == 1
-        assert result['geo_unit_type'].unique() == 'ALL'
+        assert result["geo_unit_type"].unique() == "ALL"
 
 
 def test_available_indicators_raw_with_filter():
     """Test that available_indicators returns raw API data when raw=True and filters are applied."""
 
-    _mock_indicators_no_agg_no_glossary = [{'indicatorCode': '10',
-                                            'name': 'Official entrance age to early childhood educational development (years)',
-                                            'theme': 'EDUCATION',
-                                            'lastDataUpdate': '2024-10-29',
-                                            'lastDataUpdateDescription': 'September 2024 Data Release',
-                                            'dataAvailability': {'totalRecordCount': 4675,
-                                                                 'timeLine': {'min': 1970, 'max': 2023},
-                                                                 'geoUnits': {'types': ['NATIONAL']}}},
-                                           {'indicatorCode': '10403',
-                                            'name': 'Start month of the academic school year (tertiary education)',
-                                            'theme': 'DEMOGRAPHICS',
-                                            'lastDataUpdate': '2010-10-29',
-                                            'lastDataUpdateDescription': 'September 2024 Data Release',
-                                            'dataAvailability': {'totalRecordCount': 5192,
-                                                                 'timeLine': {'min': 1991, 'max': 2023},
-                                                                 'geoUnits': {'types': ['NATIONAL', 'REGIONAL']}}}
-                                           ]
-    with patch("unesco_reader.api.get_indicators", return_value=_mock_indicators_no_agg_no_glossary) as mock_api_call:
+    _mock_indicators_no_agg_no_glossary = [
+        {
+            "indicatorCode": "10",
+            "name": "Official entrance age to early childhood educational development (years)",
+            "theme": "EDUCATION",
+            "lastDataUpdate": "2024-10-29",
+            "lastDataUpdateDescription": "September 2024 Data Release",
+            "dataAvailability": {
+                "totalRecordCount": 4675,
+                "timeLine": {"min": 1970, "max": 2023},
+                "geoUnits": {"types": ["NATIONAL"]},
+            },
+        },
+        {
+            "indicatorCode": "10403",
+            "name": "Start month of the academic school year (tertiary education)",
+            "theme": "DEMOGRAPHICS",
+            "lastDataUpdate": "2010-10-29",
+            "lastDataUpdateDescription": "September 2024 Data Release",
+            "dataAvailability": {
+                "totalRecordCount": 5192,
+                "timeLine": {"min": 1991, "max": 2023},
+                "geoUnits": {"types": ["NATIONAL", "REGIONAL"]},
+            },
+        },
+    ]
+    with patch(
+        "unesco_reader.api.get_indicators",
+        return_value=_mock_indicators_no_agg_no_glossary,
+    ) as mock_api_call:
 
         # Call available_indicators with raw=True and filters
         result = core.available_indicators(theme="EDUCATION", raw=True)
 
         # Assert the result matches the raw API response
-        assert result == [{'indicatorCode': '10',
-                           'name': 'Official entrance age to early childhood educational development (years)',
-                           'theme': 'EDUCATION',
-                           'lastDataUpdate': '2024-10-29',
-                           'lastDataUpdateDescription': 'September 2024 Data Release',
-                           'dataAvailability': {'totalRecordCount': 4675,
-                                                'timeLine': {'min': 1970, 'max': 2023},
-                                                'geoUnits': {'types': ['NATIONAL']}}}]
+        assert result == [
+            {
+                "indicatorCode": "10",
+                "name": "Official entrance age to early childhood educational development (years)",
+                "theme": "EDUCATION",
+                "lastDataUpdate": "2024-10-29",
+                "lastDataUpdateDescription": "September 2024 Data Release",
+                "dataAvailability": {
+                    "totalRecordCount": 4675,
+                    "timeLine": {"min": 1970, "max": 2023},
+                    "geoUnits": {"types": ["NATIONAL"]},
+                },
+            }
+        ]
 
 
 def test_available_indicators_no_data_error():
     """Test that available_indicators raises NoDataError when no data is returned."""
     # Mock the API response with no records
-    _mock_indicators_no_agg_no_glossary = [{'indicatorCode': '10',
-                                            'name': 'Official entrance age to early childhood educational development (years)',
-                                            'theme': 'EDUCATION',
-                                            'lastDataUpdate': '2024-10-29',
-                                            'lastDataUpdateDescription': 'September 2024 Data Release',
-                                            'dataAvailability': {'totalRecordCount': 4675,
-                                                                 'timeLine': {'min': 1970, 'max': 2023},
-                                                                 'geoUnits': {'types': ['NATIONAL']}}},
-                                           {'indicatorCode': '10403',
-                                            'name': 'Start month of the academic school year (tertiary education)',
-                                            'theme': 'DEMOGRAPHICS',
-                                            'lastDataUpdate': '2010-10-29',
-                                            'lastDataUpdateDescription': 'September 2024 Data Release',
-                                            'dataAvailability': {'totalRecordCount': 5192,
-                                                                 'timeLine': {'min': 1991, 'max': 2023},
-                                                                 'geoUnits': {'types': ['NATIONAL', 'REGIONAL']}}}
-                                           ]
-    with patch("unesco_reader.api.get_indicators", return_value=_mock_indicators_no_agg_no_glossary) as mock_api_call:
+    _mock_indicators_no_agg_no_glossary = [
+        {
+            "indicatorCode": "10",
+            "name": "Official entrance age to early childhood educational development (years)",
+            "theme": "EDUCATION",
+            "lastDataUpdate": "2024-10-29",
+            "lastDataUpdateDescription": "September 2024 Data Release",
+            "dataAvailability": {
+                "totalRecordCount": 4675,
+                "timeLine": {"min": 1970, "max": 2023},
+                "geoUnits": {"types": ["NATIONAL"]},
+            },
+        },
+        {
+            "indicatorCode": "10403",
+            "name": "Start month of the academic school year (tertiary education)",
+            "theme": "DEMOGRAPHICS",
+            "lastDataUpdate": "2010-10-29",
+            "lastDataUpdateDescription": "September 2024 Data Release",
+            "dataAvailability": {
+                "totalRecordCount": 5192,
+                "timeLine": {"min": 1991, "max": 2023},
+                "geoUnits": {"types": ["NATIONAL", "REGIONAL"]},
+            },
+        },
+    ]
+    with patch(
+        "unesco_reader.api.get_indicators",
+        return_value=_mock_indicators_no_agg_no_glossary,
+    ) as mock_api_call:
 
-            # Call available_indicators and expect NoDataError
-            with pytest.raises(NoDataError, match="No indicators found for the given parameters"):
-                core.available_indicators(theme="INVALID_THEME")
+        # Call available_indicators and expect NoDataError
+        with pytest.raises(
+            NoDataError, match="No indicators found for the given parameters"
+        ):
+            core.available_indicators(theme="INVALID_THEME")
 
 
 def test_available_indicators_theme_warning_logged(caplog):
     """Test available_indicators logs a warning when some requested themes are not found."""
 
     # Mock the API response with no records
-    _mock_indicators_no_agg_no_glossary = [{'indicatorCode': '10',
-                                            'name': 'Official entrance age to early childhood educational development (years)',
-                                            'theme': 'EDUCATION',
-                                            'lastDataUpdate': '2024-10-29',
-                                            'lastDataUpdateDescription': 'September 2024 Data Release',
-                                            'dataAvailability': {'totalRecordCount': 4675,
-                                                                 'timeLine': {'min': 1970, 'max': 2023},
-                                                                 'geoUnits': {'types': ['NATIONAL']}}},
-                                           {'indicatorCode': '10403',
-                                            'name': 'Start month of the academic school year (tertiary education)',
-                                            'theme': 'DEMOGRAPHICS',
-                                            'lastDataUpdate': '2010-10-29',
-                                            'lastDataUpdateDescription': 'September 2024 Data Release',
-                                            'dataAvailability': {'totalRecordCount': 5192,
-                                                                 'timeLine': {'min': 1991, 'max': 2023},
-                                                                 'geoUnits': {'types': ['NATIONAL', 'REGIONAL']}}}
-                                           ]
+    _mock_indicators_no_agg_no_glossary = [
+        {
+            "indicatorCode": "10",
+            "name": "Official entrance age to early childhood educational development (years)",
+            "theme": "EDUCATION",
+            "lastDataUpdate": "2024-10-29",
+            "lastDataUpdateDescription": "September 2024 Data Release",
+            "dataAvailability": {
+                "totalRecordCount": 4675,
+                "timeLine": {"min": 1970, "max": 2023},
+                "geoUnits": {"types": ["NATIONAL"]},
+            },
+        },
+        {
+            "indicatorCode": "10403",
+            "name": "Start month of the academic school year (tertiary education)",
+            "theme": "DEMOGRAPHICS",
+            "lastDataUpdate": "2010-10-29",
+            "lastDataUpdateDescription": "September 2024 Data Release",
+            "dataAvailability": {
+                "totalRecordCount": 5192,
+                "timeLine": {"min": 1991, "max": 2023},
+                "geoUnits": {"types": ["NATIONAL", "REGIONAL"]},
+            },
+        },
+    ]
 
-    with patch("unesco_reader.api.get_indicators", return_value=_mock_indicators_no_agg_no_glossary) as mock_api_call:
+    with patch(
+        "unesco_reader.api.get_indicators",
+        return_value=_mock_indicators_no_agg_no_glossary,
+    ) as mock_api_call:
 
-            # Call available_indicators with one valid and one invalid theme
-            result = core.available_indicators(theme=["EDUCATION", "INVALID_THEME"])
+        # Call available_indicators with one valid and one invalid theme
+        result = core.available_indicators(theme=["EDUCATION", "INVALID_THEME"])
 
-            # Check that a warning is logged
-            assert "Indicators not found for the following themes: ['INVALID_THEME']" in caplog.text
+        # Check that a warning is logged
+        assert (
+            "Indicators not found for the following themes: ['INVALID_THEME']"
+            in caplog.text
+        )
 
-            # Assert the result contains only the valid metadata
-            assert len(result) == 1
-            assert result['theme'].unique() == 'EDUCATION'
+        # Assert the result contains only the valid metadata
+        assert len(result) == 1
+        assert result["theme"].unique() == "EDUCATION"
 
 
 def test_available_geo_units_success():
     """Test that available_geo_units returns a correctly processed DataFrame."""
     # Mock the API call
-    with patch("unesco_reader.api.get_geo_units", return_value=mock_geo_units) as mock_api_call:
+    with patch(
+        "unesco_reader.api.get_geo_units", return_value=mock_geo_units
+    ) as mock_api_call:
 
         # Call available_geo_units
         result = core.available_geo_units()
@@ -851,14 +1108,21 @@ def test_available_geo_units_success():
         assert isinstance(result, pd.DataFrame)
 
         # Assert the DataFrame columns
-        expected_columns = {'geo_unit_code', 'geo_unit_name', 'geo_unit_type', 'region_group'}
+        expected_columns = {
+            "geo_unit_code",
+            "geo_unit_name",
+            "geo_unit_type",
+            "region_group",
+        }
         assert set(result.columns).issuperset(expected_columns)
 
 
 def test_available_geo_units_raw_success():
     """Test that available_geo_units returns a correctly processed list when raw is requested."""
     # Mock the API call
-    with patch("unesco_reader.api.get_geo_units", return_value=mock_geo_units) as mock_api_call:
+    with patch(
+        "unesco_reader.api.get_geo_units", return_value=mock_geo_units
+    ) as mock_api_call:
 
         # Call available_geo_units
         result = core.available_geo_units(raw=True)
@@ -873,7 +1137,9 @@ def test_available_geo_units_raw_success():
 def test_available_geo_units_filter():
     """Test that available_geo_units returns a correctly processed list when raw is requested."""
     # Mock the API call
-    with patch("unesco_reader.api.get_geo_units", return_value=mock_geo_units) as mock_api_call:
+    with patch(
+        "unesco_reader.api.get_geo_units", return_value=mock_geo_units
+    ) as mock_api_call:
 
         # Call available_geo_units
         result = core.available_geo_units(geo_unit_type="REGIONAL")
@@ -882,13 +1148,15 @@ def test_available_geo_units_filter():
         mock_api_call.assert_called_once_with(version=None)
 
         assert len(result) == 1
-        assert result['geo_unit_type'].unique() == 'REGIONAL'
+        assert result["geo_unit_type"].unique() == "REGIONAL"
 
 
 def test_available_geo_units_filter_raw():
     """Test that available_geo_units returns a correctly processed list when raw is requested."""
     # Mock the API call
-    with patch("unesco_reader.api.get_geo_units", return_value=mock_geo_units) as mock_api_call:
+    with patch(
+        "unesco_reader.api.get_geo_units", return_value=mock_geo_units
+    ) as mock_api_call:
 
         # Call available_geo_units
         result = core.available_geo_units(geo_unit_type="REGIONAL", raw=True)
@@ -902,7 +1170,9 @@ def test_available_geo_units_filter_raw():
 def test_available_themes_success():
     """Test that available_themes returns a correctly processed DataFrame."""
     # Mock the API call
-    with patch("unesco_reader.api.get_default_version", return_value=mock_default_version) as mock_api_call:
+    with patch(
+        "unesco_reader.api.get_default_version", return_value=mock_default_version
+    ) as mock_api_call:
 
         # Call available_themes
         result = core.available_themes()
@@ -914,14 +1184,16 @@ def test_available_themes_success():
         assert isinstance(result, pd.DataFrame)
 
         # Assert the DataFrame columns
-        expected_columns = {'theme', 'last_update', 'description'}
+        expected_columns = {"theme", "last_update", "description"}
         assert set(result.columns).issuperset(expected_columns)
 
 
 def test_available_themes_success_raw():
     """Test that available_themes returns a correctly processed list of dicts."""
     # Mock the API call
-    with patch("unesco_reader.api.get_default_version", return_value=mock_default_version) as mock_api_call:
+    with patch(
+        "unesco_reader.api.get_default_version", return_value=mock_default_version
+    ) as mock_api_call:
 
         # Call available_themes
         result = core.available_themes(raw=True)
@@ -934,7 +1206,9 @@ def test_available_themes_success_raw():
 def test_default_version():
     """Test that default version."""
     # Mock the API call
-    with patch("unesco_reader.api.get_default_version", return_value=mock_default_version) as mock_api_call:
+    with patch(
+        "unesco_reader.api.get_default_version", return_value=mock_default_version
+    ) as mock_api_call:
 
         # Call available_themes
         result = core.default_version()
@@ -946,7 +1220,9 @@ def test_default_version():
 def test_available_versions_success():
     """Test that available_versions returns a correctly processed DataFrame."""
     # Mock the API call
-    with patch("unesco_reader.api.get_versions", return_value=mock_list_versions) as mock_api_call:
+    with patch(
+        "unesco_reader.api.get_versions", return_value=mock_list_versions
+    ) as mock_api_call:
 
         # Call available_versions
         result = core.available_versions()
@@ -958,7 +1234,7 @@ def test_available_versions_success():
         assert isinstance(result, pd.DataFrame)
 
         # Assert the DataFrame columns
-        expected_columns = {'version', 'publication_date', 'description'}
+        expected_columns = {"version", "publication_date", "description"}
         assert set(result.columns).issuperset(expected_columns)
 
 
@@ -974,27 +1250,30 @@ def test_available_versions_success_raw():
                 {
                     "theme": "EDUCATION",
                     "lastUpdate": "2024-10-29",
-                    "description": "September 2024 Data Release"
+                    "description": "September 2024 Data Release",
                 },
                 {
                     "theme": "SCIENCE_TECHNOLOGY_INNOVATION",
                     "lastUpdate": "2024-02-24",
-                    "description": "February 2024 Data Release"
+                    "description": "February 2024 Data Release",
                 },
                 {
                     "theme": "CULTURE",
                     "lastUpdate": "2023-11-25",
-                    "description": "November 2023 Data Release"
+                    "description": "November 2023 Data Release",
                 },
                 {
                     "theme": "DEMOGRAPHIC_SOCIOECONOMIC",
                     "lastUpdate": "2024-10-29",
-                    "description": "September 2024 Data Release"
-                }
-            ]
-        }]
+                    "description": "September 2024 Data Release",
+                },
+            ],
+        }
+    ]
     # Mock the API call
-    with patch("unesco_reader.api.get_versions", return_value=_mock_list_versions) as mock_api_call:
+    with patch(
+        "unesco_reader.api.get_versions", return_value=_mock_list_versions
+    ) as mock_api_call:
 
         # Call available_versions
         result = core.available_versions(raw=True)
@@ -1005,9 +1284,3 @@ def test_available_versions_success_raw():
         # Assert the result is a DataFrame
         assert isinstance(result, list)
         assert len(result) == 1
-
-
-
-
-
-

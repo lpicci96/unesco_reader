@@ -71,11 +71,13 @@ def _check_for_too_many_records(response: requests.Response) -> None:
 
     # if URI Too Long raise a custom error rather than the default one from requests, indicating that too many parameters have been passed to the API
     if response.status_code == 414:
-        raise TooManyRecordsError("Too many parameters passed to the API. Please reduce the amount of parameters passed to the API")
+        raise TooManyRecordsError(
+            "Too many parameters passed to the API. Please reduce the amount of parameters passed to the API"
+        )
 
 
 def _make_request(endpoint: str, params: dict | None = None) -> dict | list:
-    """ Make a request to an API endpoint and return the response object
+    """Make a request to an API endpoint and return the response object
 
     Args:
         endpoint: The endpoint to make the request to
@@ -85,10 +87,7 @@ def _make_request(endpoint: str, params: dict | None = None) -> dict | list:
         The response object as a dictionary
     """
 
-    headers = {
-        "Accept-Encoding": "gzip",
-        "Accept": "application/json"
-    }
+    headers = {"Accept-Encoding": "gzip", "Accept": "application/json"}
 
     if params is not None:
         params = {k: v for k, v in sorted(params.items()) if v is not None}
@@ -98,8 +97,12 @@ def _make_request(endpoint: str, params: dict | None = None) -> dict | list:
             _check_valid_version(params["version"])
 
     try:
-        response = requests.get(f"{API_URL}{endpoint}", headers=headers, params=params, timeout=TIMEOUT)
-        _check_for_too_many_records(response) # check if too many records have been requested
+        response = requests.get(
+            f"{API_URL}{endpoint}", headers=headers, params=params, timeout=TIMEOUT
+        )
+        _check_for_too_many_records(
+            response
+        )  # check if too many records have been requested
         response.raise_for_status()  # Raises an error for HTTP codes 4xx/5xx
         return response.json()
 
@@ -117,15 +120,16 @@ def _convert_bool_to_string(value: bool | None) -> str | None:
     return None if value is None else "true" if value else "false"
 
 
-def get_data(indicator: str | list[str] | None = None,
-             geo_unit: str | list[str] | None = None,
-             start: int | None = None,
-             end: int | None = None,
-             indicator_metadata: bool = False,
-             footnotes: bool = False,
-             geo_unit_type: GEO_UNIT_TYPE | None = None,
-             version: str | None = None,
-             ) -> dict:
+def get_data(
+    indicator: str | list[str] | None = None,
+    geo_unit: str | list[str] | None = None,
+    start: int | None = None,
+    end: int | None = None,
+    indicator_metadata: bool = False,
+    footnotes: bool = False,
+    geo_unit_type: GEO_UNIT_TYPE | None = None,
+    version: str | None = None,
+) -> dict:
     """Function to get indicator data. Wrapper for the indicator data endpoint
 
     At least an indicator or a geo_unit must be provided.
@@ -153,11 +157,12 @@ def get_data(indicator: str | list[str] | None = None,
     if indicator is None and geo_unit is None:
         raise ValueError("At least one indicator or one geo_unit must be provided")
 
-
     # if geo_unit and geo_unit_type is specified, log a message and ignore geo_unit_type
     if geo_unit and geo_unit_type:
-        logger.warning("Both geo_unit and geo_unit_type are specified. geo_unit_type will be ignored")
-        geo_unit_type = None # set to None to ignore it to avoid unexpected results from API call and to avoid unnecessary API calls
+        logger.warning(
+            "Both geo_unit and geo_unit_type are specified. geo_unit_type will be ignored"
+        )
+        geo_unit_type = None  # set to None to ignore it to avoid unexpected results from API call and to avoid unnecessary API calls
 
     # check if the geo_unit_type is valid
     if geo_unit_type is not None and geo_unit_type not in ["NATIONAL", "REGIONAL"]:
@@ -165,7 +170,9 @@ def get_data(indicator: str | list[str] | None = None,
 
     # handle cases where start is greater than end
     if start and end and start > end:
-        raise ValueError(f"Start year ({start}) cannot be greater than end year ({end})")
+        raise ValueError(
+            f"Start year ({start}) cannot be greater than end year ({end})"
+        )
 
     params = {
         "indicator": [indicator] if isinstance(indicator, str) else indicator,
@@ -175,7 +182,7 @@ def get_data(indicator: str | list[str] | None = None,
         "indicatorMetadata": _convert_bool_to_string(indicator_metadata),
         "footnotes": _convert_bool_to_string(footnotes),
         "geoUnitType": geo_unit_type,
-        "version": version
+        "version": version,
     }
 
     return _make_request(end_point, params)
@@ -195,14 +202,16 @@ def get_geo_units(version: str | None = None) -> list[dict]:
 
     end_point: str = f"/api/public/definitions/geounits"
 
-    params = {
-        "version": version
-    }
+    params = {"version": version}
 
     return _make_request(end_point, params)
 
 
-def get_indicators(disaggregations: bool = False, glossary_terms: bool = False, version: str | None = None) -> list[dict]:
+def get_indicators(
+    disaggregations: bool = False,
+    glossary_terms: bool = False,
+    version: str | None = None,
+) -> list[dict]:
     """Get available indicators
 
     Get all available indicators, optionally with glossary terms and disaggregations, for the given API data version
@@ -222,7 +231,7 @@ def get_indicators(disaggregations: bool = False, glossary_terms: bool = False, 
     params = {
         "disaggregations": _convert_bool_to_string(disaggregations),
         "glossaryTerms": _convert_bool_to_string(glossary_terms),
-        "version": version
+        "version": version,
     }
 
     return _make_request(end_point, params)
@@ -250,7 +259,3 @@ def get_default_version() -> dict:
     end_point: str = "/api/public/versions/default"
 
     return _make_request(end_point)
-
-
-
-
