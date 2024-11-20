@@ -1,5 +1,4 @@
 from importlib.metadata import version
-from unesco_reader import bulk
 from unesco_reader import api
 from unesco_reader import exceptions
 
