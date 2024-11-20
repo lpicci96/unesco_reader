@@ -6,15 +6,7 @@ the custom exceptions used in the package.
 """
 
 import logging
-
-
-# Custom Exceptions
-
-
-class NoDataError(Exception):
-    """This is a custom exception that is raised when no UIS data exists"""
-
-    pass
+from typing import Literal
 
 
 # Configure Logging
@@ -32,3 +24,7 @@ fmt_shell = "%(levelname)s: %(message)s"
 shell_formatter = logging.Formatter(fmt_shell)  # Create formatters
 shell_handler.setFormatter(shell_formatter)  # Add formatters to handlers
 logger.addHandler(shell_handler)  # Add handlers to the logger
+
+
+# Custom TYPES
+GEO_UNIT_TYPE = Literal["NATIONAL", "REGIONAL"]
