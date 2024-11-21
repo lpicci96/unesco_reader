@@ -31,11 +31,7 @@ def test_check_for_too_many_records_success():
     mock_response.json.return_value = {}  # an empty json response
 
     # Ensure that no exception is raised when the response is valid
-    try:
-        api._check_for_too_many_records(mock_response)
-
-    except api.TooManyRecordsError:
-        pytest.fail("Unexpected TooManyRecordsError raised for a valid response")
+    assert api._check_for_too_many_records(mock_response) is None
 
 
 def test_check_for_too_many_records_uri_too_long():
@@ -215,7 +211,7 @@ def test_get_data_success(mock_success_response):
         "unesco_reader.api._make_request", return_value=mock_response.json()
     ) as mock_make_request:
         # Call get_data with basic parameters
-        result = api.get_data(indicator="CR.1", geo_unit="ZWE")
+        result = api.get_data(indicator="CR.1", geoUnit="ZWE")
 
         # Assert that the result matches the mock response data
         assert result == mock_data_no_hints_no_metadata
@@ -251,7 +247,7 @@ def test_get_data_geo_unit_with_geo_unit_type(caplog):
     with caplog.at_level(logging.WARNING):
         # Case 1: geo_unit as a string and geo_unit_type provided
         with patch("unesco_reader.api._make_request") as mock_make_request:
-            api.get_data(indicator="CR.1", geo_unit="ZWE", geo_unit_type="NATIONAL")
+            api.get_data(indicator="CR.1", geoUnit="ZWE", geoUnitType="NATIONAL")
 
             # Assert that a warning is logged
             assert "geo_unit_type will be ignored" in caplog.text
@@ -277,7 +273,7 @@ def test_get_data_geo_unit_with_geo_unit_type(caplog):
         # Case 2: geo_unit as a list and geo_unit_type provided
         with patch("unesco_reader.api._make_request") as mock_make_request:
             api.get_data(
-                indicator="CR.1", geo_unit=["ZWE", "USA"], geo_unit_type="REGIONAL"
+                indicator="CR.1", geoUnit=["ZWE", "USA"], geoUnitType="REGIONAL"
             )
 
             # Assert that a warning is logged
@@ -307,7 +303,7 @@ def test_get_data_invalid_year_range():
         ValueError,
         match="Start year \\(2020\\) cannot be greater than end year \\(2010\\)",
     ):
-        api.get_data(indicator="CR.1", geo_unit="ZWE", start=2020, end=2010)
+        api.get_data(indicator="CR.1", geoUnit="ZWE", start=2020, end=2010)
 
 
 def test_check_valid_version_valid():
@@ -315,11 +311,8 @@ def test_check_valid_version_valid():
 
     # Mock get_versions to return the mock_list_versions data
     with patch("unesco_reader.api.get_versions", return_value=mock_list_versions):
-        # Test with a valid version that exists in mock_list_versions
-        try:
-            api._check_valid_version("20241030-9d4d089e")
-        except ValueError:
-            pytest.fail("Unexpected ValueError raised for a valid version")
+        # check that _check_valid_version does not raise an exception for a valid version
+        assert api._check_valid_version("20241030-9d4d089e") is None
 
 
 def test_check_valid_version_invalid():

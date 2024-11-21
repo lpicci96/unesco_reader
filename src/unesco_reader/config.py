@@ -27,4 +27,4 @@ logger.addHandler(shell_handler)  # Add handlers to the logger
 
 
 # Custom TYPES
-GEO_UNIT_TYPE = Literal["NATIONAL", "REGIONAL"]
+GeoUnitType = Literal["NATIONAL", "REGIONAL"]
