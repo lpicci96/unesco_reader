@@ -318,7 +318,14 @@ def test_get_data_basic_call():
         mock_add_geo_unit_labels.assert_not_called()
 
         # Assert the DataFrame columns are as expected
-        expected_columns = ['indicatorId', 'geoUnit', 'year', 'value', 'magnitude', 'qualifier']
+        expected_columns = [
+            "indicatorId",
+            "geoUnit",
+            "year",
+            "value",
+            "magnitude",
+            "qualifier",
+        ]
         assert list(result.columns) == expected_columns
 
         assert len(result) > 0
@@ -443,7 +450,17 @@ def test_get_data_with_labels():
         # Assert the result is a DataFrame
         assert isinstance(result, pd.DataFrame)
         # Assert the DataFrame columns are as expected
-        expected_columns = ['indicatorId', 'geoUnit', 'year', 'value', 'magnitude', 'qualifier', 'name', 'geoUnitName', 'regionGroup']
+        expected_columns = [
+            "indicatorId",
+            "geoUnit",
+            "year",
+            "value",
+            "magnitude",
+            "qualifier",
+            "name",
+            "geoUnitName",
+            "regionGroup",
+        ]
         assert list(result.columns) == expected_columns
 
 

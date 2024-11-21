@@ -353,9 +353,8 @@ def _indicators_df(indicators: list[dict]) -> pd.DataFrame:
         record.pop("dataAvailability")
 
     # Convert to pandas DataFrame and return
-    return (
-        pd.DataFrame(indicators)
-        .assign(last_data_update=lambda d: pd.to_datetime(d.lastDataUpdate))
+    return pd.DataFrame(indicators).assign(
+        last_data_update=lambda d: pd.to_datetime(d.lastDataUpdate)
     )
 
 
@@ -491,9 +490,8 @@ def available_themes(*, raw: bool = False) -> pd.DataFrame | dict:
     if raw:
         return themes
 
-    return (
-        pd.DataFrame(themes)
-        .assign(lastUpdate=lambda d: pd.to_datetime(d.lastUpdate))
+    return pd.DataFrame(themes).assign(
+        lastUpdate=lambda d: pd.to_datetime(d.lastUpdate)
     )
 
 
@@ -522,7 +520,6 @@ def available_versions(*, raw: bool = False) -> pd.DataFrame | list[dict]:
     if raw:
         return versions
 
-    return (
-        pd.DataFrame(versions)
-        .assign(publicationDate=lambda d: pd.to_datetime(d.publicationDate))
+    return pd.DataFrame(versions).assign(
+        publicationDate=lambda d: pd.to_datetime(d.publicationDate)
     )
