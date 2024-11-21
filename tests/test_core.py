@@ -292,17 +292,17 @@ def test_get_data_basic_call():
 
         # Call get_data with minimal parameters
         result = core.get_data(
-            indicator="CR.1", geo_unit="ZWE", footnotes=False, labels=False, raw=False
+            indicator="CR.1", geoUnit="ZWE", footnotes=False, labels=False, raw=False
         )
 
         # Assert that API call was made with the correct parameters
         mock_api_call.assert_called_once_with(
             indicator="CR.1",
-            geo_unit="ZWE",
+            geoUnit="ZWE",
             start=None,
             end=None,
             footnotes=False,
-            geo_unit_type=None,
+            geoUnitType=None,
             version=None,
         )
 
@@ -318,14 +318,7 @@ def test_get_data_basic_call():
         mock_add_geo_unit_labels.assert_not_called()
 
         # Assert the DataFrame columns are as expected
-        expected_columns = [
-            "indicator_code",
-            "geo_unit_code",
-            "year",
-            "value",
-            "magnitude",
-            "qualifier",
-        ]
+        expected_columns = ['indicatorId', 'geoUnit', 'year', 'value', 'magnitude', 'qualifier']
         assert list(result.columns) == expected_columns
 
         assert len(result) > 0
@@ -345,17 +338,17 @@ def test_get_data_raw_call():
 
         # Call get_data with raw=True
         result = core.get_data(
-            indicator="CR.1", geo_unit="ZWE", footnotes=False, labels=False, raw=True
+            indicator="CR.1", geoUnit="ZWE", footnotes=False, labels=False, raw=True
         )
 
         # Assert that API call was made with the correct parameters
         mock_api_call.assert_called_once_with(
             indicator="CR.1",
-            geo_unit="ZWE",
+            geoUnit="ZWE",
             start=None,
             end=None,
             footnotes=False,
-            geo_unit_type=None,
+            geoUnitType=None,
             version=None,
         )
 
@@ -433,34 +426,24 @@ def test_get_data_with_labels():
 
         # Call get_data with labels=True
         result = core.get_data(
-            indicator="CR.1", geo_unit="ZWE", footnotes=False, labels=True, raw=False
+            indicator="CR.1", geoUnit="ZWE", footnotes=False, labels=True, raw=False
         )
 
         # Assert that API call was made with the correct parameters
         mock_api_call.assert_called_once_with(
             indicator="CR.1",
-            geo_unit="ZWE",
+            geoUnit="ZWE",
             start=None,
             end=None,
             footnotes=False,
-            geo_unit_type=None,
+            geoUnitType=None,
             version=None,
         )
 
         # Assert the result is a DataFrame
         assert isinstance(result, pd.DataFrame)
         # Assert the DataFrame columns are as expected
-        expected_columns = [
-            "indicator_code",
-            "geo_unit_code",
-            "year",
-            "value",
-            "magnitude",
-            "qualifier",
-            "indicator_name",
-            "geo_unit_name",
-            "region_group",
-        ]
+        expected_columns = ['indicatorId', 'geoUnit', 'year', 'value', 'magnitude', 'qualifier', 'name', 'geoUnitName', 'regionGroup']
         assert list(result.columns) == expected_columns
 
 
@@ -515,17 +498,17 @@ def test_get_data_with_footnotes():
 
         # Call get_data with footnotes=True
         result = core.get_data(
-            indicator="CR.1", geo_unit="AFG", footnotes=True, labels=False, raw=False
+            indicator="CR.1", geoUnit="AFG", footnotes=True, labels=False, raw=False
         )
 
         # Assert that API call was made with the correct parameters
         mock_api_call.assert_called_once_with(
             indicator="CR.1",
-            geo_unit="AFG",
+            geoUnit="AFG",
             start=None,
             end=None,
             footnotes=True,
-            geo_unit_type=None,
+            geoUnitType=None,
             version=None,
         )
 
@@ -551,7 +534,7 @@ def test_get_data_no_data_error():
         with pytest.raises(NoDataError, match="No data found for the given parameters"):
             core.get_data(
                 indicator="CR.1",
-                geo_unit="ZWE",
+                geoUnit="ZWE",
                 footnotes=False,
                 labels=False,
                 raw=False,
@@ -575,7 +558,7 @@ def test_get_metadata_single_indicator():
 
         # Assert that API call was made
         mock_api_call.assert_called_once_with(
-            disaggregations=False, glossary_terms=False, version=None
+            disaggregations=False, glossaryTerms=False, version=None
         )
 
         # Assert private function was called
@@ -609,7 +592,7 @@ def test_get_metadata_with_invalid_indicator(caplog):
 
         # Assert that API call was made
         mock_api_call.assert_called_once_with(
-            disaggregations=False, glossary_terms=False, version=None
+            disaggregations=False, glossaryTerms=False, version=None
         )
 
         # Assert private function was called
@@ -658,14 +641,14 @@ def test_indicators_df():
 
     # Assert the expected columns are present
     expected_columns = {
-        "indicator_code",
-        "indicator_name",
-        "last_update",
-        "last_update_description",
-        "min_year",
-        "max_year",
-        "total_records",
-        "geo_unit_type",
+        "indicatorCode",
+        "name",
+        "lastDataUpdate",
+        "lastDataUpdateDescription",
+        "min",
+        "max",
+        "totalRecordCount",
+        "geoUnitType",
     }
     assert set(result.columns).issuperset(expected_columns)
 
@@ -713,15 +696,15 @@ def test_available_indicators_success():
 
         # Assert the DataFrame columns
         expected_columns = {
-            "indicator_code",
-            "indicator_name",
+            "indicatorCode",
+            "name",
             "theme",
-            "last_update",
-            "last_update_description",
-            "min_year",
-            "max_year",
-            "total_records",
-            "geo_unit_type",
+            "lastDataUpdate",
+            "lastDataUpdateDescription",
+            "min",
+            "max",
+            "totalRecordCount",
+            "geoUnitType",
         }
         assert set(result.columns).issuperset(expected_columns)
 
@@ -807,13 +790,13 @@ def test_available_indicators_filter_min_year():
     ) as mock_api_call:
 
         # Call available_indicators
-        result = core.available_indicators(min_year=1990)
+        result = core.available_indicators(minStart=1990)
 
         # Assert the result is a DataFrame
         assert isinstance(result, pd.DataFrame)
 
         assert len(result) == 1
-        assert result["min_year"].unique() == 1970
+        assert result["min"].unique() == 1970
 
 
 def test_available_indicators_filter_geo_unit_type_regional():
@@ -851,14 +834,14 @@ def test_available_indicators_filter_geo_unit_type_regional():
     ) as mock_api_call:
 
         # Call available_indicators
-        result = core.available_indicators(geo_unit_type="REGIONAL")
+        result = core.available_indicators(geoUnitType="REGIONAL")
 
         # Assert the result is a DataFrame
         assert isinstance(result, pd.DataFrame)
 
         assert len(result) == 1
-        assert result["indicator_code"].unique() == "10403"
-        assert result["geo_unit_type"].unique() == "ALL"
+        assert result["indicatorCode"].unique() == "10403"
+        assert result["geoUnitType"].unique() == "ALL"
 
 
 def test_available_indicators_filter_geo_unit_type_national():
@@ -896,7 +879,7 @@ def test_available_indicators_filter_geo_unit_type_national():
     ) as mock_api_call:
 
         # Call available_indicators
-        result = core.available_indicators(geo_unit_type="NATIONAL")
+        result = core.available_indicators(geoUnitType="NATIONAL")
 
         # Assert the result is a DataFrame
         assert isinstance(result, pd.DataFrame)
@@ -938,12 +921,12 @@ def test_available_indicators_filter_geo_unit_type_all():
     ) as mock_api_call:
 
         # Call available_indicators
-        result = core.available_indicators(geo_unit_type="ALL")
+        result = core.available_indicators(geoUnitType="ALL")
 
         # Assert the result is a DataFrame
         assert isinstance(result, pd.DataFrame)
         assert len(result) == 1
-        assert result["geo_unit_type"].unique() == "ALL"
+        assert result["geoUnitType"].unique() == "ALL"
 
 
 def test_available_indicators_raw_with_filter():
@@ -1109,10 +1092,10 @@ def test_available_geo_units_success():
 
         # Assert the DataFrame columns
         expected_columns = {
-            "geo_unit_code",
-            "geo_unit_name",
-            "geo_unit_type",
-            "region_group",
+            "id",
+            "name",
+            "type",
+            "regionGroup",
         }
         assert set(result.columns).issuperset(expected_columns)
 
@@ -1148,7 +1131,7 @@ def test_available_geo_units_filter():
         mock_api_call.assert_called_once_with(version=None)
 
         assert len(result) == 1
-        assert result["geo_unit_type"].unique() == "REGIONAL"
+        assert result["type"].unique() == "REGIONAL"
 
 
 def test_available_geo_units_filter_raw():
@@ -1184,7 +1167,7 @@ def test_available_themes_success():
         assert isinstance(result, pd.DataFrame)
 
         # Assert the DataFrame columns
-        expected_columns = {"theme", "last_update", "description"}
+        expected_columns = {"theme", "lastUpdate", "description"}
         assert set(result.columns).issuperset(expected_columns)
 
 
@@ -1234,7 +1217,7 @@ def test_available_versions_success():
         assert isinstance(result, pd.DataFrame)
 
         # Assert the DataFrame columns
-        expected_columns = {"version", "publication_date", "description"}
+        expected_columns = {"version", "publicationDate", "description"}
         assert set(result.columns).issuperset(expected_columns)
 
 

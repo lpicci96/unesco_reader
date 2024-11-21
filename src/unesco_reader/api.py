@@ -19,7 +19,7 @@ TODO: add caching for repeated API calls - _check_valid_version and other functi
 
 import requests
 
-from unesco_reader.config import GEO_UNIT_TYPE, logger
+from unesco_reader.config import GeoUnitType, logger
 from unesco_reader.exceptions import TooManyRecordsError
 
 
@@ -122,12 +122,12 @@ def _convert_bool_to_string(value: bool | None) -> str | None:
 
 def get_data(
     indicator: str | list[str] | None = None,
-    geo_unit: str | list[str] | None = None,
+    geoUnit: str | list[str] | None = None,
     start: int | None = None,
     end: int | None = None,
-    indicator_metadata: bool = False,
+    indicatorMetadata: bool = False,
     footnotes: bool = False,
-    geo_unit_type: GEO_UNIT_TYPE | None = None,
+    geoUnitType: GeoUnitType | None = None,
     version: str | None = None,
 ) -> dict:
     """Function to get indicator data. Wrapper for the indicator data endpoint
@@ -138,12 +138,12 @@ def get_data(
 
     Args:
         indicator: IDs of the requested indicators. Returns all available indicators if not provided.
-        geo_unit: IDs of the requested geographies (countries or regions). Returns all available geographies if not provided.
+        geoUnit: IDs of the requested geographies (countries or regions). Returns all available geographies if not provided.
         start: The start year to request data for. Includes the year itself. Default is the earliest available year.
         end: The end year to request data for. Includes the year itself. Default is the latest available year
-        indicator_metadata: Include indicator metadata in the response. Default is False
+        indicatorMetadata: Include indicator metadata in the response. Default is False
         footnotes: Include footnotes (per data point) in the response. Default is False
-        geo_unit_type: The type of geography to request data for. Allowed values are NATIONAL and REGIONAL
+        geoUnitType: The type of geography to request data for. Allowed values are NATIONAL and REGIONAL
                        If a geo_unit is provided, this parameter is ignored. Default is both national and regional data
         version: The API data version to request. If not provided, defaults to the current default version.
 
@@ -154,18 +154,18 @@ def get_data(
     end_point: str = "/api/public/data/indicators"
 
     # if indicator is None and geo_unit is None, raise an error
-    if indicator is None and geo_unit is None:
+    if indicator is None and geoUnit is None:
         raise ValueError("At least one indicator or one geo_unit must be provided")
 
     # if geo_unit and geo_unit_type is specified, log a message and ignore geo_unit_type
-    if geo_unit and geo_unit_type:
+    if geoUnit and geoUnitType:
         logger.warning(
             "Both geo_unit and geo_unit_type are specified. geo_unit_type will be ignored"
         )
-        geo_unit_type = None  # set to None to ignore it to avoid unexpected results from API call and to avoid unnecessary API calls
+        geoUnitType = None  # set to None to ignore it to avoid unexpected results from API call and to avoid unnecessary API calls
 
     # check if the geo_unit_type is valid
-    if geo_unit_type is not None and geo_unit_type not in ["NATIONAL", "REGIONAL"]:
+    if geoUnitType is not None and geoUnitType not in ["NATIONAL", "REGIONAL"]:
         raise ValueError("geo_unit_type must be either NATIONAL or REGIONAL")
 
     # handle cases where start is greater than end
@@ -176,12 +176,12 @@ def get_data(
 
     params = {
         "indicator": [indicator] if isinstance(indicator, str) else indicator,
-        "geoUnit": [geo_unit] if isinstance(geo_unit, str) else geo_unit,
+        "geoUnit": [geoUnit] if isinstance(geoUnit, str) else geoUnit,
         "start": start,
         "end": end,
-        "indicatorMetadata": _convert_bool_to_string(indicator_metadata),
+        "indicatorMetadata": _convert_bool_to_string(indicatorMetadata),
         "footnotes": _convert_bool_to_string(footnotes),
-        "geoUnitType": geo_unit_type,
+        "geoUnitType": geoUnitType,
         "version": version,
     }
 
@@ -209,7 +209,7 @@ def get_geo_units(version: str | None = None) -> list[dict]:
 
 def get_indicators(
     disaggregations: bool = False,
-    glossary_terms: bool = False,
+    glossaryTerms: bool = False,
     version: str | None = None,
 ) -> list[dict]:
     """Get available indicators
@@ -219,7 +219,7 @@ def get_indicators(
 
     Args:
         disaggregations: Include disaggregations in the response. Default is False
-        glossary_terms: Include glossary terms in the response. Default is False
+        glossaryTerms: Include glossary terms in the response. Default is False
         version: The API data version to query. If not provided, the current default version is used.
 
     Returns:
@@ -230,7 +230,7 @@ def get_indicators(
 
     params = {
         "disaggregations": _convert_bool_to_string(disaggregations),
-        "glossaryTerms": _convert_bool_to_string(glossary_terms),
+        "glossaryTerms": _convert_bool_to_string(glossaryTerms),
         "version": version,
     }
 

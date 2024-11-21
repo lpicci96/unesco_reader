@@ -10,7 +10,7 @@ import pandas as pd
 from typing import Literal
 
 from unesco_reader import api
-from unesco_reader.config import logger, GEO_UNIT_TYPE
+from unesco_reader.config import logger, GeoUnitType
 from unesco_reader.exceptions import TooManyRecordsError, NoDataError
 
 
@@ -193,11 +193,11 @@ def _add_geo_unit_labels(data: list[dict]) -> list[dict]:
 
 def get_data(
     indicator: str | list[str] | None = None,
-    geo_unit: str | list[str] | None = None,
+    geoUnit: str | list[str] | None = None,
     start: int | None = None,
     end: int | None = None,
     labels: bool = False,
-    geo_unit_type: GEO_UNIT_TYPE | None = None,
+    geoUnitType: GeoUnitType | None = None,
     footnotes: bool = False,
     *,
     raw: bool = False,
@@ -209,11 +209,11 @@ def get_data(
 
     Args:
         indicator: The indicator code or name to request data for. If None, data for all indicators is returned. By default, None. To see all available indicators, use the `available_indicators` function. A future version of this function will use regex to match indicator names.
-        geo_unit: The geo unit code or name to request data for. If None, data for all geo units is returned. By default, None. To see all available geo units, use the `available_geo_units` function. A future version of this function will use regex to match geo unit names.
+        geoUnit: The geo unit code or name to request data for. If None, data for all geo units is returned. By default, None. To see all available geo units, use the `available_geo_units` function. A future version of this function will use regex to match geo unit names.
         start: The start year to request data for. Includes the year itself. Default is None, which returns the earliest available year.
         end: The end year to request data for. Includes the year itself. Default is None, which returns the latest available year.
         labels: If True, adds indicator and geo unit labels to the data. Default is False.
-        geo_unit_type: The type of geography to request data for. Allowed values are NATIONAL and REGIONAL. If a geo_unit is provided, this parameter is ignored. Default is both national and regional data
+        geoUnitType: The type of geography to request data for. Allowed values are NATIONAL and REGIONAL. If geoUnit is provided, this parameter is ignored. Default is both national and regional data
         footnotes: If True, includes footnotes in the response. Default is False.
         raw: If True, returns the data as a list of dictionaries in the original format from the API. Default is False.
         version: The data version to use. Default uses the latest default version.
@@ -225,18 +225,18 @@ def get_data(
     # Convert the indicators and geo_units to their respective codes
     if indicator:
         indicator = _convert_indicator_codes_to_code(indicator)
-    if geo_unit:
-        geo_unit = _convert_geo_units_to_code(geo_unit)
+    if geoUnit:
+        geoUnit = _convert_geo_units_to_code(geoUnit)
 
     # get the data from the API. If both indicator and geo_unit are None, the api module will raise an error
     try:
         response = api.get_data(
             indicator=indicator,
-            geo_unit=geo_unit,
+            geoUnit=geoUnit,
             start=start,
             end=end,
             footnotes=footnotes,
-            geo_unit_type=geo_unit_type,
+            geoUnitType=geoUnitType,
             version=version,
         )
     except TooManyRecordsError:
@@ -267,21 +267,13 @@ def get_data(
     if footnotes:
         data = _normalize_footnotes(data)
 
-    return pd.DataFrame(data).rename(
-        columns={
-            "indicatorId": "indicator_code",
-            "geoUnit": "geo_unit_code",
-            "name": "indicator_name",
-            "geoUnitName": "geo_unit_name",
-            "regionGroup": "region_group",
-        }
-    )
+    return pd.DataFrame(data)
 
 
 def get_metadata(
     indicator: str | list[str] | None = None,
     disaggregations: bool = False,
-    glossary_terms: bool = False,
+    glossaryTerms: bool = False,
     *,
     version: str | None = None,
 ) -> list[dict]:
@@ -293,7 +285,7 @@ def get_metadata(
     Args:
         indicator: The indicator code or name to get metadata for. If None, metadata for all indicators is returned. Default is None which returns metadata for all indicators. To see all available indicators, use the `available_indicators` function. In a future version, this function will use regex to match indicator names.
         disaggregations: Include disaggregations in the response. Default is False.
-        glossary_terms: Include glossary terms in the response. Default is False.
+        glossaryTerms: Include glossary terms in the response. Default is False.
         version: The data version to use. Default uses the latest default version.
 
     Returns:
@@ -305,7 +297,7 @@ def get_metadata(
 
     # Convert the indicators to their respective codes
     response = api.get_indicators(
-        disaggregations=disaggregations, glossary_terms=glossary_terms, version=version
+        disaggregations=disaggregations, glossaryTerms=glossaryTerms, version=version
     )
 
     # Filter the indicators based on the given indicator codes
@@ -346,16 +338,16 @@ def _indicators_df(indicators: list[dict]) -> pd.DataFrame:
 
     # Flatten the data for DataFrame return
     for record in indicators:
-        record["min_year"] = record["dataAvailability"]["timeLine"]["min"]
-        record["max_year"] = record["dataAvailability"]["timeLine"]["max"]
-        record["total_records"] = record["dataAvailability"]["totalRecordCount"]
+        record["min"] = record["dataAvailability"]["timeLine"]["min"]
+        record["max"] = record["dataAvailability"]["timeLine"]["max"]
+        record["totalRecordCount"] = record["dataAvailability"]["totalRecordCount"]
         geo_units = record["dataAvailability"]["geoUnits"]["types"]
 
         # Handle geo_unit_type based on the conditions
         if "REGIONAL" in geo_units and "NATIONAL" in geo_units:
-            record["geo_unit_type"] = "ALL"
+            record["geoUnitType"] = "ALL"
         else:
-            record["geo_unit_type"] = geo_units[0] if geo_units else None
+            record["geoUnitType"] = geo_units[0] if geo_units else None
 
         # Remove the 'dataAvailability' key since it's been flattened
         record.pop("dataAvailability")
@@ -363,22 +355,14 @@ def _indicators_df(indicators: list[dict]) -> pd.DataFrame:
     # Convert to pandas DataFrame and return
     return (
         pd.DataFrame(indicators)
-        .rename(
-            columns={
-                "indicatorCode": "indicator_code",
-                "name": "indicator_name",
-                "lastDataUpdate": "last_update",
-                "lastDataUpdateDescription": "last_update_description",
-            }
-        )
-        .assign(last_data_update=lambda d: pd.to_datetime(d.last_update))
+        .assign(last_data_update=lambda d: pd.to_datetime(d.lastDataUpdate))
     )
 
 
 def available_indicators(
     theme: str | list[str] | None = None,
-    min_year: int | None = None,
-    geo_unit_type: GEO_UNIT_TYPE | Literal["ALL"] | None = None,
+    minStart: int | None = None,
+    geoUnitType: GeoUnitType | Literal["ALL"] | None = None,
     *,
     raw: bool = False,
     version: str | None = None,
@@ -390,8 +374,8 @@ def available_indicators(
 
     Args:
         theme: Filter indicators for specific themes. Can be a single theme or a list of themes. Default returns all themes. Use the `available_themes` function to see all available themes.
-        min_year: The earliest year for which the indicator data must be available. Includes the year itself. Default is None, which returns all available data.
-        geo_unit_type: The type of geography for which data is available. Default is None which does not filter and gets any available type. Allowed values are "NATIONAL" (country-level data), "REGIONAL" (regional-level data), "ALL" (both national and regional data), or None for all types.
+        minStart: The earliest start year for the indicator data. Includes the start year itself. Default is None, which returns all available data.
+        geoUnitType: The type of geography for which data is available. Default is None which does not filter and gets any available type. Allowed values are "NATIONAL" (country-level data), "REGIONAL" (regional-level data), "ALL" (both national and regional data), or None for all types.
         raw: If True, returns the data as a list of dictionaries in the original format from the API. Default is False.
         version: The data version to use. Default uses the latest default version.
 
@@ -420,16 +404,16 @@ def available_indicators(
             )
 
     # Filter based on min_year
-    if min_year:
+    if minStart:
         indicators = [
             record
             for record in indicators
-            if record["dataAvailability"]["timeLine"]["min"] <= min_year
+            if record["dataAvailability"]["timeLine"]["min"] <= minStart
         ]
 
     # Filter based on geo_unit_type
-    if geo_unit_type:
-        if geo_unit_type == "ALL":
+    if geoUnitType:
+        if geoUnitType == "ALL":
             # Filter records with both 'REGIONAL' and 'NATIONAL'
             indicators = [
                 record
@@ -437,12 +421,12 @@ def available_indicators(
                 if "REGIONAL" in record["dataAvailability"]["geoUnits"]["types"]
                 and "NATIONAL" in record["dataAvailability"]["geoUnits"]["types"]
             ]
-        elif geo_unit_type in ["REGIONAL", "NATIONAL"]:
+        elif geoUnitType in ["REGIONAL", "NATIONAL"]:
             # Filter records with either 'REGIONAL' or 'NATIONAL'
             indicators = [
                 record
                 for record in indicators
-                if geo_unit_type in record["dataAvailability"]["geoUnits"]["types"]
+                if geoUnitType in record["dataAvailability"]["geoUnits"]["types"]
             ]
         else:
             raise ValueError(
@@ -462,7 +446,7 @@ def available_indicators(
 
 
 def available_geo_units(
-    geo_unit_type: GEO_UNIT_TYPE | None = None,
+    geo_unit_type: GeoUnitType | None = None,
     *,
     raw: bool = False,
     version: str | None = None,
@@ -492,14 +476,7 @@ def available_geo_units(
     if raw:
         return geo_units
 
-    return pd.DataFrame(geo_units).rename(
-        columns={
-            "id": "geo_unit_code",
-            "name": "geo_unit_name",
-            "regionGroup": "region_group",
-            "type": "geo_unit_type",
-        }
-    )
+    return pd.DataFrame(geo_units)
 
 
 def available_themes(*, raw: bool = False) -> pd.DataFrame | dict:
@@ -516,8 +493,7 @@ def available_themes(*, raw: bool = False) -> pd.DataFrame | dict:
 
     return (
         pd.DataFrame(themes)
-        .rename(columns={"lastUpdate": "last_update"})
-        .assign(last_update=lambda d: pd.to_datetime(d.last_update))
+        .assign(lastUpdate=lambda d: pd.to_datetime(d.lastUpdate))
     )
 
 
@@ -548,6 +524,5 @@ def available_versions(*, raw: bool = False) -> pd.DataFrame | list[dict]:
 
     return (
         pd.DataFrame(versions)
-        .rename(columns={"publicationDate": "publication_date"})
-        .assign(publication_date=lambda d: pd.to_datetime(d.publication_date))
+        .assign(publicationDate=lambda d: pd.to_datetime(d.publicationDate))
     )

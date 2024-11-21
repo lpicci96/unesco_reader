@@ -215,7 +215,7 @@ def test_get_data_success(mock_success_response):
         "unesco_reader.api._make_request", return_value=mock_response.json()
     ) as mock_make_request:
         # Call get_data with basic parameters
-        result = api.get_data(indicator="CR.1", geo_unit="ZWE")
+        result = api.get_data(indicator="CR.1", geoUnit="ZWE")
 
         # Assert that the result matches the mock response data
         assert result == mock_data_no_hints_no_metadata
@@ -251,7 +251,7 @@ def test_get_data_geo_unit_with_geo_unit_type(caplog):
     with caplog.at_level(logging.WARNING):
         # Case 1: geo_unit as a string and geo_unit_type provided
         with patch("unesco_reader.api._make_request") as mock_make_request:
-            api.get_data(indicator="CR.1", geo_unit="ZWE", geo_unit_type="NATIONAL")
+            api.get_data(indicator="CR.1", geoUnit="ZWE", geoUnitType="NATIONAL")
 
             # Assert that a warning is logged
             assert "geo_unit_type will be ignored" in caplog.text
@@ -277,7 +277,7 @@ def test_get_data_geo_unit_with_geo_unit_type(caplog):
         # Case 2: geo_unit as a list and geo_unit_type provided
         with patch("unesco_reader.api._make_request") as mock_make_request:
             api.get_data(
-                indicator="CR.1", geo_unit=["ZWE", "USA"], geo_unit_type="REGIONAL"
+                indicator="CR.1", geoUnit=["ZWE", "USA"], geoUnitType="REGIONAL"
             )
 
             # Assert that a warning is logged
@@ -307,7 +307,7 @@ def test_get_data_invalid_year_range():
         ValueError,
         match="Start year \\(2020\\) cannot be greater than end year \\(2010\\)",
     ):
-        api.get_data(indicator="CR.1", geo_unit="ZWE", start=2020, end=2010)
+        api.get_data(indicator="CR.1", geoUnit="ZWE", start=2020, end=2010)
 
 
 def test_check_valid_version_valid():
