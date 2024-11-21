@@ -12,12 +12,16 @@ Pythonic access to UNESCO data
 
 `unesco_reader` provides simple and convenient access to data published by the UNESCO Institute of Statistics (UIS).
 It offers a simple wrapper for the [UIS API](https://api.uis.unesco.org/api/public/documentation/) endpoints, and offers
-added convenience including pandas support.
+added convenience including error handling, filtering ability, and basic pandas support.
 
-> __Note__: Versions `<v3.0.0` were developed before the release of the API and offered support 
-> for accessing the bulk data files. This functionality has been deprecated in the latest version
-> in favor of the API for programmatic access to the data. To access bulk data files, please visit
-> the [bulk data download page](https://databrowser.uis.unesco.org/resources/bulk).
+The current implementation does not implement any caching mechanism as it is handled directly by the API. 
+There are currently no rate limits, but there is a 100,000 record limit for each request. This package does not use any multithreading, to maintain the APIs recommended usage.
+
+__Note: As of version `v3.0.0` the package does not support access to bulk data files.__
+Previous versions of the package were developed before the release of the API and offered 
+support for accessing the bulk data files. This functionality has been deprecated in version in favor
+of the API for programmatic access to the data. To access bulk data files, please visit 
+the [bulk data download page](https://databrowser.uis.unesco.org/resources/bulk).
 
 
 ## Installation
@@ -28,53 +32,64 @@ $ pip install unesco-reader
 
 ## Simple Usage
 
-#### Importing the package
+
+Import the package:
 ```python
 import unesco_reader as uis
 ```
 
-
-#### Access the data
+Get data for an indicator and geo unit:
 ```python
-
-df = uis.get_data(indicator="CR.1", country="Afghanistan")
-
+df = uis.get_data("CR.1", "ZWE")
 ```
-
+ 
 At least a country or an indicator must be requested. Currently, there is a 100,000 record limit
 for the API response. If this limit is exceeded an error is raise. To request more data, please
-make multiple requests with fewer parameters. 
+make multiple requests with fewer parameters.
 
-#### Access the metadata
+Get data with additional fiels like indicator and geo unit names, and footnotes:
 ```python
-metadata = uis.get_metadata(indicator="CR.1")
+df = uis.get_data("CR.1", "ZWE", footnotes=True, labels=True)
 ```
 
-#### Access the available indicators
+Get metadata for an indicator:
+```python
+metadata = uis.get_metadata("CR.1")
+```
+
+Get metadata with disaggregations and glossary terms:
+```python
+metadata = uis.get_metadata("CR.1", disaggregations=True, glossaryTerms=True)
+```
+
+Get available indicators:
 ```python
 indicators = uis.available_indicators()
 ```
 
-#### Access the available countries
+Get available indicators for a specific theme and with data starting at least in 2010:
 ```python
-countries = uis.available_geo_units()
+indicators = uis.available_indicators(theme="education", minStart=2010)
 ```
 
-#### Access available themes
+Get available geo units:
 ```python
-themes = uis.available_themes()
+geo_units = uis.available_geo_units()
 ```
 
-#### Access data versions
-
-To get the code for latest data versions published:
+Get available regional geo units:
 ```python
-version = uis.default_version()
+geo_units = uis.available_geo_units(geoUnitType="REGIONAL")
 ```
 
-To see all available versions and accompanying information:
+Get available data versions:
 ```python
 versions = uis.available_versions()
+```
+
+Get the default data version:
+```python
+default_version = uis.default_version()
 ```
 
 
@@ -83,7 +98,6 @@ versions = uis.available_versions()
 `unesco_reader` offers out-of-the-box convenience for accessing data through the UIS API.
 If you need more control, you can access the thin wrapper around the API endpoint 
 through the `api` module.
-
 
 ## Contributing
 

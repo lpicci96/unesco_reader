@@ -11,10 +11,6 @@ Endpoints:
 - get_versions: Get all published data versions
 - get_default_version: Get the current default data version
 
-
-
-Dev:
-TODO: add caching for repeated API calls - _check_valid_version and other function
 """
 
 import requests

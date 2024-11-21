@@ -208,8 +208,8 @@ def get_data(
     Query the UIS API for data based on the given parameters. At least one indicator or one geo_unit must be provided. If only indicators are provided, data for all geographies is returned, and vice versa. To see available indicators or geographies, use the `available_indicators` or `available_geo_units` functions respectively. If both a geo_unit and geo_unit_type are provided, the geo_unit_type is ignored.
 
     Args:
-        indicator: The indicator code or name to request data for. If None, data for all indicators is returned. By default, None. To see all available indicators, use the `available_indicators` function. A future version of this function will use regex to match indicator names.
-        geoUnit: The geo unit code or name to request data for. If None, data for all geo units is returned. By default, None. To see all available geo units, use the `available_geo_units` function. A future version of this function will use regex to match geo unit names.
+        indicator: The indicator code or name to request data for. If None, data for all indicators is returned. By default, None. To see all available indicators, use the `available_indicators` function.
+        geoUnit: The geo unit code or name to request data for. If None, data for all geo units is returned. By default, None. To see all available geo units, use the `available_geo_units` function.
         start: The start year to request data for. Includes the year itself. Default is None, which returns the earliest available year.
         end: The end year to request data for. Includes the year itself. Default is None, which returns the latest available year.
         labels: If True, adds indicator and geo unit labels to the data. Default is False.
@@ -283,7 +283,7 @@ def get_metadata(
     Optionally include disaggregations and glossary terms in the response.
 
     Args:
-        indicator: The indicator code or name to get metadata for. If None, metadata for all indicators is returned. Default is None which returns metadata for all indicators. To see all available indicators, use the `available_indicators` function. In a future version, this function will use regex to match indicator names.
+        indicator: The indicator code or name to get metadata for. If None, metadata for all indicators is returned. Default is None which returns metadata for all indicators. To see all available indicators, use the `available_indicators` function.
         disaggregations: Include disaggregations in the response. Default is False.
         glossaryTerms: Include glossary terms in the response. Default is False.
         version: The data version to use. Default uses the latest default version.
