@@ -1,5 +1,9 @@
 # Changelog
 
+## v3.0.0 - 2024-11-22
+- Refactored package to support the UIS API
+- Removed support for bulk data files
+
 ## v2.0.0 - 2024-04-08
 - Add support for python 3.12
 - Remove support for python < 3.10
