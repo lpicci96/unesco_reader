@@ -802,8 +802,8 @@ def test_available_indicators_filter_theme_mixed_cases():
         },
     ]
     with patch(
-            "unesco_reader.api.get_indicators",
-            return_value=_mock_indicators_no_agg_no_glossary,
+        "unesco_reader.api.get_indicators",
+        return_value=_mock_indicators_no_agg_no_glossary,
     ) as mock_api_call:
 
         # Call available_indicators
