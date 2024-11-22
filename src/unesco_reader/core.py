@@ -445,7 +445,7 @@ def available_indicators(
 
 
 def available_geo_units(
-    geo_unit_type: GeoUnitType | None = None,
+    geoUnitType: GeoUnitType | None = None,
     *,
     raw: bool = False,
     version: str | None = None,
@@ -455,7 +455,7 @@ def available_geo_units(
     Get all available geo units for a given API data version (or the current default version if no explicit version is provided), along with some basic information like the region group and type of geography.
 
     Args:
-        geo_unit_type: The type of geography to request data for. Allowed values are NATIONAL and REGIONAL. Default is None which returns all available types.
+        geoUnitType: The type of geography to request data for. Allowed values are NATIONAL and REGIONAL. Default is None which returns all available types.
         raw: If True, returns the data as a list of dictionaries in the original format from the API. Default is False.
         version: The data version to use. Default uses the latest default version.
 
@@ -466,11 +466,11 @@ def available_geo_units(
 
     geo_units = api.get_geo_units(version=version)
 
-    if geo_unit_type:
+    if geoUnitType:
         # filter the geo_units based on the geo_unit_type
-        if geo_unit_type not in ["NATIONAL", "REGIONAL"]:
+        if geoUnitType not in ["NATIONAL", "REGIONAL"]:
             raise ValueError("geo_unit_type must be either NATIONAL or REGIONAL")
-        geo_units = [record for record in geo_units if geo_unit_type in record["type"]]
+        geo_units = [record for record in geo_units if geoUnitType in record["type"]]
 
     if raw:
         return geo_units

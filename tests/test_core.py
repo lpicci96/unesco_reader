@@ -1142,7 +1142,7 @@ def test_available_geo_units_filter():
     ) as mock_api_call:
 
         # Call available_geo_units
-        result = core.available_geo_units(geo_unit_type="REGIONAL")
+        result = core.available_geo_units(geoUnitType="REGIONAL")
 
         # Assert the API call was made
         mock_api_call.assert_called_once_with(version=None)
@@ -1159,7 +1159,7 @@ def test_available_geo_units_filter_raw():
     ) as mock_api_call:
 
         # Call available_geo_units
-        result = core.available_geo_units(geo_unit_type="REGIONAL", raw=True)
+        result = core.available_geo_units(geoUnitType="REGIONAL", raw=True)
 
         # Assert the API call was made
         mock_api_call.assert_called_once_with(version=None)
