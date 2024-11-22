@@ -771,6 +771,51 @@ def test_available_indicators_filter_theme():
         assert result["theme"].unique() == "EDUCATION"
 
 
+def test_available_indicators_filter_theme_mixed_cases():
+    """Test that available_indicators returns a correctly processed DataFrame when filtering by theme with lowercases."""
+    # Mock the API call
+
+    _mock_indicators_no_agg_no_glossary = [
+        {
+            "indicatorCode": "10",
+            "name": "Official entrance age to early childhood educational development (years)",
+            "theme": "EDUCATION",
+            "lastDataUpdate": "2024-10-29",
+            "lastDataUpdateDescription": "September 2024 Data Release",
+            "dataAvailability": {
+                "totalRecordCount": 4675,
+                "timeLine": {"min": 1970, "max": 2023},
+                "geoUnits": {"types": ["NATIONAL"]},
+            },
+        },
+        {
+            "indicatorCode": "10403",
+            "name": "Start month of the academic school year (tertiary education)",
+            "theme": "DEMOGRAPHICS",
+            "lastDataUpdate": "2010-10-29",
+            "lastDataUpdateDescription": "September 2024 Data Release",
+            "dataAvailability": {
+                "totalRecordCount": 5192,
+                "timeLine": {"min": 1991, "max": 2023},
+                "geoUnits": {"types": ["NATIONAL", "REGIONAL"]},
+            },
+        },
+    ]
+    with patch(
+            "unesco_reader.api.get_indicators",
+            return_value=_mock_indicators_no_agg_no_glossary,
+    ) as mock_api_call:
+
+        # Call available_indicators
+        result = core.available_indicators(theme="education")
+
+        # Assert the result is a DataFrame
+        assert isinstance(result, pd.DataFrame)
+
+        assert len(result) == 1
+        assert result["theme"].unique() == "EDUCATION"
+
+
 def test_available_indicators_filter_min_year():
     """Test that available_indicators returns a correctly processed DataFrame when filtering by min_year."""
     # Mock the API call

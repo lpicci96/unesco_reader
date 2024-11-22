@@ -390,6 +390,10 @@ def available_indicators(
 
     # filtered based on theme
     if theme:
+        # make sure themes are capitalised
+        theme = [t.upper() for t in theme]
+
+        # filter the indicators based on the theme
         indicators = [record for record in indicators if record["theme"] in theme]
 
         # if some themes are not found log a message with the themes not found
