@@ -44,7 +44,7 @@ df = uis.get_data("CR.1", "ZWE")
 ```
  
 At least a country or an indicator must be requested. Currently, there is a 100,000 record limit
-for the API response. If this limit is exceeded an error is raise. To request more data, please
+for the API response. If this limit is exceeded an error is raised. To request more data, please
 make multiple requests with fewer parameters.
 
 Get data with additional fiels like indicator and geo unit names, and footnotes:
@@ -69,7 +69,7 @@ indicators = uis.available_indicators()
 
 Get available indicators for a specific theme and with data starting at least in 2010:
 ```python
-indicators = uis.available_indicators(theme="education", minStart=2010)
+indicators = uis.available_indicators(theme="EDUCATION", minStart=2010)
 ```
 
 Get available geo units:
@@ -98,7 +98,7 @@ default_version = uis.default_version()
 ```
 
 
-## Access the basic wrapper
+## Basic wrapper usage
 
 `unesco_reader` offers out-of-the-box convenience for accessing data through the UIS API.
 If you need more control, you can access the thin wrapper around the API endpoint 
