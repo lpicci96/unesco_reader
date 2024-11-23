@@ -82,6 +82,11 @@ Get available regional geo units:
 geo_units = uis.available_geo_units(geoUnitType="REGIONAL")
 ```
 
+Get available themes:
+```python
+themes = uis.available_themes()
+```
+
 Get available data versions:
 ```python
 versions = uis.available_versions()
