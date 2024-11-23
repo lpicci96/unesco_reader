@@ -329,3 +329,50 @@ def test_check_valid_version_invalid_type():
 
     with pytest.raises(ValueError, match="Data version must be a string"):
         api._check_valid_version(20241030)  # Passing an integer instead of a string
+
+
+def test_get_geo_units_success(mock_success_response):
+    """Test that get_geo_units returns the expected data with no parameters."""
+
+    # Use the mock data for a successful response
+    mock_response = mock_success_response(
+        [{"key": "value"}, {"key": "value"}], status_code=200
+    )
+
+    with patch(
+        "unesco_reader.api._make_request", return_value=mock_response.json()
+    ) as mock_make_request:
+        # Call get_geo_units with no parameters
+        result = api.get_geo_units()
+
+        # Assert that the result matches the mock response data
+        assert result == [{"key": "value"}, {"key": "value"}]
+
+        # Verify that _make_request was called with the correct endpoint and parameters
+        mock_make_request.assert_called_once_with(
+            "/api/public/definitions/geounits", {"version": None}
+        )
+
+
+def test_get_indicators_success(mock_success_response):
+    """Test that get_indicators returns the expected data with no parameters."""
+
+    # Use the mock data for a successful response
+    mock_response = mock_success_response(
+        [{"key": "value"}, {"key": "value"}], status_code=200
+    )
+
+    with patch(
+        "unesco_reader.api._make_request", return_value=mock_response.json()
+    ) as mock_make_request:
+        # Call get_indicators with no parameters
+        result = api.get_indicators()
+
+        # Assert that the result matches the mock response data
+        assert result == [{"key": "value"}, {"key": "value"}]
+
+        # Verify that _make_request was called with the correct endpoint and parameters
+        mock_make_request.assert_called_once_with(
+            "/api/public/definitions/indicators",
+            {"disaggregations": "false", "glossaryTerms": "false", "version": None},
+        )
