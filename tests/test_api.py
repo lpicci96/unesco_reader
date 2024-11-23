@@ -236,7 +236,7 @@ def test_get_data_missing_required_parameters():
     """Test that get_data raises a ValueError when neither geo_unit nor indicator is provided."""
 
     with pytest.raises(
-        ValueError, match="At least one indicator or one geo_unit must be provided"
+        ValueError, match="At least one indicator or one geoUnit must be provided"
     ):
         api.get_data()
 
@@ -250,7 +250,7 @@ def test_get_data_geo_unit_with_geo_unit_type(caplog):
             api.get_data(indicator="CR.1", geoUnit="ZWE", geoUnitType="NATIONAL")
 
             # Assert that a warning is logged
-            assert "geo_unit_type will be ignored" in caplog.text
+            assert "geoUnitType will be ignored" in caplog.text
 
             # Verify that geo_unit_type is set to None in the parameters sent to _make_request
             mock_make_request.assert_called_once_with(
@@ -277,7 +277,7 @@ def test_get_data_geo_unit_with_geo_unit_type(caplog):
             )
 
             # Assert that a warning is logged
-            assert "geo_unit_type will be ignored" in caplog.text
+            assert "geoUnitType will be ignored" in caplog.text
 
             # Verify that geo_unit_type is set to None in the parameters sent to _make_request
             mock_make_request.assert_called_once_with(

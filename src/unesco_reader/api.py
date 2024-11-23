@@ -151,18 +151,18 @@ def get_data(
 
     # if indicator is None and geo_unit is None, raise an error
     if indicator is None and geoUnit is None:
-        raise ValueError("At least one indicator or one geo_unit must be provided")
+        raise ValueError("At least one indicator or one geoUnit must be provided")
 
     # if geo_unit and geo_unit_type is specified, log a message and ignore geo_unit_type
     if geoUnit and geoUnitType:
         logger.warning(
-            "Both geo_unit and geo_unit_type are specified. geo_unit_type will be ignored"
+            "Both geoUnit and geoUnitType are specified. geoUnitType will be ignored"
         )
         geoUnitType = None  # set to None to ignore it to avoid unexpected results from API call and to avoid unnecessary API calls
 
     # check if the geo_unit_type is valid
     if geoUnitType is not None and geoUnitType not in ["NATIONAL", "REGIONAL"]:
-        raise ValueError("geo_unit_type must be either NATIONAL or REGIONAL")
+        raise ValueError("geoUnitType must be either NATIONAL or REGIONAL")
 
     # handle cases where start is greater than end
     if start and end and start > end:
