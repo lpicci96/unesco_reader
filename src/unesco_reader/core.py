@@ -97,6 +97,9 @@ def _convert_geo_units_to_code(geo_units: str | list[str]) -> str | list[str]:
 
     Args:
         geo_units: The geo unit name or list of geo unit names to convert to codes
+
+    Returns:
+        The geo unit code or list of geo unit codes
     """
 
     geo_units_data = api.get_geo_units()  # Fetch the geo unit data
@@ -503,7 +506,11 @@ def available_themes(*, raw: bool = False) -> pd.DataFrame | dict:
 
 
 def default_version() -> str:
-    """Get the default data version"""
+    """Get the default data version
+
+    Returns:
+        The default data version string
+    """
 
     return api.get_default_version()["version"]
 
