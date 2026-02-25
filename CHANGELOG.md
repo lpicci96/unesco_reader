@@ -13,13 +13,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `conftest.py` with autouse fixture to ensure test isolation across cached calls
 - Single retry with delay for transient network errors (timeouts, connection errors, 502/503/504 responses) with warning logs on retry attempts
 - `set_max_retries()` function to configure the number of retries for transient network errors
+- `py.typed` marker for PEP 561 type checker support
+- `__all__` to `__init__.py` for explicit public API surface
 
 ### Changed
 - Replaced library-level `StreamHandler` logging with per-module loggers and a `NullHandler`, following Python library best practices. Logs are now silent by default; users can configure the `unesco_reader` logger to enable output.
 - Migrated dependency management from Poetry to uv
 - Replaced `poetry-core` build backend with `hatchling`
 - Converted `pyproject.toml` from Poetry format to PEP 621
-- Updated CI workflows to use `astral-sh/setup-uv@v4`
+- Updated CI workflows to use `astral-sh/setup-uv@v4`, `actions/checkout@v4`, `actions/setup-python@v5`, `codecov/codecov-action@v5`
+- Expanded CI test matrix to include Python 3.13 and 3.14
 - Updated core data formatting for indicators GET endpoint for clarity:
   - removed new `last_data_update` creation and instead edited the `lastDataUpdate` directly.
   - renamed fields `max` and `min` to `timeLine_min` and `timeLine_max` for clarity.
