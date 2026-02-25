@@ -1484,7 +1484,7 @@ def test_available_versions_empty_list_non_raw_raises():
 
 
 def test_available_versions_malformed_missing_theme_data_status():
-    """Test that available_versions raises KeyError when a version record has no themeDataStatus key."""
+    """Test that available_versions handles a version record with no themeDataStatus key."""
     with patch(
         "unesco_reader.api.get_versions",
         return_value=[
@@ -1495,8 +1495,10 @@ def test_available_versions_malformed_missing_theme_data_status():
             }
         ],
     ):
-        with pytest.raises(KeyError, match="themeDataStatus"):
-            core.available_versions()
+        # themeDataStatus is simply absent, so it won't appear in the output
+        result = core.available_versions()
+        assert isinstance(result, pd.DataFrame)
+        assert "themeDataStatus" not in result.columns
 
 
 def test_available_versions_malformed_missing_publication_date():
@@ -1513,3 +1515,95 @@ def test_available_versions_malformed_missing_publication_date():
     ):
         with pytest.raises(AttributeError):
             core.available_versions()
+
+
+# ---- Idempotency tests ----
+# These tests verify that calling functions multiple times with the same
+# underlying (cached) data returns consistent results and does not mutate
+# the shared data in place.
+
+
+def test_available_indicators_idempotent():
+    """Calling available_indicators twice should return the same result."""
+    with patch(
+        "unesco_reader.api.get_indicators",
+        return_value=mock_indicators_no_agg_no_glossary,
+    ):
+        first = core.available_indicators()
+        second = core.available_indicators()
+        pd.testing.assert_frame_equal(first, second)
+
+
+def test_available_indicators_raw_idempotent():
+    """Calling available_indicators with raw=True twice should return the same result."""
+    with patch(
+        "unesco_reader.api.get_indicators",
+        return_value=mock_indicators_no_agg_no_glossary,
+    ):
+        first = core.available_indicators(raw=True)
+        second = core.available_indicators(raw=True)
+        assert first == second
+
+
+def test_available_indicators_does_not_mutate_source():
+    """available_indicators should not mutate the underlying API data."""
+    import copy
+
+    source = copy.deepcopy(mock_indicators_no_agg_no_glossary)
+    with patch("unesco_reader.api.get_indicators", return_value=source):
+        core.available_indicators()
+        # dataAvailability should still be present in source records
+        for record in source:
+            assert "dataAvailability" in record
+
+
+def test_available_versions_idempotent():
+    """Calling available_versions twice should return the same result."""
+    with patch(
+        "unesco_reader.api.get_versions", return_value=mock_list_versions
+    ):
+        first = core.available_versions()
+        second = core.available_versions()
+        pd.testing.assert_frame_equal(first, second)
+
+
+def test_available_versions_raw_idempotent():
+    """Calling available_versions with raw=True twice should return the same result."""
+    with patch(
+        "unesco_reader.api.get_versions", return_value=mock_list_versions
+    ):
+        first = core.available_versions(raw=True)
+        second = core.available_versions(raw=True)
+        assert first == second
+
+
+def test_available_versions_does_not_mutate_source():
+    """available_versions should not mutate the underlying API data."""
+    import copy
+
+    source = copy.deepcopy(mock_list_versions)
+    with patch("unesco_reader.api.get_versions", return_value=source):
+        core.available_versions()
+        # themeDataStatus should still be present in source records
+        for version in source:
+            assert "themeDataStatus" in version
+
+
+def test_available_geo_units_idempotent():
+    """Calling available_geo_units twice should return the same result."""
+    with patch(
+        "unesco_reader.api.get_geo_units", return_value=mock_geo_units
+    ):
+        first = core.available_geo_units()
+        second = core.available_geo_units()
+        pd.testing.assert_frame_equal(first, second)
+
+
+def test_available_themes_idempotent():
+    """Calling available_themes twice should return the same result."""
+    with patch(
+        "unesco_reader.api.get_default_version", return_value=mock_default_version
+    ):
+        first = core.available_themes()
+        second = core.available_themes()
+        pd.testing.assert_frame_equal(first, second)
