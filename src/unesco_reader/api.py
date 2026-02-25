@@ -13,14 +13,42 @@ Endpoints:
 
 """
 
+import logging
+import time
+
 import requests
 
-from unesco_reader.config import GeoUnitType, logger
-from unesco_reader.exceptions import TooManyRecordsError
+from unesco_reader.config import GeoUnitType, session_cache
 
+logger = logging.getLogger(__name__)
+from unesco_reader.exceptions import TooManyRecordsError
 
 API_URL: str = "https://api.uis.unesco.org"
 TIMEOUT: int = 30
+RETRY_DELAY: float = 1.0  # seconds
+_RETRYABLE_STATUS_CODES = {502, 503, 504}
+
+_max_retries: int = 1
+
+
+def set_max_retries(retries: int) -> None:
+    """Set the number of retries for transient network errors.
+
+    Controls how many times a request is retried on timeouts, connection errors,
+    and 502/503/504 responses before raising an exception. Set to 0 to disable retries.
+
+    Args:
+        retries: Number of retries. Must be a non-negative integer. Default is 1.
+
+    Raises:
+        ValueError: If retries is negative.
+    """
+    global _max_retries
+
+    if not isinstance(retries, int) or retries < 0:
+        raise ValueError("retries must be a non-negative integer")
+
+    _max_retries = retries
 
 
 def _check_valid_version(version: str | None) -> None:
@@ -61,8 +89,11 @@ def _check_for_too_many_records(response: requests.Response) -> None:
 
     # if too many records are requested raise an error with the error message from the API
     if response.status_code == 400:
-        error_message = response.json().get("message")
-        if "Too much data requested" in error_message:
+        try:
+            error_message = response.json().get("message", "")
+        except (ValueError, AttributeError):
+            error_message = ""
+        if error_message and "Too much data requested" in error_message:
             raise TooManyRecordsError(error_message)
 
     # if URI Too Long raise a custom error rather than the default one from requests, indicating that too many parameters have been passed to the API
@@ -92,22 +123,53 @@ def _make_request(endpoint: str, params: dict | None = None) -> dict | list:
         if "version" in params:
             _check_valid_version(params["version"])
 
-    try:
-        response = requests.get(
-            f"{API_URL}{endpoint}", headers=headers, params=params, timeout=TIMEOUT
-        )
-        _check_for_too_many_records(
-            response
-        )  # check if too many records have been requested
-        response.raise_for_status()  # Raises an error for HTTP codes 4xx/5xx
-        return response.json()
+    last_exception = None
 
-    except requests.exceptions.Timeout as e:
-        raise TimeoutError(f"Request timed out. Error: {str(e)}")
-    except requests.exceptions.HTTPError as e:
-        raise RuntimeError(f"HTTP error occurred: {str(e)}")
-    except requests.exceptions.RequestException as e:
-        raise ConnectionError(f"Could not connect to API. Error: {str(e)}")
+    for attempt in range(1 + _max_retries):
+        try:
+            response = requests.get(
+                f"{API_URL}{endpoint}",
+                headers=headers,
+                params=params,
+                timeout=TIMEOUT,
+            )
+            _check_for_too_many_records(
+                response
+            )  # check if too many records have been requested
+
+            # Retry on transient server errors
+            if response.status_code in _RETRYABLE_STATUS_CODES:
+                if attempt < _max_retries:
+                    logger.warning(
+                        f"Received {response.status_code} from API. "
+                        f"Retrying ({attempt + 1}/{_max_retries})..."
+                    )
+                    time.sleep(RETRY_DELAY)
+                    continue
+                response.raise_for_status()
+
+            response.raise_for_status()  # Raises an error for HTTP codes 4xx/5xx
+            return response.json()
+
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+            last_exception = e
+            if attempt < _max_retries:
+                logger.warning(
+                    f"Request failed: {str(e)}. "
+                    f"Retrying ({attempt + 1}/{_max_retries})..."
+                )
+                time.sleep(RETRY_DELAY)
+                continue
+
+        except requests.exceptions.HTTPError as e:
+            raise RuntimeError(f"HTTP error occurred: {str(e)}")
+        except requests.exceptions.RequestException as e:
+            raise ConnectionError(f"Could not connect to API. Error: {str(e)}")
+
+    # If we exhausted retries due to timeout or connection error
+    if isinstance(last_exception, requests.exceptions.Timeout):
+        raise TimeoutError(f"Request timed out. Error: {str(last_exception)}")
+    raise ConnectionError(f"Could not connect to API. Error: {str(last_exception)}")
 
 
 def _convert_bool_to_string(value: bool | None) -> str | None:
@@ -184,6 +246,7 @@ def get_data(
     return _make_request(end_point, params)
 
 
+@session_cache()
 def get_geo_units(version: str | None = None) -> list[dict]:
     """Get geo units
 
@@ -203,6 +266,7 @@ def get_geo_units(version: str | None = None) -> list[dict]:
     return _make_request(end_point, params)
 
 
+@session_cache()
 def get_indicators(
     disaggregations: bool = False,
     glossaryTerms: bool = False,
@@ -233,6 +297,7 @@ def get_indicators(
     return _make_request(end_point, params)
 
 
+@session_cache()
 def get_versions() -> list[dict]:
     """Get all published data versions
 
@@ -245,6 +310,7 @@ def get_versions() -> list[dict]:
     return _make_request(end_point)
 
 
+@session_cache()
 def get_default_version() -> dict:
     """Get the current default data version
 

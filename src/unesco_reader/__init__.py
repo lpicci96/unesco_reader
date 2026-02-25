@@ -44,14 +44,20 @@ does not provide any additional functionality and mirrors the API endpoints dire
 
 
 Additional information:
-- The package does not implement any caching as caching is handled by the API itself.
+- API definition endpoints (indicators, geo units, versions) are cached in memory for the session. Use `clear_cache()` to invalidate.
 - Field names are not modified and are returned as they are from the API.
 - Currently there are no rate limits for the API other than 100,000 row response limit. This package does not implement and multitheading or async functionality to handle this limit, as the intended usage for the API is to get make smaller requests for specific data points.
 """
 
+import logging
 from importlib.metadata import version
+
 from unesco_reader import api
 from unesco_reader import exceptions
+from unesco_reader.config import clear_cache
+from unesco_reader.api import set_max_retries
+
+logging.getLogger("unesco_reader").addHandler(logging.NullHandler())
 
 from unesco_reader.core import (
     get_data,
@@ -64,3 +70,17 @@ from unesco_reader.core import (
 )
 
 __version__ = version("unesco_reader")
+
+__all__ = [
+    "api",
+    "exceptions",
+    "get_data",
+    "get_metadata",
+    "available_indicators",
+    "available_geo_units",
+    "available_versions",
+    "available_themes",
+    "default_version",
+    "clear_cache",
+    "set_max_retries",
+]

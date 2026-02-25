@@ -278,17 +278,19 @@ def test_add_geo_unit_labels():
 def test_get_data_basic_call():
     """Test that get_data returns a DataFrame for basic inputs."""
     # Mock the private functions and API call
-    with patch(
-        "unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1"
-    ) as mock_convert_indicators, patch(
-        "unesco_reader.core._convert_geo_units_to_code", return_value="ZWE"
-    ) as mock_convert_geo_units, patch(
-        "unesco_reader.api.get_data", return_value=mock_data_no_hints_no_metadata
-    ) as mock_api_call, patch(
-        "unesco_reader.core._add_indicator_labels"
-    ) as mock_add_indicator_labels, patch(
-        "unesco_reader.core._add_geo_unit_labels"
-    ) as mock_add_geo_unit_labels:
+    with (
+        patch(
+            "unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1"
+        ) as mock_convert_indicators,
+        patch(
+            "unesco_reader.core._convert_geo_units_to_code", return_value="ZWE"
+        ) as mock_convert_geo_units,
+        patch(
+            "unesco_reader.api.get_data", return_value=mock_data_no_hints_no_metadata
+        ) as mock_api_call,
+        patch("unesco_reader.core._add_indicator_labels") as mock_add_indicator_labels,
+        patch("unesco_reader.core._add_geo_unit_labels") as mock_add_geo_unit_labels,
+    ):
 
         # Call get_data with minimal parameters
         result = core.get_data(
@@ -335,13 +337,17 @@ def test_get_data_raw_call():
     """Test that get_data returns raw API data when raw=True."""
     # Mock the private functions and API call
 
-    with patch(
-        "unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1"
-    ) as mock_convert_indicators, patch(
-        "unesco_reader.core._convert_geo_units_to_code", return_value="ZWE"
-    ) as mock_convert_geo_units, patch(
-        "unesco_reader.api.get_data", return_value=mock_data_no_hints_no_metadata
-    ) as mock_api_call:
+    with (
+        patch(
+            "unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1"
+        ) as mock_convert_indicators,
+        patch(
+            "unesco_reader.core._convert_geo_units_to_code", return_value="ZWE"
+        ) as mock_convert_geo_units,
+        patch(
+            "unesco_reader.api.get_data", return_value=mock_data_no_hints_no_metadata
+        ) as mock_api_call,
+    ):
 
         # Call get_data with raw=True
         result = core.get_data(
@@ -419,17 +425,23 @@ def test_get_data_with_labels():
         },
     ]
 
-    with patch(
-        "unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1"
-    ) as mock_convert_indicators, patch(
-        "unesco_reader.core._convert_geo_units_to_code", return_value="ZWE"
-    ) as mock_convert_geo_units, patch(
-        "unesco_reader.api.get_data", return_value=mock_data_no_hints_no_metadata
-    ) as mock_api_call, patch(
-        "unesco_reader.core._add_indicator_labels", return_value=mock_labels
-    ) as mock_add_indicator_labels, patch(
-        "unesco_reader.core._add_geo_unit_labels", return_value=mock_labels
-    ) as mock_add_geo_unit_labels:
+    with (
+        patch(
+            "unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1"
+        ) as mock_convert_indicators,
+        patch(
+            "unesco_reader.core._convert_geo_units_to_code", return_value="ZWE"
+        ) as mock_convert_geo_units,
+        patch(
+            "unesco_reader.api.get_data", return_value=mock_data_no_hints_no_metadata
+        ) as mock_api_call,
+        patch(
+            "unesco_reader.core._add_indicator_labels", return_value=mock_labels
+        ) as mock_add_indicator_labels,
+        patch(
+            "unesco_reader.core._add_geo_unit_labels", return_value=mock_labels
+        ) as mock_add_geo_unit_labels,
+    ):
 
         # Call get_data with labels=True
         result = core.get_data(
@@ -503,15 +515,21 @@ def test_get_data_with_footnotes():
         },
     ]
 
-    with patch(
-        "unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1"
-    ) as mock_convert_indicators, patch(
-        "unesco_reader.core._convert_geo_units_to_code", return_value="AFG"
-    ) as mock_convert_geo_units, patch(
-        "unesco_reader.api.get_data", return_value=mock_data_no_hints_no_metadata
-    ) as mock_api_call, patch(
-        "unesco_reader.core._normalize_footnotes", return_value=mock_data_with_footnotes
-    ) as mock_normalize_footnotes:
+    with (
+        patch(
+            "unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1"
+        ) as mock_convert_indicators,
+        patch(
+            "unesco_reader.core._convert_geo_units_to_code", return_value="AFG"
+        ) as mock_convert_geo_units,
+        patch(
+            "unesco_reader.api.get_data", return_value=mock_data_no_hints_no_metadata
+        ) as mock_api_call,
+        patch(
+            "unesco_reader.core._normalize_footnotes",
+            return_value=mock_data_with_footnotes,
+        ) as mock_normalize_footnotes,
+    ):
 
         # Call get_data with footnotes=True
         result = core.get_data(
@@ -539,13 +557,17 @@ def test_get_data_no_data_error():
     # Mock the API response with no records
     mock_no_data_response = {"hints": [], "records": [], "indicatorMetadata": []}
 
-    with patch(
-        "unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1"
-    ) as mock_convert_indicators, patch(
-        "unesco_reader.core._convert_geo_units_to_code", return_value="ZWE"
-    ) as mock_convert_geo_units, patch(
-        "unesco_reader.api.get_data", return_value=mock_no_data_response
-    ) as mock_api_call:
+    with (
+        patch(
+            "unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1"
+        ) as mock_convert_indicators,
+        patch(
+            "unesco_reader.core._convert_geo_units_to_code", return_value="ZWE"
+        ) as mock_convert_geo_units,
+        patch(
+            "unesco_reader.api.get_data", return_value=mock_no_data_response
+        ) as mock_api_call,
+    ):
 
         # Call get_data and expect NoDataError
         with pytest.raises(NoDataError, match="No data found for the given parameters"):
@@ -558,15 +580,36 @@ def test_get_data_no_data_error():
             )
 
 
+def test_get_data_too_many_records_error():
+    """Test that get_data re-raises TooManyRecordsError with a user-friendly message."""
+    from unesco_reader.exceptions import TooManyRecordsError
+
+    with (
+        patch(
+            "unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1"
+        ),
+        patch("unesco_reader.core._convert_geo_units_to_code", return_value="ZWE"),
+        patch(
+            "unesco_reader.api.get_data",
+            side_effect=TooManyRecordsError("API error"),
+        ),
+    ):
+        with pytest.raises(TooManyRecordsError, match="100,000 records"):
+            core.get_data(indicator="CR.1", geoUnit="ZWE")
+
+
 def test_get_metadata_single_indicator():
     """Test that get_metadata returns metadata for a single valid indicator."""
     # Mock the API response
-    with patch(
-        "unesco_reader.api.get_indicators",
-        return_value=mock_indicators_no_agg_no_glossary,
-    ) as mock_api_call, patch(
-        "unesco_reader.core._convert_indicator_codes_to_code", return_value=["10"]
-    ) as mock_convert_indicators:
+    with (
+        patch(
+            "unesco_reader.api.get_indicators",
+            return_value=mock_indicators_no_agg_no_glossary,
+        ) as mock_api_call,
+        patch(
+            "unesco_reader.core._convert_indicator_codes_to_code", return_value=["10"]
+        ) as mock_convert_indicators,
+    ):
 
         # Call get_metadata
         result = core.get_metadata(
@@ -591,13 +634,16 @@ def test_get_metadata_single_indicator():
 def test_get_metadata_with_invalid_indicator(caplog):
     """Test that a warning is logged when some requested indicators are not found."""
     # Mock the API response
-    with patch(
-        "unesco_reader.api.get_indicators",
-        return_value=mock_indicators_no_agg_no_glossary,
-    ) as mock_api_call, patch(
-        "unesco_reader.core._convert_indicator_codes_to_code",
-        return_value=["10", "InvalidCode"],
-    ) as mock_convert_indicators:
+    with (
+        patch(
+            "unesco_reader.api.get_indicators",
+            return_value=mock_indicators_no_agg_no_glossary,
+        ) as mock_api_call,
+        patch(
+            "unesco_reader.core._convert_indicator_codes_to_code",
+            return_value=["10", "InvalidCode"],
+        ) as mock_convert_indicators,
+    ):
 
         # Call get_metadata with one valid and one invalid indicator
         result = core.get_metadata(
@@ -634,12 +680,13 @@ def test_get_metadata_with_invalid_indicator(caplog):
 def test_get_metadata_invalid_indicator():
     """Test that get_metadata raises NoDataError when an invalid indicator is requested."""
     # Mock the API response
-    with patch(
-        "unesco_reader.api.get_indicators", return_value=[]
-    ) as mock_api_call, patch(
-        "unesco_reader.core._convert_indicator_codes_to_code",
-        return_value=["InvalidCode"],
-    ) as mock_convert_indicators:
+    with (
+        patch("unesco_reader.api.get_indicators", return_value=[]) as mock_api_call,
+        patch(
+            "unesco_reader.core._convert_indicator_codes_to_code",
+            return_value=["InvalidCode"],
+        ) as mock_convert_indicators,
+    ):
 
         # Call get_metadata and expect NoDataError
         with pytest.raises(
@@ -662,8 +709,8 @@ def test_indicators_df():
         "name",
         "lastDataUpdate",
         "lastDataUpdateDescription",
-        "min",
-        "max",
+        "timeLine_min",
+        "timeLine_max",
         "totalRecordCount",
         "geoUnitType",
     }
@@ -718,8 +765,8 @@ def test_available_indicators_success():
             "theme",
             "lastDataUpdate",
             "lastDataUpdateDescription",
-            "min",
-            "max",
+            "timeLine_min",
+            "timeLine_max",
             "totalRecordCount",
             "geoUnitType",
         }
@@ -858,7 +905,7 @@ def test_available_indicators_filter_min_year():
         assert isinstance(result, pd.DataFrame)
 
         assert len(result) == 1
-        assert result["min"].unique() == 1970
+        assert result["timeLine_min"].unique() == 1970
 
 
 def test_available_indicators_filter_geo_unit_type_regional():
@@ -1086,6 +1133,31 @@ def test_available_indicators_no_data_error():
             core.available_indicators(theme="INVALID_THEME")
 
 
+def test_available_indicators_invalid_geo_unit_type():
+    """Test that available_indicators raises ValueError for an invalid geoUnitType."""
+
+    _mock_indicators = [
+        {
+            "indicatorCode": "10",
+            "name": "Test",
+            "theme": "EDUCATION",
+            "lastDataUpdate": "2024-10-29",
+            "lastDataUpdateDescription": "September 2024 Data Release",
+            "dataAvailability": {
+                "totalRecordCount": 100,
+                "timeLine": {"min": 1970, "max": 2023},
+                "geoUnits": {"types": ["NATIONAL"]},
+            },
+        }
+    ]
+
+    with patch("unesco_reader.api.get_indicators", return_value=_mock_indicators):
+        with pytest.raises(
+            ValueError, match="geo_unit_type must be NATIONAL, REGIONAL, ALL"
+        ):
+            core.available_indicators(geoUnitType="INVALID")
+
+
 def test_available_indicators_theme_warning_logged(caplog):
     """Test available_indicators logs a warning when some requested themes are not found."""
 
@@ -1194,6 +1266,16 @@ def test_available_geo_units_filter():
 
         assert len(result) == 1
         assert result["type"].unique() == "REGIONAL"
+
+
+def test_available_geo_units_invalid_geo_unit_type():
+    """Test that available_geo_units raises ValueError for an invalid geoUnitType."""
+
+    with patch("unesco_reader.api.get_geo_units", return_value=mock_geo_units):
+        with pytest.raises(
+            ValueError, match="geoUnitType must be either NATIONAL or REGIONAL"
+        ):
+            core.available_geo_units(geoUnitType="INVALID")
 
 
 def test_available_geo_units_filter_raw():
@@ -1329,3 +1411,105 @@ def test_available_versions_success_raw():
         # Assert the result is a DataFrame
         assert isinstance(result, list)
         assert len(result) == 1
+
+
+def test_available_themes_empty_theme_list_raw():
+    """Test that available_themes returns an empty list when themeDataStatus is empty and raw=True."""
+    with patch(
+        "unesco_reader.api.get_default_version",
+        return_value={"version": "20241030-9d4d089e", "themeDataStatus": []},
+    ) as mock_api_call:
+        result = core.available_themes(raw=True)
+
+        mock_api_call.assert_called_once_with()
+        assert isinstance(result, list)
+        assert result == []
+
+
+def test_available_themes_empty_theme_list_non_raw_raises():
+    """Test that available_themes raises when themeDataStatus is empty and DataFrame conversion expects lastUpdate."""
+    with patch(
+        "unesco_reader.api.get_default_version",
+        return_value={"version": "20241030-9d4d089e", "themeDataStatus": []},
+    ):
+        with pytest.raises(AttributeError):
+            core.available_themes()
+
+
+def test_available_themes_malformed_missing_theme_data_status():
+    """Test that available_themes raises KeyError when themeDataStatus key is missing."""
+    with patch(
+        "unesco_reader.api.get_default_version",
+        return_value={"version": "20241030-9d4d089e"},
+    ):
+        with pytest.raises(KeyError, match="themeDataStatus"):
+            core.available_themes()
+
+
+def test_available_themes_malformed_last_update_key():
+    """Test that available_themes raises when lastUpdate field is missing in theme records."""
+    with patch(
+        "unesco_reader.api.get_default_version",
+        return_value={
+            "version": "20241030-9d4d089e",
+            "themeDataStatus": [{"theme": "EDUCATION", "description": "x"}],
+        },
+    ):
+        with pytest.raises(AttributeError):
+            core.available_themes()
+
+
+def test_default_version_malformed_missing_version_key():
+    """Test that default_version raises KeyError when version key is missing."""
+    with patch("unesco_reader.api.get_default_version", return_value={}):
+        with pytest.raises(KeyError, match="version"):
+            core.default_version()
+
+
+def test_available_versions_empty_list_raw():
+    """Test that available_versions returns an empty list when API returns no versions and raw=True."""
+    with patch("unesco_reader.api.get_versions", return_value=[]) as mock_api_call:
+        result = core.available_versions(raw=True)
+
+        mock_api_call.assert_called_once_with()
+        assert isinstance(result, list)
+        assert result == []
+
+
+def test_available_versions_empty_list_non_raw_raises():
+    """Test that available_versions raises when versions list is empty and DataFrame conversion expects publicationDate."""
+    with patch("unesco_reader.api.get_versions", return_value=[]):
+        with pytest.raises(AttributeError):
+            core.available_versions()
+
+
+def test_available_versions_malformed_missing_theme_data_status():
+    """Test that available_versions raises KeyError when a version record has no themeDataStatus key."""
+    with patch(
+        "unesco_reader.api.get_versions",
+        return_value=[
+            {
+                "version": "20241030-9d4d089e",
+                "publicationDate": "2024-10-30T17:28:00.868Z",
+                "description": "x",
+            }
+        ],
+    ):
+        with pytest.raises(KeyError, match="themeDataStatus"):
+            core.available_versions()
+
+
+def test_available_versions_malformed_missing_publication_date():
+    """Test that available_versions raises when publicationDate is missing after theme data removal."""
+    with patch(
+        "unesco_reader.api.get_versions",
+        return_value=[
+            {
+                "version": "20241030-9d4d089e",
+                "description": "x",
+                "themeDataStatus": [],
+            }
+        ],
+    ):
+        with pytest.raises(AttributeError):
+            core.available_versions()
