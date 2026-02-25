@@ -60,8 +60,11 @@ def _check_for_too_many_records(response: requests.Response) -> None:
 
     # if too many records are requested raise an error with the error message from the API
     if response.status_code == 400:
-        error_message = response.json().get("message")
-        if "Too much data requested" in error_message:
+        try:
+            error_message = response.json().get("message", "")
+        except (ValueError, AttributeError):
+            error_message = ""
+        if error_message and "Too much data requested" in error_message:
             raise TooManyRecordsError(error_message)
 
     # if URI Too Long raise a custom error rather than the default one from requests, indicating that too many parameters have been passed to the API

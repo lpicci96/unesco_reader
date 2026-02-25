@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Corrected `TooManyRecordsError` message in `core.get_data` to reference the actual 100,000 record limit instead of 1,000
 - Fixed `_normalize_footnotes` mutating the original API response data in place
+- Fixed `_check_for_too_many_records` crashing on non-JSON or unexpected 400 responses
 
 ### Removed
 - Removed `poetry.lock`, `requirements.txt`, and `requirements-dev.txt` (replaced by `uv.lock`)
