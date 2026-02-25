@@ -338,8 +338,8 @@ def _indicators_df(indicators: list[dict]) -> pd.DataFrame:
 
     # Flatten the data for DataFrame return
     for record in indicators:
-        record["min"] = record["dataAvailability"]["timeLine"]["min"]
-        record["max"] = record["dataAvailability"]["timeLine"]["max"]
+        record["timeLine_min"] = record["dataAvailability"]["timeLine"]["min"]
+        record["timeLine_max"] = record["dataAvailability"]["timeLine"]["max"]
         record["totalRecordCount"] = record["dataAvailability"]["totalRecordCount"]
         geo_units = record["dataAvailability"]["geoUnits"]["types"]
 
@@ -354,7 +354,7 @@ def _indicators_df(indicators: list[dict]) -> pd.DataFrame:
 
     # Convert to pandas DataFrame and return
     return pd.DataFrame(indicators).assign(
-        last_data_update=lambda d: pd.to_datetime(d.lastDataUpdate)
+        lastDataUpdate=lambda d: pd.to_datetime(d.lastDataUpdate)
     )
 
 
