@@ -580,6 +580,24 @@ def test_get_data_no_data_error():
             )
 
 
+def test_get_data_too_many_records_error():
+    """Test that get_data re-raises TooManyRecordsError with a user-friendly message."""
+    from unesco_reader.exceptions import TooManyRecordsError
+
+    with (
+        patch(
+            "unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1"
+        ),
+        patch("unesco_reader.core._convert_geo_units_to_code", return_value="ZWE"),
+        patch(
+            "unesco_reader.api.get_data",
+            side_effect=TooManyRecordsError("API error"),
+        ),
+    ):
+        with pytest.raises(TooManyRecordsError, match="100,000 records"):
+            core.get_data(indicator="CR.1", geoUnit="ZWE")
+
+
 def test_get_metadata_single_indicator():
     """Test that get_metadata returns metadata for a single valid indicator."""
     # Mock the API response
@@ -1115,6 +1133,31 @@ def test_available_indicators_no_data_error():
             core.available_indicators(theme="INVALID_THEME")
 
 
+def test_available_indicators_invalid_geo_unit_type():
+    """Test that available_indicators raises ValueError for an invalid geoUnitType."""
+
+    _mock_indicators = [
+        {
+            "indicatorCode": "10",
+            "name": "Test",
+            "theme": "EDUCATION",
+            "lastDataUpdate": "2024-10-29",
+            "lastDataUpdateDescription": "September 2024 Data Release",
+            "dataAvailability": {
+                "totalRecordCount": 100,
+                "timeLine": {"min": 1970, "max": 2023},
+                "geoUnits": {"types": ["NATIONAL"]},
+            },
+        }
+    ]
+
+    with patch("unesco_reader.api.get_indicators", return_value=_mock_indicators):
+        with pytest.raises(
+            ValueError, match="geo_unit_type must be NATIONAL, REGIONAL, ALL"
+        ):
+            core.available_indicators(geoUnitType="INVALID")
+
+
 def test_available_indicators_theme_warning_logged(caplog):
     """Test available_indicators logs a warning when some requested themes are not found."""
 
@@ -1223,6 +1266,16 @@ def test_available_geo_units_filter():
 
         assert len(result) == 1
         assert result["type"].unique() == "REGIONAL"
+
+
+def test_available_geo_units_invalid_geo_unit_type():
+    """Test that available_geo_units raises ValueError for an invalid geoUnitType."""
+
+    with patch("unesco_reader.api.get_geo_units", return_value=mock_geo_units):
+        with pytest.raises(
+            ValueError, match="geoUnitType must be either NATIONAL or REGIONAL"
+        ):
+            core.available_geo_units(geoUnitType="INVALID")
 
 
 def test_available_geo_units_filter_raw():
@@ -1460,4 +1513,3 @@ def test_available_versions_malformed_missing_publication_date():
     ):
         with pytest.raises(AttributeError):
             core.available_versions()
-

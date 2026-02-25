@@ -8,7 +8,6 @@ including custom types and caching utilities.
 from functools import lru_cache
 from typing import Literal
 
-
 # Custom TYPES
 GeoUnitType = Literal["NATIONAL", "REGIONAL"]
 

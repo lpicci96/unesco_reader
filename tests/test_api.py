@@ -2,7 +2,12 @@
 
 import pytest
 from unittest.mock import Mock, patch
-from requests.exceptions import Timeout, HTTPError, ConnectionError as RequestsConnectionError, RequestException
+from requests.exceptions import (
+    Timeout,
+    HTTPError,
+    ConnectionError as RequestsConnectionError,
+    RequestException,
+)
 import logging
 
 
@@ -57,6 +62,27 @@ def test_check_for_too_many_records_too_much_data():
 
     with pytest.raises(api.TooManyRecordsError, match="Too much data requested"):
         api._check_for_too_many_records(mock_response)
+
+
+def test_check_for_too_many_records_malformed_json():
+    """Test that _check_for_too_many_records handles a 400 response with non-JSON body gracefully."""
+
+    mock_response = Mock()
+    mock_response.status_code = 400
+    mock_response.json.side_effect = ValueError("No JSON")
+
+    # Should not raise — the malformed body is silently ignored since it's not the "Too much data" error
+    assert api._check_for_too_many_records(mock_response) is None
+
+
+def test_check_for_too_many_records_400_unrelated_message():
+    """Test that _check_for_too_many_records ignores a 400 response whose message is not about too many records."""
+
+    mock_response = Mock()
+    mock_response.status_code = 400
+    mock_response.json.return_value = {"message": "Some other bad request error"}
+
+    assert api._check_for_too_many_records(mock_response) is None
 
 
 def test_make_request_success(mock_success_response):
@@ -189,6 +215,34 @@ def test_make_request_sorts_parameters(mock_success_response):
         )
 
 
+def test_make_request_validates_version_param(mock_success_response):
+    """Test that _make_request calls _check_valid_version when params contain a version key."""
+
+    mock_response = mock_success_response({"key": "value"}, status_code=200)
+
+    with (
+        patch("requests.get", return_value=mock_response),
+        patch("unesco_reader.api._check_valid_version") as mock_check,
+    ):
+        api._make_request("/endpoint", params={"version": "v1"})
+        mock_check.assert_called_once_with("v1")
+
+
+@patch("unesco_reader.api.RETRY_DELAY", 0)
+def test_make_request_retryable_status_exhausted(mock_success_response):
+    """Test that _make_request raises after exhausting retries on retryable status codes."""
+
+    mock_503 = mock_success_response({}, status_code=503)
+    mock_503.raise_for_status.side_effect = HTTPError("503 Service Unavailable")
+
+    with patch("requests.get", return_value=mock_503) as mock_get:
+        with pytest.raises(RuntimeError, match="503 Service Unavailable"):
+            api._make_request("/endpoint")
+
+        # initial + 1 retry
+        assert mock_get.call_count == 2
+
+
 def test_convert_bool_to_string():
     """
     Test the _convert_bool_to_string function to ensure correct string conversion.
@@ -308,6 +362,15 @@ def test_get_data_invalid_year_range():
         match="Start year \\(2020\\) cannot be greater than end year \\(2010\\)",
     ):
         api.get_data(indicator="CR.1", geoUnit="ZWE", start=2020, end=2010)
+
+
+def test_get_data_invalid_geo_unit_type():
+    """Test that get_data raises ValueError for an invalid geoUnitType."""
+
+    with pytest.raises(
+        ValueError, match="geoUnitType must be either NATIONAL or REGIONAL"
+    ):
+        api.get_data(indicator="CR.1", geoUnitType="INVALID")
 
 
 def test_check_valid_version_valid():
@@ -480,9 +543,7 @@ def test_make_request_retry_logs_warning(mock_success_response, caplog):
 
     mock_200 = mock_success_response({"key": "value"}, status_code=200)
 
-    with patch(
-        "requests.get", side_effect=[Timeout("timed out"), mock_200]
-    ):
+    with patch("requests.get", side_effect=[Timeout("timed out"), mock_200]):
         with caplog.at_level(logging.WARNING):
             api._make_request("/endpoint")
 

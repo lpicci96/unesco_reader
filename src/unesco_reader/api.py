@@ -169,9 +169,7 @@ def _make_request(endpoint: str, params: dict | None = None) -> dict | list:
     # If we exhausted retries due to timeout or connection error
     if isinstance(last_exception, requests.exceptions.Timeout):
         raise TimeoutError(f"Request timed out. Error: {str(last_exception)}")
-    raise ConnectionError(
-        f"Could not connect to API. Error: {str(last_exception)}"
-    )
+    raise ConnectionError(f"Could not connect to API. Error: {str(last_exception)}")
 
 
 def _convert_bool_to_string(value: bool | None) -> str | None:

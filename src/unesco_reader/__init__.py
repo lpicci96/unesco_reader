@@ -57,7 +57,6 @@ from unesco_reader import exceptions
 from unesco_reader.config import clear_cache
 from unesco_reader.api import set_max_retries
 
-
 logging.getLogger("unesco_reader").addHandler(logging.NullHandler())
 
 from unesco_reader.core import (

@@ -12,7 +12,6 @@ import pytest
 
 from unesco_reader import core
 
-
 pytestmark = [
     pytest.mark.smoke,
     pytest.mark.skipif(
