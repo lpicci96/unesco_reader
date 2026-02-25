@@ -44,6 +44,7 @@ jobs:
         run: uv run pytest tests/ --cov=unesco_reader --cov-report=xml
 
       - name: Use Codecov to track coverage
+        if: matrix.config.os == 'ubuntu-latest' && matrix.config.py == '3.13'
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
