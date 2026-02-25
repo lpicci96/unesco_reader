@@ -71,3 +71,17 @@ from unesco_reader.core import (
 )
 
 __version__ = version("unesco_reader")
+
+__all__ = [
+    "api",
+    "exceptions",
+    "get_data",
+    "get_metadata",
+    "available_indicators",
+    "available_geo_units",
+    "available_versions",
+    "available_themes",
+    "default_version",
+    "clear_cache",
+    "set_max_retries",
+]
