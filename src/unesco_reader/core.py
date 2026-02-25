@@ -47,21 +47,17 @@ def _convert_codes(indicators: str | list[str], mapper: dict) -> str | list[str]
     is_single = isinstance(indicators, str)
     indicators = [indicators] if is_single else indicators
 
-    converted_indicators = (
-        []
-    )  # Initialize an empty list to store the converted indicators
+    # Build a set of known codes for O(1) lookup instead of O(n) scan of mapper.values()
+    codes = set(mapper.values())
+
+    converted_indicators = []
     for indicator in indicators:
-        # Check if the indicator is already a code
-        if indicator in mapper.values():
+        if indicator in codes:
             converted_indicators.append(indicator)
-        # Check if the indicator is a name and convert to code
-        elif indicator in mapper.keys():
+        elif indicator in mapper:
             converted_indicators.append(mapper[indicator])
-        # else return the original indicator as a fallback
         else:
-            converted_indicators.append(
-                indicator
-            )  # Append the original indicator as a fallback
+            converted_indicators.append(indicator)
 
     # Return a string if a single indicator was provided, otherwise return a list
     return converted_indicators[0] if is_single else converted_indicators
@@ -476,7 +472,7 @@ def available_geo_units(
     if geoUnitType:
         # filter the geo_units based on the geo_unit_type
         if geoUnitType not in ["NATIONAL", "REGIONAL"]:
-            raise ValueError("geo_unit_type must be either NATIONAL or REGIONAL")
+            raise ValueError("geoUnitType must be either NATIONAL or REGIONAL")
         geo_units = [record for record in geo_units if geoUnitType in record["type"]]
 
     if raw:
