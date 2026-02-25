@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- In-memory session caching for API definition endpoints (`get_indicators`, `get_geo_units`, `get_versions`, `get_default_version`) to avoid redundant network calls
+- `clear_cache()` function to manually invalidate all cached data mid-session
+- `conftest.py` with autouse fixture to ensure test isolation across cached calls
+
 ### Changed
 - Migrated dependency management from Poetry to uv
 - Replaced `poetry-core` build backend with `hatchling`
@@ -15,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated core data formatting for indicators GET endpoint for clarity:
   - removed new `last_data_update` creation and instead edited the `lastDataUpdate` directly.
   - renamed fields `max` and `min` to `timeLine_min` and `timeLine_max` for clarity.
+
+### Fixed
+- Corrected `TooManyRecordsError` message in `core.get_data` to reference the actual 100,000 record limit instead of 1,000
+- Fixed `_normalize_footnotes` mutating the original API response data in place
 
 ### Removed
 - Removed `poetry.lock`, `requirements.txt`, and `requirements-dev.txt` (replaced by `uv.lock`)
