@@ -2,7 +2,7 @@
 
 import pytest
 from unittest.mock import Mock, patch
-from requests.exceptions import Timeout, HTTPError, RequestException
+from requests.exceptions import Timeout, HTTPError, ConnectionError as RequestsConnectionError, RequestException
 import logging
 
 
@@ -84,12 +84,16 @@ def test_make_request_success(mock_success_response):
         )
 
 
+@patch("unesco_reader.api.RETRY_DELAY", 0)
 def test_make_request_timeout(mock_success_response):
-    """Test that _make_request raises TimeoutError when a timeout occurs."""
+    """Test that _make_request raises TimeoutError after retrying."""
 
-    with patch("requests.get", side_effect=Timeout("Request timed out")):
+    with patch("requests.get", side_effect=Timeout("Request timed out")) as mock_get:
         with pytest.raises(TimeoutError, match="Request timed out"):
             api._make_request("/endpoint", params={"param1": "value1"})
+
+        # Should have been called twice (initial + 1 retry)
+        assert mock_get.call_count == 2
 
 
 def test_make_request_http_error(mock_success_response):
@@ -120,9 +124,9 @@ def test_make_request_too_many_records(mock_success_response):
 
 
 def test_make_request_connection_error(mock_success_response):
-    """Test that _make_request raises ConnectionError when a general request exception occurs."""
+    """Test that _make_request raises ConnectionError when a non-retryable RequestException occurs."""
 
-    # Simulate a general RequestException
+    # Simulate a general RequestException (not ConnectionError, so no retry)
     with patch(
         "requests.get", side_effect=RequestException("Connection error occurred")
     ):
@@ -376,3 +380,209 @@ def test_get_indicators_success(mock_success_response):
             "/api/public/definitions/indicators",
             {"disaggregations": "false", "glossaryTerms": "false", "version": None},
         )
+
+
+# --- Retry logic tests ---
+
+
+@patch("unesco_reader.api.RETRY_DELAY", 0)
+def test_make_request_retries_on_timeout_then_succeeds(mock_success_response):
+    """Test that _make_request retries on timeout and succeeds on the second attempt."""
+
+    mock_response = mock_success_response({"key": "value"}, status_code=200)
+
+    with patch(
+        "requests.get", side_effect=[Timeout("timed out"), mock_response]
+    ) as mock_get:
+        result = api._make_request("/endpoint")
+
+        assert result == {"key": "value"}
+        assert mock_get.call_count == 2
+
+
+@patch("unesco_reader.api.RETRY_DELAY", 0)
+def test_make_request_retries_on_connection_error_then_succeeds(mock_success_response):
+    """Test that _make_request retries on connection error and succeeds on the second attempt."""
+
+    mock_response = mock_success_response({"key": "value"}, status_code=200)
+
+    with patch(
+        "requests.get",
+        side_effect=[RequestsConnectionError("connection refused"), mock_response],
+    ) as mock_get:
+        result = api._make_request("/endpoint")
+
+        assert result == {"key": "value"}
+        assert mock_get.call_count == 2
+
+
+@patch("unesco_reader.api.RETRY_DELAY", 0)
+def test_make_request_retries_on_connection_error_then_raises():
+    """Test that _make_request raises ConnectionError after exhausting retries on connection errors."""
+
+    with patch(
+        "requests.get",
+        side_effect=RequestsConnectionError("connection refused"),
+    ) as mock_get:
+        with pytest.raises(ConnectionError, match="connection refused"):
+            api._make_request("/endpoint")
+
+        assert mock_get.call_count == 2
+
+
+@patch("unesco_reader.api.RETRY_DELAY", 0)
+def test_make_request_retries_on_503(mock_success_response):
+    """Test that _make_request retries on a 503 status code and succeeds on the second attempt."""
+
+    mock_503 = mock_success_response({}, status_code=503)
+    mock_503.raise_for_status.side_effect = HTTPError("503 Service Unavailable")
+    mock_200 = mock_success_response({"key": "value"}, status_code=200)
+
+    with patch("requests.get", side_effect=[mock_503, mock_200]) as mock_get:
+        result = api._make_request("/endpoint")
+
+        assert result == {"key": "value"}
+        assert mock_get.call_count == 2
+
+
+@patch("unesco_reader.api.RETRY_DELAY", 0)
+def test_make_request_retries_on_502(mock_success_response):
+    """Test that _make_request retries on a 502 status code and succeeds on the second attempt."""
+
+    mock_502 = mock_success_response({}, status_code=502)
+    mock_502.raise_for_status.side_effect = HTTPError("502 Bad Gateway")
+    mock_200 = mock_success_response({"key": "value"}, status_code=200)
+
+    with patch("requests.get", side_effect=[mock_502, mock_200]) as mock_get:
+        result = api._make_request("/endpoint")
+
+        assert result == {"key": "value"}
+        assert mock_get.call_count == 2
+
+
+@patch("unesco_reader.api.RETRY_DELAY", 0)
+def test_make_request_no_retry_on_404(mock_success_response):
+    """Test that _make_request does not retry on a 404 (non-retryable) status code."""
+
+    mock_404 = mock_success_response({"error": "Not Found"}, status_code=404)
+    mock_404.raise_for_status.side_effect = HTTPError("404 Not Found")
+
+    with patch("requests.get", return_value=mock_404) as mock_get:
+        with pytest.raises(RuntimeError, match="404 Not Found"):
+            api._make_request("/endpoint")
+
+        assert mock_get.call_count == 1
+
+
+@patch("unesco_reader.api.RETRY_DELAY", 0)
+def test_make_request_retry_logs_warning(mock_success_response, caplog):
+    """Test that a warning is logged when a retry occurs."""
+
+    mock_200 = mock_success_response({"key": "value"}, status_code=200)
+
+    with patch(
+        "requests.get", side_effect=[Timeout("timed out"), mock_200]
+    ):
+        with caplog.at_level(logging.WARNING):
+            api._make_request("/endpoint")
+
+            assert "Retrying (1/1)" in caplog.text
+
+
+@patch("unesco_reader.api.RETRY_DELAY", 0)
+def test_make_request_retry_logs_warning_on_503(mock_success_response, caplog):
+    """Test that a warning is logged when retrying a 503 response."""
+
+    mock_503 = mock_success_response({}, status_code=503)
+    mock_503.raise_for_status.side_effect = HTTPError("503 Service Unavailable")
+    mock_200 = mock_success_response({"key": "value"}, status_code=200)
+
+    with patch("requests.get", side_effect=[mock_503, mock_200]):
+        with caplog.at_level(logging.WARNING):
+            api._make_request("/endpoint")
+
+            assert "Received 503 from API" in caplog.text
+            assert "Retrying (1/1)" in caplog.text
+
+
+# --- set_max_retries tests ---
+
+
+def test_set_max_retries_valid():
+    """Test that set_max_retries sets the retry count."""
+
+    api.set_max_retries(3)
+    assert api._max_retries == 3
+
+    # Reset to default
+    api.set_max_retries(1)
+
+
+def test_set_max_retries_zero():
+    """Test that set_max_retries accepts 0 to disable retries."""
+
+    api.set_max_retries(0)
+    assert api._max_retries == 0
+
+    # Reset to default
+    api.set_max_retries(1)
+
+
+def test_set_max_retries_negative():
+    """Test that set_max_retries raises ValueError for negative values."""
+
+    with pytest.raises(ValueError, match="retries must be a non-negative integer"):
+        api.set_max_retries(-1)
+
+
+def test_set_max_retries_non_integer():
+    """Test that set_max_retries raises ValueError for non-integer values."""
+
+    with pytest.raises(ValueError, match="retries must be a non-negative integer"):
+        api.set_max_retries(1.5)
+
+
+@patch("unesco_reader.api.RETRY_DELAY", 0)
+def test_set_max_retries_disables_retries(mock_success_response):
+    """Test that setting retries to 0 disables retry behavior."""
+
+    api.set_max_retries(0)
+
+    try:
+        with patch("requests.get", side_effect=Timeout("timed out")) as mock_get:
+            with pytest.raises(TimeoutError, match="timed out"):
+                api._make_request("/endpoint")
+
+            # Only one call, no retry
+            assert mock_get.call_count == 1
+    finally:
+        api.set_max_retries(1)
+
+
+@patch("unesco_reader.api.RETRY_DELAY", 0)
+def test_set_max_retries_multiple_retries(mock_success_response):
+    """Test that setting retries to 2 allows two retry attempts."""
+
+    api.set_max_retries(2)
+    mock_200 = mock_success_response({"key": "value"}, status_code=200)
+
+    try:
+        with patch(
+            "requests.get",
+            side_effect=[Timeout("t1"), Timeout("t2"), mock_200],
+        ) as mock_get:
+            result = api._make_request("/endpoint")
+
+            assert result == {"key": "value"}
+            assert mock_get.call_count == 3
+    finally:
+        api.set_max_retries(1)
+
+
+def test_set_max_retries_exposed_at_package_level():
+    """Test that set_max_retries is accessible from the top-level package."""
+
+    import unesco_reader
+
+    assert hasattr(unesco_reader, "set_max_retries")
+    assert callable(unesco_reader.set_max_retries)

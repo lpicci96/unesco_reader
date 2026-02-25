@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - In-memory session caching for API definition endpoints (`get_indicators`, `get_geo_units`, `get_versions`, `get_default_version`) to avoid redundant network calls
 - `clear_cache()` function to manually invalidate all cached data mid-session
 - `conftest.py` with autouse fixture to ensure test isolation across cached calls
+- Single retry with delay for transient network errors (timeouts, connection errors, 502/503/504 responses) with warning logs on retry attempts
+- `set_max_retries()` function to configure the number of retries for transient network errors
 
 ### Changed
 - Migrated dependency management from Poetry to uv

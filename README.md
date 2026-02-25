@@ -15,6 +15,7 @@ It offers a simple wrapper for the [UIS API](https://api.uis.unesco.org/api/publ
 added convenience including error handling, filtering ability, and basic pandas support.
 
 API definition endpoints (indicators, geo units, versions) are cached in memory for the duration of the session to avoid redundant network calls. The cache can be cleared manually with `uis.clear_cache()`.
+Transient network errors (timeouts, connection errors, and 502/503/504 responses) are retried once automatically before raising an exception. The number of retries can be configured with `uis.set_max_retries()`.
 There are currently no rate limits, but there is a 100,000 record limit for each request. This package does not use any multithreading, to maintain the APIs recommended usage.
 
 __Note: As of version `v3.0.0` the package does not support access to bulk data files.__
@@ -109,6 +110,15 @@ uis.clear_cache()
 ```
 
 Data requests (`get_data`) are never cached and always fetch fresh results from the API.
+
+## Retry Configuration
+
+By default, transient network errors are retried once. To change the number of retries:
+
+```python
+uis.set_max_retries(3)  # retry up to 3 times
+uis.set_max_retries(0)  # disable retries
+```
 
 ## Basic wrapper usage
 

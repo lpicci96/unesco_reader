@@ -53,6 +53,7 @@ from importlib.metadata import version
 from unesco_reader import api
 from unesco_reader import exceptions
 from unesco_reader.config import clear_cache
+from unesco_reader.api import set_max_retries
 
 from unesco_reader.core import (
     get_data,
