@@ -1358,3 +1358,106 @@ def test_available_versions_success_raw():
         # Assert the result is a DataFrame
         assert isinstance(result, list)
         assert len(result) == 1
+
+
+def test_available_themes_empty_theme_list_raw():
+    """Test that available_themes returns an empty list when themeDataStatus is empty and raw=True."""
+    with patch(
+        "unesco_reader.api.get_default_version",
+        return_value={"version": "20241030-9d4d089e", "themeDataStatus": []},
+    ) as mock_api_call:
+        result = core.available_themes(raw=True)
+
+        mock_api_call.assert_called_once_with()
+        assert isinstance(result, list)
+        assert result == []
+
+
+def test_available_themes_empty_theme_list_non_raw_raises():
+    """Test that available_themes raises when themeDataStatus is empty and DataFrame conversion expects lastUpdate."""
+    with patch(
+        "unesco_reader.api.get_default_version",
+        return_value={"version": "20241030-9d4d089e", "themeDataStatus": []},
+    ):
+        with pytest.raises(AttributeError):
+            core.available_themes()
+
+
+def test_available_themes_malformed_missing_theme_data_status():
+    """Test that available_themes raises KeyError when themeDataStatus key is missing."""
+    with patch(
+        "unesco_reader.api.get_default_version",
+        return_value={"version": "20241030-9d4d089e"},
+    ):
+        with pytest.raises(KeyError, match="themeDataStatus"):
+            core.available_themes()
+
+
+def test_available_themes_malformed_last_update_key():
+    """Test that available_themes raises when lastUpdate field is missing in theme records."""
+    with patch(
+        "unesco_reader.api.get_default_version",
+        return_value={
+            "version": "20241030-9d4d089e",
+            "themeDataStatus": [{"theme": "EDUCATION", "description": "x"}],
+        },
+    ):
+        with pytest.raises(AttributeError):
+            core.available_themes()
+
+
+def test_default_version_malformed_missing_version_key():
+    """Test that default_version raises KeyError when version key is missing."""
+    with patch("unesco_reader.api.get_default_version", return_value={}):
+        with pytest.raises(KeyError, match="version"):
+            core.default_version()
+
+
+def test_available_versions_empty_list_raw():
+    """Test that available_versions returns an empty list when API returns no versions and raw=True."""
+    with patch("unesco_reader.api.get_versions", return_value=[]) as mock_api_call:
+        result = core.available_versions(raw=True)
+
+        mock_api_call.assert_called_once_with()
+        assert isinstance(result, list)
+        assert result == []
+
+
+def test_available_versions_empty_list_non_raw_raises():
+    """Test that available_versions raises when versions list is empty and DataFrame conversion expects publicationDate."""
+    with patch("unesco_reader.api.get_versions", return_value=[]):
+        with pytest.raises(AttributeError):
+            core.available_versions()
+
+
+def test_available_versions_malformed_missing_theme_data_status():
+    """Test that available_versions raises KeyError when a version record has no themeDataStatus key."""
+    with patch(
+        "unesco_reader.api.get_versions",
+        return_value=[
+            {
+                "version": "20241030-9d4d089e",
+                "publicationDate": "2024-10-30T17:28:00.868Z",
+                "description": "x",
+            }
+        ],
+    ):
+        with pytest.raises(KeyError, match="themeDataStatus"):
+            core.available_versions()
+
+
+def test_available_versions_malformed_missing_publication_date():
+    """Test that available_versions raises when publicationDate is missing after theme data removal."""
+    with patch(
+        "unesco_reader.api.get_versions",
+        return_value=[
+            {
+                "version": "20241030-9d4d089e",
+                "description": "x",
+                "themeDataStatus": [],
+            }
+        ],
+    ):
+        with pytest.raises(AttributeError):
+            core.available_versions()
+
