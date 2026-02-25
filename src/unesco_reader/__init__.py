@@ -44,7 +44,7 @@ does not provide any additional functionality and mirrors the API endpoints dire
 
 
 Additional information:
-- The package does not implement any caching as caching is handled by the API itself.
+- API definition endpoints (indicators, geo units, versions) are cached in memory for the session. Use `clear_cache()` to invalidate.
 - Field names are not modified and are returned as they are from the API.
 - Currently there are no rate limits for the API other than 100,000 row response limit. This package does not implement and multitheading or async functionality to handle this limit, as the intended usage for the API is to get make smaller requests for specific data points.
 """

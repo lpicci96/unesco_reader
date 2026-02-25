@@ -14,7 +14,7 @@ Pythonic access to UNESCO data
 It offers a simple wrapper for the [UIS API](https://api.uis.unesco.org/api/public/documentation/) endpoints, and offers
 added convenience including error handling, filtering ability, and basic pandas support.
 
-The current implementation does not implement any caching mechanism as it is handled directly by the API. 
+API definition endpoints (indicators, geo units, versions) are cached in memory for the duration of the session to avoid redundant network calls. The cache can be cleared manually with `uis.clear_cache()`.
 There are currently no rate limits, but there is a 100,000 record limit for each request. This package does not use any multithreading, to maintain the APIs recommended usage.
 
 __Note: As of version `v3.0.0` the package does not support access to bulk data files.__
@@ -97,6 +97,18 @@ Get the default data version:
 default_version = uis.default_version()
 ```
 
+
+## Caching
+
+API definition endpoints (indicators, geo units, and versions) are cached in memory for the lifetime
+of the session. This avoids redundant network requests when making multiple queries. To manually
+clear the cache (e.g. to pick up newly published data versions mid-session):
+
+```python
+uis.clear_cache()
+```
+
+Data requests (`get_data`) are never cached and always fetch fresh results from the API.
 
 ## Basic wrapper usage
 
