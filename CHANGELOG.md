@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.1] - 2026-02-25
+
+### Fixed
+- Fixed `available_indicators` and `available_versions` mutating cached API responses in place, causing `KeyError` on repeated calls
+- Fixed `available_geo_units` using substring matching (`in`) instead of equality (`==`) for `geoUnitType` filtering
+- Fixed `get_metadata` returning direct references to cached dicts, allowing callers to corrupt the cache
+
+### Added
+- Idempotency and cache-safety tests for `available_indicators`, `available_versions`, `available_geo_units`, `available_themes`, and `get_metadata`
+
 ## [3.1.0] - 2025-02-25
 
 ### Added
