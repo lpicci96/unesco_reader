@@ -1607,3 +1607,43 @@ def test_available_themes_idempotent():
         first = core.available_themes()
         second = core.available_themes()
         pd.testing.assert_frame_equal(first, second)
+
+
+def test_available_geo_units_filter_uses_equality_not_substring():
+    """Filtering geo units should use equality, not substring matching."""
+    mock_geo_units_with_sub = [
+        {"id": "ABW", "name": "Aruba", "type": "NATIONAL"},
+        {"id": "X1", "name": "Subnational Region", "type": "SUBNATIONAL"},
+        {"id": "UNESCO: SIDS", "name": "SIDS", "type": "REGIONAL", "regionGroup": "UNESCO"},
+    ]
+    with patch(
+        "unesco_reader.api.get_geo_units", return_value=mock_geo_units_with_sub
+    ):
+        result = core.available_geo_units(geoUnitType="NATIONAL")
+        assert len(result) == 1
+        assert result.iloc[0]["id"] == "ABW"
+
+
+def test_get_metadata_does_not_mutate_cache():
+    """get_metadata should return deep copies so callers cannot corrupt the cache."""
+    with patch(
+        "unesco_reader.api.get_indicators",
+        return_value=mock_indicators_no_agg_no_glossary,
+    ):
+        result = core.get_metadata()
+        # Mutate the returned data
+        result[0]["name"] = "CORRUPTED"
+        # Fetch again — should be unaffected
+        result2 = core.get_metadata()
+        assert result2[0]["name"] != "CORRUPTED"
+
+
+def test_get_metadata_idempotent():
+    """Calling get_metadata twice should return equal results."""
+    with patch(
+        "unesco_reader.api.get_indicators",
+        return_value=mock_indicators_no_agg_no_glossary,
+    ):
+        first = core.get_metadata()
+        second = core.get_metadata()
+        assert first == second
