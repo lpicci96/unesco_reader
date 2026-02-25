@@ -36,3 +36,8 @@ patch_without_tag = true                    # patch release by default
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+markers = [
+    "smoke: marks tests as live API smoke tests",
+]
