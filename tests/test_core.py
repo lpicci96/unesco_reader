@@ -662,8 +662,8 @@ def test_indicators_df():
         "name",
         "lastDataUpdate",
         "lastDataUpdateDescription",
-        "min",
-        "max",
+        "timeLine_min",
+        "timeLine_max",
         "totalRecordCount",
         "geoUnitType",
     }
@@ -718,8 +718,8 @@ def test_available_indicators_success():
             "theme",
             "lastDataUpdate",
             "lastDataUpdateDescription",
-            "min",
-            "max",
+            "timeLine_min",
+            "timeLine_max",
             "totalRecordCount",
             "geoUnitType",
         }
@@ -858,7 +858,7 @@ def test_available_indicators_filter_min_year():
         assert isinstance(result, pd.DataFrame)
 
         assert len(result) == 1
-        assert result["min"].unique() == 1970
+        assert result["timeLine_min"].unique() == 1970
 
 
 def test_available_indicators_filter_geo_unit_type_regional():
