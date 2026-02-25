@@ -14,10 +14,6 @@ Pythonic access to UNESCO data
 It offers a simple wrapper for the [UIS API](https://api.uis.unesco.org/api/public/documentation/) endpoints, and offers
 added convenience including error handling, filtering ability, and basic pandas support.
 
-API definition endpoints (indicators, geo units, versions) are cached in memory for the duration of the session to avoid redundant network calls. The cache can be cleared manually with `uis.clear_cache()`.
-Transient network errors (timeouts, connection errors, and 502/503/504 responses) are retried once automatically before raising an exception. The number of retries can be configured with `uis.set_max_retries()`.
-There are currently no rate limits, but there is a 100,000 record limit for each request. This package does not use any multithreading, to maintain the APIs recommended usage.
-
 __Note: As of version `v3.0.0` the package does not support access to bulk data files.__
 Previous versions of the package were developed before the release of the API and offered 
 support for accessing the bulk data files. This functionality has been deprecated in version in favor
@@ -101,7 +97,8 @@ default_version = uis.default_version()
 
 ## Caching
 
-API definition endpoints (indicators, geo units, and versions) are cached in memory for the lifetime
+The UIS API includes caching logic. This package also includes in memory caching for 
+API definition endpoints (indicators, geo units, and versions) for the lifetime
 of the session. This avoids redundant network requests when making multiple queries. To manually
 clear the cache (e.g. to pick up newly published data versions mid-session):
 
@@ -109,7 +106,8 @@ clear the cache (e.g. to pick up newly published data versions mid-session):
 uis.clear_cache()
 ```
 
-Data requests (`get_data`) are never cached and always fetch fresh results from the API.
+Data requests (`get_data`) are never cached and always fetch fresh results from the API
+(which may be cached by the API itself, depending on the endpoint and parameters).
 
 ## Retry Configuration
 
@@ -119,6 +117,15 @@ By default, transient network errors are retried once. To change the number of r
 uis.set_max_retries(3)  # retry up to 3 times
 uis.set_max_retries(0)  # disable retries
 ```
+
+## Rate Limiting and Asynchronous Support
+
+There are currently [no API rate limits](https://api.uis.unesco.org/api/public/documentation/#rate-limiting-and-caching),
+but there is a 100,000 record limit for each request. This package does not use
+any multithreading or chunking responses, to maintain the APIs recommended usage. 
+Aggregated flat file data can
+be accessed through the [Bulk Data Download page](https://databrowser.uis.unesco.org/resources/bulk).
+
 
 ## Basic wrapper usage
 
@@ -142,8 +149,3 @@ By contributing to this project, you agree to abide by its terms.
 ## License
 
 `unesco_reader` was created by Luca Picci. It is licensed under the terms of the MIT license.
-
-## Credits
-
-`unesco_reader` was created with [`cookiecutter`](https://cookiecutter.readthedocs.io/en/latest/) and the
-`py-pkgs-cookiecutter` [template](https://github.com/py-pkgs/py-pkgs-cookiecutter).
