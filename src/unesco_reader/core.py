@@ -241,7 +241,7 @@ def get_data(
         )
     except TooManyRecordsError:
         raise TooManyRecordsError(
-            "Too much data requested. Please make multiple requests with fewer parameters. A maximum of 1000 records can be requested at a time."
+            "Too much data requested. Please make multiple requests with fewer parameters. A maximum of 100,000 records can be requested at a time."
         )
 
     # log hints if any
