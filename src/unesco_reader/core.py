@@ -127,17 +127,20 @@ def _normalize_footnotes(data: list[dict]) -> list[dict]:
     For multiple footnotes, the normalized string is concatenated with a semicolon.
     """
 
+    normalized = []
     for record in data:
+        record = {**record}  # shallow copy to avoid mutating the original
         if len(record["footnotes"]) == 0:
             record["footnotes"] = None
-            continue
-        footnotes_str = [
-            f"{footnote['type']}, {footnote['subtype']}: {footnote['value']}"
-            for footnote in record["footnotes"]
-        ]
-        record["footnotes"] = " ; ".join(footnotes_str)
+        else:
+            footnotes_str = [
+                f"{footnote['type']}, {footnote['subtype']}: {footnote['value']}"
+                for footnote in record["footnotes"]
+            ]
+            record["footnotes"] = " ; ".join(footnotes_str)
+        normalized.append(record)
 
-    return data
+    return normalized
 
 
 def _add_indicator_labels(data: list[dict]) -> list[dict]:
