@@ -342,24 +342,28 @@ def _indicators_df(indicators: list[dict]) -> pd.DataFrame:
         A pandas DataFrame with the available indicators
     """
 
-    # Flatten the data for DataFrame return
+    # Flatten the data for DataFrame return without mutating the original records
+    rows = []
     for record in indicators:
-        record["timeLine_min"] = record["dataAvailability"]["timeLine"]["min"]
-        record["timeLine_max"] = record["dataAvailability"]["timeLine"]["max"]
-        record["totalRecordCount"] = record["dataAvailability"]["totalRecordCount"]
-        geo_units = record["dataAvailability"]["geoUnits"]["types"]
+        row = {
+            k: v for k, v in record.items() if k != "dataAvailability"
+        }
+        da = record["dataAvailability"]
+        row["timeLine_min"] = da["timeLine"]["min"]
+        row["timeLine_max"] = da["timeLine"]["max"]
+        row["totalRecordCount"] = da["totalRecordCount"]
+        geo_units = da["geoUnits"]["types"]
 
         # Handle geo_unit_type based on the conditions
         if "REGIONAL" in geo_units and "NATIONAL" in geo_units:
-            record["geoUnitType"] = "ALL"
+            row["geoUnitType"] = "ALL"
         else:
-            record["geoUnitType"] = geo_units[0] if geo_units else None
+            row["geoUnitType"] = geo_units[0] if geo_units else None
 
-        # Remove the 'dataAvailability' key since it's been flattened
-        record.pop("dataAvailability")
+        rows.append(row)
 
     # Convert to pandas DataFrame and return
-    return pd.DataFrame(indicators).assign(
+    return pd.DataFrame(rows).assign(
         lastDataUpdate=lambda d: pd.to_datetime(d.lastDataUpdate)
     )
 
@@ -527,9 +531,11 @@ def available_versions(*, raw: bool = False) -> pd.DataFrame | list[dict]:
 
     versions = api.get_versions()
 
-    # remove theme details
-    for version in versions:
-        version.pop("themeDataStatus")
+    # remove theme details without mutating the cached API response
+    versions = [
+        {k: v for k, v in version.items() if k != "themeDataStatus"}
+        for version in versions
+    ]
 
     if raw:
         return versions
