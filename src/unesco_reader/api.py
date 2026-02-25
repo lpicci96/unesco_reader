@@ -15,7 +15,7 @@ Endpoints:
 
 import requests
 
-from unesco_reader.config import GeoUnitType, logger
+from unesco_reader.config import GeoUnitType, logger, session_cache
 from unesco_reader.exceptions import TooManyRecordsError
 
 API_URL: str = "https://api.uis.unesco.org"
@@ -183,6 +183,7 @@ def get_data(
     return _make_request(end_point, params)
 
 
+@session_cache()
 def get_geo_units(version: str | None = None) -> list[dict]:
     """Get geo units
 
@@ -202,6 +203,7 @@ def get_geo_units(version: str | None = None) -> list[dict]:
     return _make_request(end_point, params)
 
 
+@session_cache()
 def get_indicators(
     disaggregations: bool = False,
     glossaryTerms: bool = False,
@@ -232,6 +234,7 @@ def get_indicators(
     return _make_request(end_point, params)
 
 
+@session_cache()
 def get_versions() -> list[dict]:
     """Get all published data versions
 
@@ -244,6 +247,7 @@ def get_versions() -> list[dict]:
     return _make_request(end_point)
 
 
+@session_cache()
 def get_default_version() -> dict:
     """Get the current default data version
 
