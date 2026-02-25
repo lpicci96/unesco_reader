@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed `_normalize_footnotes` mutating the original API response data in place
 - Fixed `_check_for_too_many_records` crashing on non-JSON or unexpected 400 responses
 - Fixed O(n) per-item scan in `_convert_codes` by using a reverse lookup set for code validation
+- Corrected - `geoUnitType` error message for consistent parameter naming using camel case
 
 ### Removed
 - Removed `poetry.lock`, `requirements.txt`, and `requirements-dev.txt` (replaced by `uv.lock`)
