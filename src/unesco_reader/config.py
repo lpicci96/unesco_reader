@@ -8,7 +8,6 @@ the custom exceptions used in the package.
 import logging
 from typing import Literal
 
-
 # Configure Logging
 logger = logging.getLogger(__name__)
 shell_handler = logging.StreamHandler()  # Create terminal handler

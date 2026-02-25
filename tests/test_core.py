@@ -278,17 +278,19 @@ def test_add_geo_unit_labels():
 def test_get_data_basic_call():
     """Test that get_data returns a DataFrame for basic inputs."""
     # Mock the private functions and API call
-    with patch(
-        "unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1"
-    ) as mock_convert_indicators, patch(
-        "unesco_reader.core._convert_geo_units_to_code", return_value="ZWE"
-    ) as mock_convert_geo_units, patch(
-        "unesco_reader.api.get_data", return_value=mock_data_no_hints_no_metadata
-    ) as mock_api_call, patch(
-        "unesco_reader.core._add_indicator_labels"
-    ) as mock_add_indicator_labels, patch(
-        "unesco_reader.core._add_geo_unit_labels"
-    ) as mock_add_geo_unit_labels:
+    with (
+        patch(
+            "unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1"
+        ) as mock_convert_indicators,
+        patch(
+            "unesco_reader.core._convert_geo_units_to_code", return_value="ZWE"
+        ) as mock_convert_geo_units,
+        patch(
+            "unesco_reader.api.get_data", return_value=mock_data_no_hints_no_metadata
+        ) as mock_api_call,
+        patch("unesco_reader.core._add_indicator_labels") as mock_add_indicator_labels,
+        patch("unesco_reader.core._add_geo_unit_labels") as mock_add_geo_unit_labels,
+    ):
 
         # Call get_data with minimal parameters
         result = core.get_data(
@@ -335,13 +337,17 @@ def test_get_data_raw_call():
     """Test that get_data returns raw API data when raw=True."""
     # Mock the private functions and API call
 
-    with patch(
-        "unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1"
-    ) as mock_convert_indicators, patch(
-        "unesco_reader.core._convert_geo_units_to_code", return_value="ZWE"
-    ) as mock_convert_geo_units, patch(
-        "unesco_reader.api.get_data", return_value=mock_data_no_hints_no_metadata
-    ) as mock_api_call:
+    with (
+        patch(
+            "unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1"
+        ) as mock_convert_indicators,
+        patch(
+            "unesco_reader.core._convert_geo_units_to_code", return_value="ZWE"
+        ) as mock_convert_geo_units,
+        patch(
+            "unesco_reader.api.get_data", return_value=mock_data_no_hints_no_metadata
+        ) as mock_api_call,
+    ):
 
         # Call get_data with raw=True
         result = core.get_data(
@@ -419,17 +425,23 @@ def test_get_data_with_labels():
         },
     ]
 
-    with patch(
-        "unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1"
-    ) as mock_convert_indicators, patch(
-        "unesco_reader.core._convert_geo_units_to_code", return_value="ZWE"
-    ) as mock_convert_geo_units, patch(
-        "unesco_reader.api.get_data", return_value=mock_data_no_hints_no_metadata
-    ) as mock_api_call, patch(
-        "unesco_reader.core._add_indicator_labels", return_value=mock_labels
-    ) as mock_add_indicator_labels, patch(
-        "unesco_reader.core._add_geo_unit_labels", return_value=mock_labels
-    ) as mock_add_geo_unit_labels:
+    with (
+        patch(
+            "unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1"
+        ) as mock_convert_indicators,
+        patch(
+            "unesco_reader.core._convert_geo_units_to_code", return_value="ZWE"
+        ) as mock_convert_geo_units,
+        patch(
+            "unesco_reader.api.get_data", return_value=mock_data_no_hints_no_metadata
+        ) as mock_api_call,
+        patch(
+            "unesco_reader.core._add_indicator_labels", return_value=mock_labels
+        ) as mock_add_indicator_labels,
+        patch(
+            "unesco_reader.core._add_geo_unit_labels", return_value=mock_labels
+        ) as mock_add_geo_unit_labels,
+    ):
 
         # Call get_data with labels=True
         result = core.get_data(
@@ -503,15 +515,21 @@ def test_get_data_with_footnotes():
         },
     ]
 
-    with patch(
-        "unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1"
-    ) as mock_convert_indicators, patch(
-        "unesco_reader.core._convert_geo_units_to_code", return_value="AFG"
-    ) as mock_convert_geo_units, patch(
-        "unesco_reader.api.get_data", return_value=mock_data_no_hints_no_metadata
-    ) as mock_api_call, patch(
-        "unesco_reader.core._normalize_footnotes", return_value=mock_data_with_footnotes
-    ) as mock_normalize_footnotes:
+    with (
+        patch(
+            "unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1"
+        ) as mock_convert_indicators,
+        patch(
+            "unesco_reader.core._convert_geo_units_to_code", return_value="AFG"
+        ) as mock_convert_geo_units,
+        patch(
+            "unesco_reader.api.get_data", return_value=mock_data_no_hints_no_metadata
+        ) as mock_api_call,
+        patch(
+            "unesco_reader.core._normalize_footnotes",
+            return_value=mock_data_with_footnotes,
+        ) as mock_normalize_footnotes,
+    ):
 
         # Call get_data with footnotes=True
         result = core.get_data(
@@ -539,13 +557,17 @@ def test_get_data_no_data_error():
     # Mock the API response with no records
     mock_no_data_response = {"hints": [], "records": [], "indicatorMetadata": []}
 
-    with patch(
-        "unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1"
-    ) as mock_convert_indicators, patch(
-        "unesco_reader.core._convert_geo_units_to_code", return_value="ZWE"
-    ) as mock_convert_geo_units, patch(
-        "unesco_reader.api.get_data", return_value=mock_no_data_response
-    ) as mock_api_call:
+    with (
+        patch(
+            "unesco_reader.core._convert_indicator_codes_to_code", return_value="CR.1"
+        ) as mock_convert_indicators,
+        patch(
+            "unesco_reader.core._convert_geo_units_to_code", return_value="ZWE"
+        ) as mock_convert_geo_units,
+        patch(
+            "unesco_reader.api.get_data", return_value=mock_no_data_response
+        ) as mock_api_call,
+    ):
 
         # Call get_data and expect NoDataError
         with pytest.raises(NoDataError, match="No data found for the given parameters"):
@@ -561,12 +583,15 @@ def test_get_data_no_data_error():
 def test_get_metadata_single_indicator():
     """Test that get_metadata returns metadata for a single valid indicator."""
     # Mock the API response
-    with patch(
-        "unesco_reader.api.get_indicators",
-        return_value=mock_indicators_no_agg_no_glossary,
-    ) as mock_api_call, patch(
-        "unesco_reader.core._convert_indicator_codes_to_code", return_value=["10"]
-    ) as mock_convert_indicators:
+    with (
+        patch(
+            "unesco_reader.api.get_indicators",
+            return_value=mock_indicators_no_agg_no_glossary,
+        ) as mock_api_call,
+        patch(
+            "unesco_reader.core._convert_indicator_codes_to_code", return_value=["10"]
+        ) as mock_convert_indicators,
+    ):
 
         # Call get_metadata
         result = core.get_metadata(
@@ -591,13 +616,16 @@ def test_get_metadata_single_indicator():
 def test_get_metadata_with_invalid_indicator(caplog):
     """Test that a warning is logged when some requested indicators are not found."""
     # Mock the API response
-    with patch(
-        "unesco_reader.api.get_indicators",
-        return_value=mock_indicators_no_agg_no_glossary,
-    ) as mock_api_call, patch(
-        "unesco_reader.core._convert_indicator_codes_to_code",
-        return_value=["10", "InvalidCode"],
-    ) as mock_convert_indicators:
+    with (
+        patch(
+            "unesco_reader.api.get_indicators",
+            return_value=mock_indicators_no_agg_no_glossary,
+        ) as mock_api_call,
+        patch(
+            "unesco_reader.core._convert_indicator_codes_to_code",
+            return_value=["10", "InvalidCode"],
+        ) as mock_convert_indicators,
+    ):
 
         # Call get_metadata with one valid and one invalid indicator
         result = core.get_metadata(
@@ -634,12 +662,13 @@ def test_get_metadata_with_invalid_indicator(caplog):
 def test_get_metadata_invalid_indicator():
     """Test that get_metadata raises NoDataError when an invalid indicator is requested."""
     # Mock the API response
-    with patch(
-        "unesco_reader.api.get_indicators", return_value=[]
-    ) as mock_api_call, patch(
-        "unesco_reader.core._convert_indicator_codes_to_code",
-        return_value=["InvalidCode"],
-    ) as mock_convert_indicators:
+    with (
+        patch("unesco_reader.api.get_indicators", return_value=[]) as mock_api_call,
+        patch(
+            "unesco_reader.core._convert_indicator_codes_to_code",
+            return_value=["InvalidCode"],
+        ) as mock_convert_indicators,
+    ):
 
         # Call get_metadata and expect NoDataError
         with pytest.raises(

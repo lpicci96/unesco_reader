@@ -18,7 +18,6 @@ import requests
 from unesco_reader.config import GeoUnitType, logger
 from unesco_reader.exceptions import TooManyRecordsError
 
-
 API_URL: str = "https://api.uis.unesco.org"
 TIMEOUT: int = 30
 
