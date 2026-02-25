@@ -49,11 +49,16 @@ Additional information:
 - Currently there are no rate limits for the API other than 100,000 row response limit. This package does not implement and multitheading or async functionality to handle this limit, as the intended usage for the API is to get make smaller requests for specific data points.
 """
 
+import logging
 from importlib.metadata import version
+
 from unesco_reader import api
 from unesco_reader import exceptions
 from unesco_reader.config import clear_cache
 from unesco_reader.api import set_max_retries
+
+
+logging.getLogger("unesco_reader").addHandler(logging.NullHandler())
 
 from unesco_reader.core import (
     get_data,

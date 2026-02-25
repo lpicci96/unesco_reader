@@ -13,11 +13,14 @@ Endpoints:
 
 """
 
+import logging
 import time
 
 import requests
 
-from unesco_reader.config import GeoUnitType, logger, session_cache
+from unesco_reader.config import GeoUnitType, session_cache
+
+logger = logging.getLogger(__name__)
 from unesco_reader.exceptions import TooManyRecordsError
 
 API_URL: str = "https://api.uis.unesco.org"

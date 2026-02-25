@@ -10,7 +10,11 @@ import pandas as pd
 from typing import Literal
 
 from unesco_reader import api
-from unesco_reader.config import logger, GeoUnitType
+import logging
+
+from unesco_reader.config import GeoUnitType
+
+logger = logging.getLogger(__name__)
 from unesco_reader.exceptions import TooManyRecordsError, NoDataError
 
 

@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `set_max_retries()` function to configure the number of retries for transient network errors
 
 ### Changed
+- Replaced library-level `StreamHandler` logging with per-module loggers and a `NullHandler`, following Python library best practices. Logs are now silent by default; users can configure the `unesco_reader` logger to enable output.
 - Migrated dependency management from Poetry to uv
 - Replaced `poetry-core` build backend with `hatchling`
 - Converted `pyproject.toml` from Poetry format to PEP 621
