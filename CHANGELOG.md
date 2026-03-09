@@ -10,9 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [3.1.1] - 2026-02-25
 
 ### Fixed
-- Fixed `available_indicators` and `available_versions` mutating cached API responses in place, causing `KeyError` on repeated calls
+- Fixed cached data mutation bug: `session_cache` now returns `copy.deepcopy()` of cached results, preventing any call site from corrupting the cache. This fixes issues where `available_versions()` (popping `themeDataStatus`) and `available_indicators()` (popping `dataAvailability`) would corrupt cached data on subsequent calls
+- Removed redundant shallow copy in `_normalize_footnotes`, now unnecessary with the deepcopy-based cache
 - Fixed `available_geo_units` using substring matching (`in`) instead of equality (`==`) for `geoUnitType` filtering
-- Fixed `get_metadata` returning direct references to cached dicts, allowing callers to corrupt the cache
 
 ### Added
 - Idempotency and cache-safety tests for `available_indicators`, `available_versions`, `available_geo_units`, `available_themes`, and `get_metadata`
