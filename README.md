@@ -3,7 +3,7 @@
 [![PyPI](https://img.shields.io/pypi/v/unesco_reader.svg)](https://pypi.org/project/unesco_reader/)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/unesco_reader.svg)](https://pypi.org/project/unesco_reader/)
 [![Documentation Status](https://readthedocs.org/projects/unesco-reader/badge/?version=latest)](https://unesco-reader.readthedocs.io/en/latest/?badge=latest)
-[![codecov](https://codecov.io/gh/lpicci96/unesco_reader/graph/badge.svg?token=R53UN1W77F)](https://codecov.io/gh/lpicci96/unesco_reader)
+[![codecov](https://codecov.io/gh/lpicci96/unesco_reader/branch/main/graph/badge.svg?token=R53UN1W77F)](https://codecov.io/gh/lpicci96/unesco_reader)
 ![Black](https://img.shields.io/badge/code%20style-black-000000.svg)
 
 # unesco_reader
