@@ -1559,9 +1559,7 @@ def test_available_indicators_does_not_mutate_source():
 
 def test_available_versions_idempotent():
     """Calling available_versions twice should return the same result."""
-    with patch(
-        "unesco_reader.api.get_versions", return_value=mock_list_versions
-    ):
+    with patch("unesco_reader.api.get_versions", return_value=mock_list_versions):
         first = core.available_versions()
         second = core.available_versions()
         pd.testing.assert_frame_equal(first, second)
@@ -1569,9 +1567,7 @@ def test_available_versions_idempotent():
 
 def test_available_versions_raw_idempotent():
     """Calling available_versions with raw=True twice should return the same result."""
-    with patch(
-        "unesco_reader.api.get_versions", return_value=mock_list_versions
-    ):
+    with patch("unesco_reader.api.get_versions", return_value=mock_list_versions):
         first = core.available_versions(raw=True)
         second = core.available_versions(raw=True)
         assert first == second
@@ -1591,9 +1587,7 @@ def test_available_versions_does_not_mutate_source():
 
 def test_available_geo_units_idempotent():
     """Calling available_geo_units twice should return the same result."""
-    with patch(
-        "unesco_reader.api.get_geo_units", return_value=mock_geo_units
-    ):
+    with patch("unesco_reader.api.get_geo_units", return_value=mock_geo_units):
         first = core.available_geo_units()
         second = core.available_geo_units()
         pd.testing.assert_frame_equal(first, second)
@@ -1614,11 +1608,14 @@ def test_available_geo_units_filter_uses_equality_not_substring():
     mock_geo_units_with_sub = [
         {"id": "ABW", "name": "Aruba", "type": "NATIONAL"},
         {"id": "X1", "name": "Subnational Region", "type": "SUBNATIONAL"},
-        {"id": "UNESCO: SIDS", "name": "SIDS", "type": "REGIONAL", "regionGroup": "UNESCO"},
+        {
+            "id": "UNESCO: SIDS",
+            "name": "SIDS",
+            "type": "REGIONAL",
+            "regionGroup": "UNESCO",
+        },
     ]
-    with patch(
-        "unesco_reader.api.get_geo_units", return_value=mock_geo_units_with_sub
-    ):
+    with patch("unesco_reader.api.get_geo_units", return_value=mock_geo_units_with_sub):
         result = core.available_geo_units(geoUnitType="NATIONAL")
         assert len(result) == 1
         assert result.iloc[0]["id"] == "ABW"

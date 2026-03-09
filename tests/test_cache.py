@@ -173,7 +173,9 @@ def test_session_cache_deep_mutation_protection():
         result1["a"]["new_key"] = "injected"
 
         result2 = get_nested()
-        assert result2 == {"a": {"b": [1, 2, 3]}}, "Cache was corrupted by deep mutation"
+        assert result2 == {
+            "a": {"b": [1, 2, 3]}
+        }, "Cache was corrupted by deep mutation"
     finally:
         get_nested.cache_clear()
 
@@ -189,7 +191,9 @@ def test_available_versions_does_not_corrupt_get_versions_cache():
         # get_versions should still return records with themeDataStatus intact
         versions = api.get_versions()
         for v in versions:
-            assert "themeDataStatus" in v, "get_versions cache corrupted by available_versions"
+            assert (
+                "themeDataStatus" in v
+            ), "get_versions cache corrupted by available_versions"
 
 
 def test_available_indicators_does_not_corrupt_get_indicators_cache():
@@ -216,7 +220,9 @@ def test_available_indicators_does_not_corrupt_get_indicators_cache():
         # get_indicators should still have dataAvailability
         indicators = api.get_indicators()
         for ind in indicators:
-            assert "dataAvailability" in ind, "get_indicators cache corrupted by available_indicators"
+            assert (
+                "dataAvailability" in ind
+            ), "get_indicators cache corrupted by available_indicators"
 
 
 def test_session_cache_cache_clear_still_works():

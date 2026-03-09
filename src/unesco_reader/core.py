@@ -349,9 +349,7 @@ def _indicators_df(indicators: list[dict]) -> pd.DataFrame:
     # Flatten the data for DataFrame return without mutating the original records
     rows = []
     for record in indicators:
-        row = {
-            k: v for k, v in record.items() if k != "dataAvailability"
-        }
+        row = {k: v for k, v in record.items() if k != "dataAvailability"}
         da = record["dataAvailability"]
         row["timeLine_min"] = da["timeLine"]["min"]
         row["timeLine_max"] = da["timeLine"]["max"]
