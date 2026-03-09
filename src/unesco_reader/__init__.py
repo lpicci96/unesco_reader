@@ -32,6 +32,9 @@ Get available geo units:
 Get available regional geo units:
 >>> geo_units = uis.available_geo_units(geoUnitType="REGIONAL")
 
+Get available themes:
+>>> themes = uis.available_themes()
+
 Get available data versions:
 >>> versions = uis.available_versions()
 
@@ -45,6 +48,7 @@ does not provide any additional functionality and mirrors the API endpoints dire
 
 Additional information:
 - API definition endpoints (indicators, geo units, versions) are cached in memory for the session. Use `clear_cache()` to invalidate.
+- Transient network errors are retried once by default. Use `set_max_retries()` to configure.
 - Field names are not modified and are returned as they are from the API.
 - Currently there are no rate limits for the API other than 100,000 row response limit. This package does not implement any multithreading or async functionality to handle this limit, as the intended usage for the API is to make smaller requests for specific data points.
 """
