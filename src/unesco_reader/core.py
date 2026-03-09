@@ -6,8 +6,6 @@ The module handles indicator and entity conversions and normalizes data for easy
 The module handles errors and logs hints from the API responses
 """
 
-import copy
-
 import pandas as pd
 from typing import Literal
 
@@ -134,7 +132,6 @@ def _normalize_footnotes(data: list[dict]) -> list[dict]:
 
     normalized = []
     for record in data:
-        record = {**record}  # shallow copy to avoid mutating the original
         if len(record["footnotes"]) == 0:
             record["footnotes"] = None
         else:
@@ -333,8 +330,7 @@ def get_metadata(
     else:
         response = list(cached_response)
 
-    # Return deep copies to avoid callers mutating the cached API data
-    return copy.deepcopy(response)
+    return response
 
 
 def _indicators_df(indicators: list[dict]) -> pd.DataFrame:
@@ -350,9 +346,7 @@ def _indicators_df(indicators: list[dict]) -> pd.DataFrame:
     # Flatten the data for DataFrame return without mutating the original records
     rows = []
     for record in indicators:
-        row = {
-            k: v for k, v in record.items() if k != "dataAvailability"
-        }
+        row = {k: v for k, v in record.items() if k != "dataAvailability"}
         da = record["dataAvailability"]
         row["timeLine_min"] = da["timeLine"]["min"]
         row["timeLine_max"] = da["timeLine"]["max"]

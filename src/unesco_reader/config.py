@@ -5,7 +5,8 @@ including custom types and caching utilities.
 
 """
 
-from functools import lru_cache
+import copy
+from functools import lru_cache, wraps
 from typing import Literal
 
 # Custom TYPES
@@ -29,7 +30,14 @@ def session_cache(maxsize: int = 32):
     def decorator(func):
         cached_func = lru_cache(maxsize=maxsize)(func)
         _cached_functions.append(cached_func)
-        return cached_func
+
+        @wraps(cached_func)
+        def wrapper(*args, **kwargs):
+            return copy.deepcopy(cached_func(*args, **kwargs))
+
+        wrapper.cache_info = cached_func.cache_info
+        wrapper.cache_clear = cached_func.cache_clear
+        return wrapper
 
     return decorator
 
