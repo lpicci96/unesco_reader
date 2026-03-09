@@ -15,6 +15,7 @@ from mock_api_response import (
     mock_default_version,
     mock_list_versions,
 )
+from unesco_reader.config import clear_cache
 from unesco_reader.exceptions import NoDataError
 
 
@@ -1624,9 +1625,10 @@ def test_available_geo_units_filter_uses_equality_not_substring():
 def test_get_metadata_does_not_mutate_cache():
     """get_metadata should return deep copies so callers cannot corrupt the cache."""
     with patch(
-        "unesco_reader.api.get_indicators",
+        "unesco_reader.api._make_request",
         return_value=mock_indicators_no_agg_no_glossary,
     ):
+        clear_cache()
         result = core.get_metadata()
         # Mutate the returned data
         result[0]["name"] = "CORRUPTED"
