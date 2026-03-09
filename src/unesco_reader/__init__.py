@@ -11,7 +11,7 @@ Import the package:
 Get data for an indicator and geo unit:
 >>> df = uis.get_data("CR.1", "ZWE")
 
-Get data with additional fiels like indicator and geo unit names, and footnotes:
+Get data with additional fields like indicator and geo unit names, and footnotes:
 >>> df = uis.get_data("CR.1", "ZWE", footnotes=True, labels=True)
 
 Get metadata for an indicator:
@@ -46,7 +46,7 @@ does not provide any additional functionality and mirrors the API endpoints dire
 Additional information:
 - API definition endpoints (indicators, geo units, versions) are cached in memory for the session. Use `clear_cache()` to invalidate.
 - Field names are not modified and are returned as they are from the API.
-- Currently there are no rate limits for the API other than 100,000 row response limit. This package does not implement and multitheading or async functionality to handle this limit, as the intended usage for the API is to get make smaller requests for specific data points.
+- Currently there are no rate limits for the API other than 100,000 row response limit. This package does not implement any multithreading or async functionality to handle this limit, as the intended usage for the API is to make smaller requests for specific data points.
 """
 
 import logging

@@ -7,14 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.1] - 2026-02-25
+
+### Fixed
+- Fixed `available_indicators` and `available_versions` mutating cached API responses in place, causing `KeyError` on repeated calls
+- Fixed `available_geo_units` using substring matching (`in`) instead of equality (`==`) for `geoUnitType` filtering
+- Fixed `get_metadata` returning direct references to cached dicts, allowing callers to corrupt the cache
+
+### Added
+- Idempotency and cache-safety tests for `available_indicators`, `available_versions`, `available_geo_units`, `available_themes`, and `get_metadata`
+
+## [3.1.0] - 2025-02-25
+
 ### Added
 - In-memory session caching for API definition endpoints (`get_indicators`, `get_geo_units`, `get_versions`, `get_default_version`) to avoid redundant network calls
 - `clear_cache()` function to manually invalidate all cached data mid-session
-- `conftest.py` with autouse fixture to ensure test isolation across cached calls
 - Single retry with delay for transient network errors (timeouts, connection errors, 502/503/504 responses) with warning logs on retry attempts
 - `set_max_retries()` function to configure the number of retries for transient network errors
 - `py.typed` marker for PEP 561 type checker support
 - `__all__` to `__init__.py` for explicit public API surface
+- Live API smoke tests (opt-in via `RUN_LIVE_SMOKE_TESTS=1`)
+- Full test coverage (100%) across all modules
 
 ### Changed
 - Replaced library-level `StreamHandler` logging with per-module loggers and a `NullHandler`, following Python library best practices. Logs are now silent by default; users can configure the `unesco_reader` logger to enable output.
@@ -32,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed `_normalize_footnotes` mutating the original API response data in place
 - Fixed `_check_for_too_many_records` crashing on non-JSON or unexpected 400 responses
 - Fixed O(n) per-item scan in `_convert_codes` by using a reverse lookup set for code validation
-- Corrected - `geoUnitType` error message for consistent parameter naming using camel case
+- Corrected `geoUnitType` error message for consistent parameter naming using camel case
 
 ### Removed
 - Removed `poetry.lock`, `requirements.txt`, and `requirements-dev.txt` (replaced by `uv.lock`)

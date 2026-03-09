@@ -6,6 +6,8 @@ The module handles indicator and entity conversions and normalizes data for easy
 The module handles errors and logs hints from the API responses
 """
 
+import copy
+
 import pandas as pd
 from typing import Literal
 
@@ -97,6 +99,9 @@ def _convert_geo_units_to_code(geo_units: str | list[str]) -> str | list[str]:
 
     Args:
         geo_units: The geo unit name or list of geo unit names to convert to codes
+
+    Returns:
+        The geo unit code or list of geo unit codes
     """
 
     geo_units_data = api.get_geo_units()  # Fetch the geo unit data
@@ -298,7 +303,7 @@ def get_metadata(
         indicator = [indicator]
 
     # Convert the indicators to their respective codes
-    response = api.get_indicators(
+    cached_response = api.get_indicators(
         disaggregations=disaggregations, glossaryTerms=glossaryTerms, version=version
     )
 
@@ -306,7 +311,7 @@ def get_metadata(
     if indicator:
         indicator = _convert_indicator_codes_to_code(indicator)
         response = [
-            record for record in response if record["indicatorCode"] in indicator
+            record for record in cached_response if record["indicatorCode"] in indicator
         ]
 
         # check if no data is found
@@ -324,8 +329,11 @@ def get_metadata(
             logger.warning(
                 f"Metadata not found for the following indicators: {list(not_found)}"
             )
+    else:
+        response = list(cached_response)
 
-    return response
+    # Return deep copies to avoid callers mutating the cached API data
+    return copy.deepcopy(response)
 
 
 def _indicators_df(indicators: list[dict]) -> pd.DataFrame:
@@ -338,24 +346,28 @@ def _indicators_df(indicators: list[dict]) -> pd.DataFrame:
         A pandas DataFrame with the available indicators
     """
 
-    # Flatten the data for DataFrame return
+    # Flatten the data for DataFrame return without mutating the original records
+    rows = []
     for record in indicators:
-        record["timeLine_min"] = record["dataAvailability"]["timeLine"]["min"]
-        record["timeLine_max"] = record["dataAvailability"]["timeLine"]["max"]
-        record["totalRecordCount"] = record["dataAvailability"]["totalRecordCount"]
-        geo_units = record["dataAvailability"]["geoUnits"]["types"]
+        row = {
+            k: v for k, v in record.items() if k != "dataAvailability"
+        }
+        da = record["dataAvailability"]
+        row["timeLine_min"] = da["timeLine"]["min"]
+        row["timeLine_max"] = da["timeLine"]["max"]
+        row["totalRecordCount"] = da["totalRecordCount"]
+        geo_units = da["geoUnits"]["types"]
 
         # Handle geo_unit_type based on the conditions
         if "REGIONAL" in geo_units and "NATIONAL" in geo_units:
-            record["geoUnitType"] = "ALL"
+            row["geoUnitType"] = "ALL"
         else:
-            record["geoUnitType"] = geo_units[0] if geo_units else None
+            row["geoUnitType"] = geo_units[0] if geo_units else None
 
-        # Remove the 'dataAvailability' key since it's been flattened
-        record.pop("dataAvailability")
+        rows.append(row)
 
     # Convert to pandas DataFrame and return
-    return pd.DataFrame(indicators).assign(
+    return pd.DataFrame(rows).assign(
         lastDataUpdate=lambda d: pd.to_datetime(d.lastDataUpdate)
     )
 
@@ -476,7 +488,7 @@ def available_geo_units(
         # filter the geo_units based on the geo_unit_type
         if geoUnitType not in ["NATIONAL", "REGIONAL"]:
             raise ValueError("geoUnitType must be either NATIONAL or REGIONAL")
-        geo_units = [record for record in geo_units if geoUnitType in record["type"]]
+        geo_units = [record for record in geo_units if record["type"] == geoUnitType]
 
     if raw:
         return geo_units
@@ -502,7 +514,11 @@ def available_themes(*, raw: bool = False) -> pd.DataFrame | dict:
 
 
 def default_version() -> str:
-    """Get the default data version"""
+    """Get the default data version
+
+    Returns:
+        The default data version string
+    """
 
     return api.get_default_version()["version"]
 
@@ -519,9 +535,11 @@ def available_versions(*, raw: bool = False) -> pd.DataFrame | list[dict]:
 
     versions = api.get_versions()
 
-    # remove theme details
-    for version in versions:
-        version.pop("themeDataStatus")
+    # remove theme details without mutating the cached API response
+    versions = [
+        {k: v for k, v in version.items() if k != "themeDataStatus"}
+        for version in versions
+    ]
 
     if raw:
         return versions
