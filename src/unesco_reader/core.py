@@ -6,8 +6,6 @@ The module handles indicator and entity conversions and normalizes data for easy
 The module handles errors and logs hints from the API responses
 """
 
-import copy
-
 import pandas as pd
 from typing import Literal
 
@@ -332,8 +330,7 @@ def get_metadata(
     else:
         response = list(cached_response)
 
-    # Return deep copies to avoid callers mutating the cached API data
-    return copy.deepcopy(response)
+    return response
 
 
 def _indicators_df(indicators: list[dict]) -> pd.DataFrame:
