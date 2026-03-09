@@ -16,7 +16,7 @@ added convenience including error handling, filtering ability, and basic pandas 
 
 __Note: As of version `v3.0.0` the package does not support access to bulk data files.__
 Previous versions of the package were developed before the release of the API and offered 
-support for accessing the bulk data files. This functionality has been deprecated in version in favor
+support for accessing the bulk data files. This functionality has been deprecated in favor
 of the API for programmatic access to the data. To access bulk data files, please visit 
 the [bulk data download page](https://databrowser.uis.unesco.org/resources/bulk).
 
@@ -44,7 +44,7 @@ At least a country or an indicator must be requested. Currently, there is a 100,
 for the API response. If this limit is exceeded an error is raised. To request more data, please
 make multiple requests with fewer parameters.
 
-Get data with additional fiels like indicator and geo unit names, and footnotes:
+Get data with additional fields like indicator and geo unit names, and footnotes:
 ```python
 df = uis.get_data("CR.1", "ZWE", footnotes=True, labels=True)
 ```
