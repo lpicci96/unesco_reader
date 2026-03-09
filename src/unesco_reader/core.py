@@ -129,7 +129,6 @@ def _normalize_footnotes(data: list[dict]) -> list[dict]:
 
     normalized = []
     for record in data:
-        record = {**record}  # shallow copy to avoid mutating the original
         if len(record["footnotes"]) == 0:
             record["footnotes"] = None
         else:
